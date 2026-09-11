@@ -1,0 +1,1571 @@
+{
+  "synthetic": true,
+  "description": "Entirely fictitious contract examples. No live provider, customer, account, domain, or retained source payload is represented.",
+  "records": {
+    "sourceRecordAlpha": {
+      "contract": "sourceRecord",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "source_record",
+        "identity": {
+          "scope": {
+            "tenantId": "tenant-alpha",
+            "siteId": "site-alpha",
+            "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+          },
+          "providerId": "synthetic-provider",
+          "providerConnectionId": "synthetic-connection",
+          "sourceRecordId": "synthetic-external-record-001"
+        },
+        "integrity": {
+          "state": "unavailable",
+          "reason": "Synthetic fixture has no retained source bytes to hash."
+        },
+        "availability": {
+          "state": "unavailable",
+          "reason": "Synthetic source record; no provider resource exists."
+        }
+      }
+    },
+    "sourceRecordBeta": {
+      "contract": "sourceRecord",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "source_record",
+        "identity": {
+          "scope": {
+            "tenantId": "tenant-beta",
+            "siteId": "site-beta",
+            "siteScopeRevisionId": "synthetic-scope-beta-r1"
+          },
+          "providerId": "synthetic-provider",
+          "providerConnectionId": "synthetic-connection",
+          "sourceRecordId": "synthetic-external-record-001"
+        },
+        "integrity": {
+          "state": "unavailable",
+          "reason": "Synthetic fixture has no retained source bytes to hash."
+        },
+        "availability": {
+          "state": "unavailable",
+          "reason": "Synthetic source record; no provider resource exists."
+        }
+      }
+    },
+    "cohortAlpha": {
+      "contract": "cohort",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "cohort",
+        "id": "synthetic-cohort-alpha",
+        "revision": 1,
+        "context": {
+          "scope": {
+            "tenantId": "tenant-alpha",
+            "siteId": "site-alpha",
+            "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+          },
+          "subject": {
+            "kind": "site",
+            "reference": "site-alpha"
+          },
+          "metric": {
+            "id": "synthetic-detection-count",
+            "meaningVersion": "1.0",
+            "valueType": "number",
+            "unit": "items"
+          },
+          "dimensions": {
+            "providerId": "synthetic-provider",
+            "surface": "synthetic-surface",
+            "model": "synthetic-model",
+            "geography": "synthetic-region",
+            "language": "en",
+            "device": "synthetic-device",
+            "promptCohort": {
+              "id": "synthetic-prompt-cohort",
+              "revision": 1
+            },
+            "configuration": {
+              "id": "synthetic-provider-configuration",
+              "version": "1.0"
+            }
+          },
+          "method": {
+            "id": "synthetic-count-method",
+            "version": "1.0",
+            "configurationId": "synthetic-count-configuration",
+            "configurationRevision": 1
+          },
+          "timeWindowRules": {
+            "id": "synthetic-hour-window",
+            "version": "1.0",
+            "alignment": "calendar",
+            "durationSeconds": 3600,
+            "timezone": "UTC"
+          }
+        }
+      }
+    },
+    "provenanceAlpha": {
+      "contract": "provenance",
+      "data": {
+        "schemaVersion": "1.0",
+        "source": {
+          "scope": {
+            "tenantId": "tenant-alpha",
+            "siteId": "site-alpha",
+            "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+          },
+          "providerId": "synthetic-provider",
+          "providerConnectionId": "synthetic-connection",
+          "sourceRecordId": "synthetic-external-record-001"
+        },
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "runId": "synthetic-run-complete",
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "sourceTimezone": "UTC",
+        "completeness": {
+          "state": "complete",
+          "expectedCount": 1,
+          "receivedCount": 1
+        },
+        "integrity": {
+          "state": "unavailable",
+          "reason": "Synthetic fixture has no retained source bytes to hash."
+        },
+        "normalization": {
+          "id": "synthetic-normalization",
+          "version": "1.0"
+        },
+        "availability": {
+          "state": "unavailable",
+          "reason": "Synthetic source record; no provider resource exists."
+        }
+      }
+    },
+    "observedZeroValue": {
+      "contract": "observationValue",
+      "data": {
+        "state": "observed",
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    },
+    "observationZero": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-zero",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "observed",
+          "value": {
+            "type": "number",
+            "value": 0
+          }
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-external-record-001"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-complete",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "complete",
+            "expectedCount": 1,
+            "receivedCount": 1
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "observationContradicting": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-contradicting",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "observed",
+          "value": {
+            "type": "number",
+            "value": 2
+          }
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-external-record-contradicting"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-contradicting",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "complete",
+            "expectedCount": 1,
+            "receivedCount": 1
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "observationFollowUp": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-follow-up",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "observed",
+          "value": {
+            "type": "number",
+            "value": 1
+          }
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-external-record-follow-up"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-follow-up",
+          "sourceTime": {
+            "start": "2026-01-02T00:00:00.000Z",
+            "end": "2026-01-02T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-02T01:02:00.000Z",
+          "receivedAt": "2026-01-02T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "complete",
+            "expectedCount": 1,
+            "receivedCount": 1
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "value_unknown": {
+      "contract": "observationValue",
+      "data": {
+        "state": "unknown",
+        "reason": "Synthetic evidence exists but does not determine the requested count."
+      }
+    },
+    "observation_unknown": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-unknown",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "unknown",
+          "reason": "Synthetic evidence exists but does not determine the requested count."
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-source-unknown"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-unknown",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "complete",
+            "expectedCount": 1,
+            "receivedCount": 1
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "value_unavailable": {
+      "contract": "observationValue",
+      "data": {
+        "state": "unavailable",
+        "reason": "Synthetic evidence is inaccessible in this scenario."
+      }
+    },
+    "observation_unavailable": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-unavailable",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "unavailable",
+          "reason": "Synthetic evidence is inaccessible in this scenario."
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-source-unavailable"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-unavailable",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "unavailable",
+            "receivedCount": 0,
+            "reason": "Synthetic scenario supplies no observed source result."
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "value_not_collected": {
+      "contract": "observationValue",
+      "data": {
+        "state": "not_collected",
+        "reason": "Synthetic collection was intentionally not performed for this observation."
+      }
+    },
+    "observation_not_collected": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-not_collected",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "not_collected",
+          "reason": "Synthetic collection was intentionally not performed for this observation."
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-source-not_collected"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-not_collected",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "unavailable",
+            "receivedCount": 0,
+            "reason": "Synthetic scenario supplies no observed source result."
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "value_not_applicable": {
+      "contract": "observationValue",
+      "data": {
+        "state": "not_applicable",
+        "reason": "Synthetic metric does not apply to this simulated scope."
+      }
+    },
+    "observation_not_applicable": {
+      "contract": "observation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "observation",
+        "id": "synthetic-observation-not_applicable",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "value": {
+          "state": "not_applicable",
+          "reason": "Synthetic metric does not apply to this simulated scope."
+        },
+        "provenance": {
+          "schemaVersion": "1.0",
+          "source": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "providerId": "synthetic-provider",
+            "providerConnectionId": "synthetic-connection",
+            "sourceRecordId": "synthetic-source-not_applicable"
+          },
+          "adapter": {
+            "id": "synthetic-adapter",
+            "version": "2.0"
+          },
+          "sourceSchema": {
+            "id": "synthetic-source-schema",
+            "version": "7.3"
+          },
+          "runId": "synthetic-run-not_applicable",
+          "sourceTime": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "collectedAt": "2026-01-01T01:02:00.000Z",
+          "receivedAt": "2026-01-01T01:03:00.000Z",
+          "sourceTimezone": "UTC",
+          "completeness": {
+            "state": "unavailable",
+            "receivedCount": 0,
+            "reason": "Synthetic scenario supplies no observed source result."
+          },
+          "integrity": {
+            "state": "unavailable",
+            "reason": "Synthetic fixture has no retained source bytes to hash."
+          },
+          "normalization": {
+            "id": "synthetic-normalization",
+            "version": "1.0"
+          },
+          "availability": {
+            "state": "unavailable",
+            "reason": "Synthetic source record; no provider resource exists."
+          }
+        }
+      }
+    },
+    "collectionComplete": {
+      "contract": "collection",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "collection",
+        "id": "synthetic-run-complete",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "providerId": "synthetic-provider",
+        "providerConnectionId": "synthetic-connection",
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "method": {
+          "id": "synthetic-count-method",
+          "version": "1.0",
+          "configurationId": "synthetic-count-configuration",
+          "configurationRevision": 1
+        },
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "startedAt": "2026-01-01T01:00:10.000Z",
+        "endedAt": "2026-01-01T01:01:00.000Z",
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "completeness": {
+          "state": "complete",
+          "expectedCount": 1,
+          "receivedCount": 1
+        }
+      }
+    },
+    "collectionCompleteEmpty": {
+      "contract": "collection",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "collection",
+        "id": "synthetic-run-complete-empty",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "providerId": "synthetic-provider",
+        "providerConnectionId": "synthetic-connection",
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "method": {
+          "id": "synthetic-count-method",
+          "version": "1.0",
+          "configurationId": "synthetic-count-configuration",
+          "configurationRevision": 1
+        },
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "startedAt": "2026-01-01T01:00:10.000Z",
+        "endedAt": "2026-01-01T01:01:00.000Z",
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "completeness": {
+          "state": "complete",
+          "expectedCount": 0,
+          "receivedCount": 0
+        }
+      }
+    },
+    "collectionPartial": {
+      "contract": "collection",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "collection",
+        "id": "synthetic-run-partial",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "providerId": "synthetic-provider",
+        "providerConnectionId": "synthetic-connection",
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "method": {
+          "id": "synthetic-count-method",
+          "version": "1.0",
+          "configurationId": "synthetic-count-configuration",
+          "configurationRevision": 1
+        },
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "startedAt": "2026-01-01T01:00:10.000Z",
+        "endedAt": "2026-01-01T01:01:00.000Z",
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "completeness": {
+          "state": "partial",
+          "expectedCount": 2,
+          "receivedCount": 1,
+          "reason": "Synthetic run returned one of two expected source results."
+        }
+      }
+    },
+    "collectionUnavailable": {
+      "contract": "collection",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "collection",
+        "id": "synthetic-run-unavailable",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "providerId": "synthetic-provider",
+        "providerConnectionId": "synthetic-connection",
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "method": {
+          "id": "synthetic-count-method",
+          "version": "1.0",
+          "configurationId": "synthetic-count-configuration",
+          "configurationRevision": 1
+        },
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "startedAt": "2026-01-01T01:00:10.000Z",
+        "endedAt": "2026-01-01T01:01:00.000Z",
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "completeness": {
+          "state": "unavailable",
+          "receivedCount": 0,
+          "reason": "Synthetic provider is unavailable in this scenario."
+        }
+      }
+    },
+    "collectionFailed": {
+      "contract": "collection",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "collection",
+        "id": "synthetic-run-failed",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "providerId": "synthetic-provider",
+        "providerConnectionId": "synthetic-connection",
+        "adapter": {
+          "id": "synthetic-adapter",
+          "version": "2.0"
+        },
+        "sourceSchema": {
+          "id": "synthetic-source-schema",
+          "version": "7.3"
+        },
+        "method": {
+          "id": "synthetic-count-method",
+          "version": "1.0",
+          "configurationId": "synthetic-count-configuration",
+          "configurationRevision": 1
+        },
+        "sourceTime": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "startedAt": "2026-01-01T01:00:10.000Z",
+        "endedAt": "2026-01-01T01:01:00.000Z",
+        "collectedAt": "2026-01-01T01:02:00.000Z",
+        "receivedAt": "2026-01-01T01:03:00.000Z",
+        "completeness": {
+          "state": "failed",
+          "receivedCount": 1,
+          "reason": "Synthetic run failed after receiving one source result; coverage is unproven."
+        }
+      }
+    },
+    "inferenceContradictory": {
+      "contract": "inference",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "inference",
+        "id": "synthetic-inference-conflict",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "supportingObservations": [
+          {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "id": "synthetic-observation-zero"
+          }
+        ],
+        "contradictingObservations": [
+          {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "id": "synthetic-observation-contradicting"
+          }
+        ],
+        "method": {
+          "id": "synthetic-conflict-review",
+          "version": "1.0"
+        },
+        "rationale": "Two synthetic source records report different counts for the same scope and window; retain both without resolving the conflict automatically.",
+        "uncertainty": {
+          "state": "qualitative",
+          "level": "high",
+          "basis": "The synthetic conflicting record prevents a stable interpretation; this label is not a statistical probability."
+        },
+        "createdAt": "2026-01-01T01:04:00.000Z"
+      }
+    },
+    "recommendationAccepted": {
+      "contract": "recommendation",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "recommendation",
+        "id": "synthetic-recommendation-review",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "evidence": [
+          {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "kind": "inference",
+            "id": "synthetic-inference-conflict"
+          }
+        ],
+        "rationale": "Review the simulated discrepancy before selecting any separately authorized action.",
+        "priority": {
+          "level": "medium",
+          "basis": "Synthetic conflicting evidence warrants internal review; no numeric priority engine was applied."
+        },
+        "authorityClass": "separately_authorized_external_action",
+        "lifecycle": "accepted",
+        "revision": 1,
+        "createdAt": "2026-01-01T01:05:00.000Z",
+        "updatedAt": "2026-01-01T01:06:00.000Z"
+      }
+    },
+    "actionPlanned": {
+      "contract": "action",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "action",
+        "id": "synthetic-action-planned",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "recommendation": {
+          "id": "synthetic-recommendation-review",
+          "revision": 1
+        },
+        "plan": {
+          "id": "synthetic-plan-review",
+          "revision": 1
+        },
+        "execution": {
+          "state": "planned"
+        },
+        "verification": {
+          "state": "not_verified"
+        }
+      }
+    },
+    "measurementBaseline": {
+      "contract": "measurement",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "measurement",
+        "id": "synthetic-measurement-baseline",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "relationship": {
+          "role": "baseline"
+        },
+        "dueWindow": {
+          "start": "2026-01-01T00:00:00.000Z",
+          "end": "2026-01-01T01:00:00.000Z"
+        },
+        "result": {
+          "state": "measured",
+          "observedWindow": {
+            "start": "2026-01-01T00:00:00.000Z",
+            "end": "2026-01-01T01:00:00.000Z"
+          },
+          "observations": [
+            {
+              "reference": {
+                "scope": {
+                  "tenantId": "tenant-alpha",
+                  "siteId": "site-alpha",
+                  "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+                },
+                "id": "synthetic-observation-zero"
+              },
+              "value": {
+                "state": "observed",
+                "value": {
+                  "type": "number",
+                  "value": 0
+                }
+              }
+            }
+          ]
+        },
+        "comparability": {
+          "state": "comparable"
+        },
+        "methodology": {
+          "id": "synthetic-measurement-method",
+          "version": "1.0"
+        },
+        "createdAt": "2026-01-01T01:07:00.000Z"
+      }
+    },
+    "measurementFollowUp": {
+      "contract": "measurement",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "measurement",
+        "id": "synthetic-measurement-follow-up",
+        "cohort": {
+          "schemaVersion": "1.0",
+          "kind": "cohort",
+          "id": "synthetic-cohort-alpha",
+          "revision": 1,
+          "context": {
+            "scope": {
+              "tenantId": "tenant-alpha",
+              "siteId": "site-alpha",
+              "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+            },
+            "subject": {
+              "kind": "site",
+              "reference": "site-alpha"
+            },
+            "metric": {
+              "id": "synthetic-detection-count",
+              "meaningVersion": "1.0",
+              "valueType": "number",
+              "unit": "items"
+            },
+            "dimensions": {
+              "providerId": "synthetic-provider",
+              "surface": "synthetic-surface",
+              "model": "synthetic-model",
+              "geography": "synthetic-region",
+              "language": "en",
+              "device": "synthetic-device",
+              "promptCohort": {
+                "id": "synthetic-prompt-cohort",
+                "revision": 1
+              },
+              "configuration": {
+                "id": "synthetic-provider-configuration",
+                "version": "1.0"
+              }
+            },
+            "method": {
+              "id": "synthetic-count-method",
+              "version": "1.0",
+              "configurationId": "synthetic-count-configuration",
+              "configurationRevision": 1
+            },
+            "timeWindowRules": {
+              "id": "synthetic-hour-window",
+              "version": "1.0",
+              "alignment": "calendar",
+              "durationSeconds": 3600,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "relationship": {
+          "role": "follow_up",
+          "baselineMeasurementId": "synthetic-measurement-baseline"
+        },
+        "dueWindow": {
+          "start": "2026-01-02T00:00:00.000Z",
+          "end": "2026-01-02T01:00:00.000Z"
+        },
+        "result": {
+          "state": "measured",
+          "observedWindow": {
+            "start": "2026-01-02T00:00:00.000Z",
+            "end": "2026-01-02T01:00:00.000Z"
+          },
+          "observations": [
+            {
+              "reference": {
+                "scope": {
+                  "tenantId": "tenant-alpha",
+                  "siteId": "site-alpha",
+                  "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+                },
+                "id": "synthetic-observation-follow-up"
+              },
+              "value": {
+                "state": "observed",
+                "value": {
+                  "type": "number",
+                  "value": 1
+                }
+              }
+            }
+          ]
+        },
+        "comparability": {
+          "state": "comparable"
+        },
+        "methodology": {
+          "id": "synthetic-measurement-method",
+          "version": "1.0"
+        },
+        "createdAt": "2026-01-02T01:07:00.000Z"
+      }
+    },
+    "outcomeInconclusive": {
+      "contract": "outcome",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "outcome",
+        "id": "synthetic-outcome-inconclusive",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "recommendationId": "synthetic-recommendation-review",
+        "assessment": {
+          "direction": "inconclusive",
+          "measurements": [
+            {
+              "scope": {
+                "tenantId": "tenant-alpha",
+                "siteId": "site-alpha",
+                "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+              },
+              "id": "synthetic-measurement-baseline"
+            }
+          ],
+          "reason": "Only a baseline measurement is available at this synthetic assessment time."
+        },
+        "attribution": {
+          "strength": "none",
+          "reason": "Synthetic evidence cannot support an attribution claim."
+        },
+        "createdAt": "2026-01-01T01:08:00.000Z"
+      }
+    },
+    "outcomeAssociation": {
+      "contract": "outcome",
+      "data": {
+        "schemaVersion": "1.0",
+        "kind": "outcome",
+        "id": "synthetic-outcome-association",
+        "scope": {
+          "tenantId": "tenant-alpha",
+          "siteId": "site-alpha",
+          "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+        },
+        "recommendationId": "synthetic-recommendation-review",
+        "assessment": {
+          "direction": "improved",
+          "measurements": [
+            {
+              "scope": {
+                "tenantId": "tenant-alpha",
+                "siteId": "site-alpha",
+                "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+              },
+              "id": "synthetic-measurement-baseline"
+            },
+            {
+              "scope": {
+                "tenantId": "tenant-alpha",
+                "siteId": "site-alpha",
+                "siteScopeRevisionId": "synthetic-scope-alpha-r1"
+              },
+              "id": "synthetic-measurement-follow-up"
+            }
+          ],
+          "comparability": "comparable",
+          "rationale": "The synthetic detection count increased from zero to one under the same declared comparison context."
+        },
+        "attribution": {
+          "strength": "association",
+          "basis": "The synthetic increase follows the review decision in time; no executed action, controlled experiment, or causal effect is established."
+        },
+        "createdAt": "2026-01-02T01:08:00.000Z"
+      }
+    }
+  }
+}

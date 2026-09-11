@@ -1,11 +1,11 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Release 0.1 contains documentation only; none of the functional capabilities below currently exists in this repository.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Release 0.1 is accepted. Release 0.2 supplies local canonical contracts and synthetic validation, pending independent release acceptance. Releases 0.3 onward are unimplemented.
 
 | Release | Bounded proof focus |
 | --- | --- |
-| 0.1 | Architecture and authority foundation: publication-safe documentation and repository instructions. |
-| 0.2 | Canonical contracts: distinguish evidence, inference, recommendation, action, measurement, and outcome; define provenance and missing-data representations with clearly synthetic examples/fixtures as authorized. |
+| 0.1 | Accepted architecture and authority foundation: publication-safe documentation and repository instructions. |
+| 0.2 | Current review candidate: versioned canonical contracts, wire/domain validation, deterministic hashing, JSON Schema exports, and clearly synthetic fixtures/tests. See [contract guide](contracts.md). |
 | 0.3 | Tenant-safe persistence: trusted tenant context, history, and adversarial synthetic isolation validation. |
 | 0.4 | Authenticated bounded ingestion: scoped, validated intake of authorized evidence treated as untrusted input. |
 | 0.5 | WQT adapter: adapt existing technical/Search evidence without rebuilding its crawler. |
@@ -17,7 +17,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 
 ## Gates and evaluation
 
-LDW internal governance remains authoritative. Release 0.1 is the current documentation-only workstream. Releases 0.2–0.9 require later bounded Product-Orchestrator sequencing, independent review, and acceptance within delegated authority; this document does not dispatch them. Before functional/runtime merges, establish the normal enforceable public-repository governance and applicable CI baseline through separately governed work.
+LDW internal governance remains authoritative. Release 0.2 is the current bounded contracts workstream. Releases 0.3–0.9 require later bounded Product-Orchestrator sequencing, independent review, and acceptance within delegated authority; this document does not dispatch them. Before functional/runtime merges, establish the normal enforceable public-repository governance and applicable CI baseline through separately governed work. A local CI workflow does not substitute for enforceable branch/ruleset protection.
 
 Future functional releases require adversarial synthetic second-tenant testing for unauthorized list, read, update, correlate, approve, export, remeasure, and delete operations. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
