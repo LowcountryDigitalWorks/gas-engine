@@ -1,0 +1,32 @@
+# Local credentials and development state
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+
+# Future local dependency/build output
+node_modules/
+dist/
+coverage/
+
+# Local databases and journal files
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-*
+*.sqlite3-*
+*.db-*
+
+# Local evidence and generated artifacts (never public runtime storage)
+/local-evidence/
+/local-artifacts/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
