@@ -135,6 +135,10 @@ function checkSpecific(name: ContractName, value: unknown): void {
     case 'action': {
       const record = value as Contract<'action'>;
       requireSameScopes(record, record.scope);
+      if (record.verification.state === 'verified') {
+        const refs = record.verification.evidence.map((ref) => `${ref.kind}:${ref.id}`);
+        requireInvariant(new Set(refs).size === refs.length, 'Duplicate action verification evidence');
+      }
       if (record.verification.state !== 'not_verified') {
         requireInvariant(record.execution.state === 'succeeded' || record.execution.state === 'failed', 'Verification requires an execution record');
         const checkedAt = record.verification.state === 'verified' ? record.verification.verifiedAt : record.verification.checkedAt;

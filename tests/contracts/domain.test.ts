@@ -452,3 +452,19 @@ test('measurement references cannot be duplicated or self-referential and values
   measurement.result.observations[0]!.value = { state: 'observed', value: { type: 'boolean', value: true } };
   assert.throws(() => parseContract('measurement', measurement), ContractInvariantError);
 });
+
+test('verified action evidence rejects repeated composite references without conflating record kinds', () => {
+  const action = fixture('action', 'actionPlanned');
+  action.execution = {
+    state: 'succeeded', requestedAt: '2026-01-01T02:00:00.000Z', executedAt: '2026-01-01T02:01:00.000Z',
+    authority: { reference: 'synthetic-separate-authority', revision: 1 },
+  };
+  const reference = { scope: action.scope, kind: 'observation' as const, id: 'synthetic-evidence-001' };
+  action.verification = {
+    state: 'verified', verifiedAt: '2026-01-01T02:02:00.000Z',
+    method: { id: 'synthetic-verification', version: '1.0' }, evidence: [reference, { ...reference }],
+  };
+  assert.throws(() => parseContract('action', action), /Duplicate action verification evidence/);
+  action.verification.evidence[1] = { ...reference, kind: 'inference' };
+  assert.doesNotThrow(() => parseContract('action', action));
+});
