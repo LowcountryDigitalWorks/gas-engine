@@ -12,13 +12,16 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
-test('production surface uses only local modules, Zod, crypto and util; no provider/network/server/persistence imports', () => {
+test('production surface is local-only; SQLite is confined to the adapter and administrative migration', () => {
   for (const path of sourceFiles('src')) {
     const content = readFileSync(path, 'utf8');
     assert.match(path, /\.ts$/);
     for (const match of content.matchAll(/(?:from\s+|import\s*)['"]([^'"]+)['"]/g)) {
       const specifier = match[1]!;
-      assert.ok(specifier.startsWith('.') || ['zod', 'node:crypto', 'node:util'].includes(specifier), `${path}: unexpected import ${specifier}`);
+      const sqliteAdapter = /src[\\/]persistence[\\/](sqlite|migrations)\.ts$/.test(path);
+      assert.ok(specifier.startsWith('.') || ['zod', 'node:crypto', 'node:util'].includes(specifier)
+        || (sqliteAdapter && specifier === 'node:sqlite'), `${path}: unexpected import ${specifier}`);
+      if (/src[\\/](contracts|domain|lib)[\\/]/.test(path)) assert.doesNotMatch(specifier, /persistence/, 'Core must remain independent of storage');
     }
     assert.doesNotMatch(content, /\b(?:fetch|WebSocket|XMLHttpRequest|require)\s*\(|\bimport\s*\(/, `${path}: dynamic/network capability`);
   }

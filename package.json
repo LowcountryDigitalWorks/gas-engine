@@ -1,6 +1,6 @@
 {
   "name": "@lowcountrydigitalworks/gas-engine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=24.19.0 <25", "npm": ">=11 <12" },
@@ -8,7 +8,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "test": "node --permission --allow-fs-read=. --test --test-isolation=none dist/tests/contracts/*.test.js",
+    "test": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --import ./dist/tests/no-network.js --test --test-isolation=none dist/tests/contracts/*.test.js dist/tests/persistence/*.test.js",
     "schemas:generate": "node dist/scripts/schemas.js",
     "schemas:check": "node dist/scripts/schemas.js --check",
     "check": "npm run typecheck && npm run build && npm test && npm run schemas:check"
