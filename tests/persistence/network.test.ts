@@ -12,4 +12,5 @@ test('the synthetic runner blocks fetch, socket, HTTP and DNS calls before any n
   assert.equal(process.permission.has('child'), false);
   assert.equal(process.permission.has('worker'), false);
   assert.equal(process.permission.has('fs.write', 'package.json'), false);
+  assert.equal(process.permission.has('fs.write', 'local-artifacts/synthetic-not-yet-created/child.sqlite'), true);
 });
