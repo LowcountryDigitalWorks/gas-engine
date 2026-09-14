@@ -1,6 +1,6 @@
 # Architecture baseline
 
-Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers for these concepts. They do not implement the operating lifecycle; persistence, ingestion, adapters, and operator interfaces require subsequent bounded releases.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md), now accepted on `main`, implement local wire validation, cross-field checks, and deterministic identity helpers. The [Release 0.3 candidate](persistence.md) adds tenant-safe local persistence for seven ingestion-foundation record groups, with embedded provenance, and remains unmerged. Ingestion, authentication, adapters, and operator interfaces require subsequent bounded releases.
 
 ## Objectives and operating model
 
@@ -76,9 +76,9 @@ Sensor/read adapters and write/action adapters are separate architectural respon
 
 ## Tenant security invariant
 
-**Tenant identity is an authorization boundary. A globally unique object ID is never by itself authorization.** Future application and persistence interfaces must carry trusted tenant context; a tenant value supplied in untrusted evidence cannot establish that context.
+**Tenant identity is an authorization boundary. A globally unique object ID is never by itself authorization.** The Release 0.3 repository requires trusted tenant context; future authenticated application interfaces must preserve it. A tenant value supplied in untrusted evidence cannot establish that context.
 
-The bounded proof uses LDW-owned and synthetic evidence only, but isolation must be designed before customer use could ever be considered. Future functional releases require adversarial synthetic second-tenant testing to ensure tenant B cannot improperly list, read, update, correlate, approve, export, remeasure, or delete tenant A data, including by supplying a known object ID. No database schema or authorization implementation is supplied here.
+The bounded proof uses LDW-owned and synthetic evidence only, but isolation must be designed before customer use could ever be considered. Release 0.3 tests every implemented persistence surface with an adversarial synthetic second tenant and supplies a local schema with composite ownership constraints. Correlation, approval, export, and remeasurement need isolation tests when implemented. There is no production authentication/authorization implementation; the trusted test factory is not an authentication mechanism.
 
 All source content is untrusted input. Evidence must not confer permissions or issue executable instructions. See the [security posture](../SECURITY.md).
 
@@ -109,7 +109,7 @@ A compact future LDW operator experience should let an operator inspect source h
 
 Cloudflare **Workers, D1, and static operator assets** are the current candidate architecture for a later bounded cloud proof. No resources, deployment configuration, runtime, database, or provider accounts are created by Release 0.1. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
-Keep the evidence concepts and provider boundaries portable; choose specific persistence and runtime contracts in later bounded releases. Reuse useful existing capabilities rather than add components without demonstrated value.
+Keep the evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with a local SQLite adapter; a later cloud adapter must preserve its tenant/evidence semantics. Reuse useful existing capabilities rather than add components without demonstrated value.
 
 **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative CPU/request/query/storage estimates, and rollback/decommission planning assessed before approval. Paid infrastructure, overages, and billing changes require separate authority.
 

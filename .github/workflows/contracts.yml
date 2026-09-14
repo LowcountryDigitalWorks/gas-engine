@@ -3,7 +3,7 @@ name: Contracts
 on:
   pull_request:
   push:
-    branches: [main, release/0.2-canonical-contracts]
+    branches: [main, release/0.3-tenant-safe-persistence]
 
 permissions:
   contents: read

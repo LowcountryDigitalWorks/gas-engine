@@ -8,11 +8,13 @@
 - Use a branch from freshly verified `main` and a PR for meaningful work. Do not commit directly to `main`. Validate before opening the PR, then return evidence to the Product Orchestrator for independent review and release acceptance. Do not self-accept or merge this implementation workstream.
 - Choose the smallest useful next release. Roadmap entries do not independently authorize implementation; stop or collapse work when evidence shows duplication or poor value.
 
-## Release 0.2 scope
+## Release 0.3 scope
 
-Release 0.1's documentation foundation is accepted. The bounded Release 0.2 dispatch permits domain/wire contracts, canonical schemas, deterministic helpers, clearly synthetic fixtures, contract tests, and minimal project/build/test scaffolding. It permits a least-privilege repository-local CI check using included capacity and no secrets. Do not add persistence/databases/migrations, ingestion, provider access, API servers/routes, authentication/authorization middleware, UI, or deployment configuration. Do not proceed into Release 0.3.
+Release 0.1's documentation foundation and Release 0.2's canonical contracts are accepted and merged. The Release 0.3 dispatch authorizes only tenant-safe local persistence, deterministic migrations, and adversarial synthetic tests on accepted `main`. Use `release/0.3-tenant-safe-persistence` with draft PR base `main`. Preserve accepted Release 0.2 behavior exactly; do not reintroduce superseded contract implementations. Stop if `main` materially changes or competing work invalidates the dispatch. Do not merge the PR.
 
-Before any functional/runtime merge, establish the separately governed, enforceable public-repository branch/ruleset and applicable CI baseline. This workstream does not authorize account/security setting changes. An implementation PR may be prepared while Product ORCH1 reconciles that merge prerequisite separately.
+Persist only tenant, site, site-scope revision, provider connection metadata, collection, source record metadata/reference, and normalized observation. Require trusted tenant context on every owned operation and composite relational ownership constraints. Keep evidence immutable, SQL bounded/parameterized, transactions atomic, and test databases fresh/ignored. See [persistence guide](docs/persistence.md). Prefer built-in SQLite with zero new dependencies. Do not add ingestion, provider access, APIs, authentication, UI, cloud/deployment configuration, or Release 0.4 work.
+
+Repository governance is now established: a repository ruleset targets `main`, requires pull requests with review-thread resolution and linear history, and requires the `contracts` GitHub Actions check. Work with that baseline; this document does not authorize account, security-setting, or ruleset changes.
 
 ## Persistent boundaries
 

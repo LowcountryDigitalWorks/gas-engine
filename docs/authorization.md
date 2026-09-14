@@ -6,11 +6,11 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Release 0.1's documentation-only architecture and authority foundation is accepted. The current bounded Release 0.2 dispatch authorizes canonical domain/wire contracts, versioned schemas, deterministic helpers, clearly synthetic fixtures, contract tests, and minimal build/test scaffolding.
+Release 0.1's documentation-only architecture and authority foundation and Release 0.2's canonical-contract implementation are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
-Release 0.2 performs no ingestion, provider/network access, persistence, database work, API serving, authentication, external execution, or deployment. A repository-local CI workflow is permitted only with least privilege, included capacity, no secrets, and synthetic/local checks safe for public PRs. Product-Orchestrator independent review and release acceptance remain required; the implementation workstream does not merge or self-accept its PR.
+The bounded Release 0.3 dispatch permits local tenant-safe persistence, small deterministic migrations, and adversarial synthetic isolation tests. Its branch is reconstructed on accepted `main` with a draft PR based on `main`. Accepted Release 0.2 behavior is preserved unchanged. Product ORCH1 owns independent review and release acceptance; this workstream does not merge or self-accept its PR.
 
-Later Releases 0.3–0.9 may be sequenced only through bounded Product-Orchestrator authority and normal independent review. This workstream does not implement or dispatch them. Before functional/runtime merges, the repository must receive the separately governed, enforceable public-repository governance and applicable CI baseline. Preparing the Release 0.2 PR does not waive that merge prerequisite or authorize security setting changes.
+There is no ingestion, provider/network access, API serving, authentication, external execution, or deployment. Repository-local CI remains least privilege, included capacity, no secrets, and synthetic/local checks safe for public PRs. Later Releases 0.4–0.9 require separate bounded Product-Orchestrator sequencing. This dispatch does not authorize account, security-setting, or ruleset changes.
 
 ## Fixed proof limits
 
@@ -31,7 +31,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Releases 0.1 and 0.2 add **$0 incremental recurring cost**: no resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity.
+Releases 0.1–0.3 add **$0 incremental recurring cost**: no resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity.
 
 For a later cloud proof, **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -39,4 +39,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to the Product Orchestrator if live repository changes or competing work invalidate the dispatch, governing authority revokes or narrows it, or completion would require persistence, provider access, a paid dependency, private/customer material, consequential security setting changes, or a material architecture departure. Do not resolve a stop condition by silently expanding scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.
+Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, local SQLite is unsuitable, or completion requires cloud/authentication/provider access, a substantial new dependency, paid tooling, private/customer material, security setting changes, governance bypass, or a material architecture departure. Do not silently expand scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.

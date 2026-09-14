@@ -1,6 +1,6 @@
 # Canonical contracts — Release 0.2
 
-This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. There is no provider access, ingestion, persistence, server, authentication, priority engine, execution adapter, or deployment. Synthetic contract scope checks do not replace Release 0.3 adversarial persistence/isolation tests.
+This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. The separate [Release 0.3 persistence boundary](persistence.md) consumes these unchanged contracts and supplies actual adversarial isolation tests. There is no provider access, ingestion, server, authentication, priority engine, execution adapter, or deployment.
 
 ## Entry points and contract inventory
 
@@ -30,9 +30,9 @@ Observed numeric zero is exactly `{ "state": "observed", "value": { "type": "num
 
 ## Versions and wire/domain validation
 
-All record/envelope contracts accept exactly `schemaVersion: "1.0"`. This is the contract version, independent of package/release `0.2.0` and provider/source/adapter/normalization versions. Nested envelopes are checked too. The value union and shared primitives are versioned by their enclosing contract and exported schema identity.
+All record/envelope contracts accept exactly `schemaVersion: "1.0"`. This is the contract version, independent of package/release version and provider/source/adapter/normalization versions. Nested envelopes are checked too. The value union and shared primitives are versioned by their enclosing contract and exported schema identity.
 
-Unknown fields and unsupported versions fail closed; there is no silent stripping, coercion, defaulting, or fallback. Even a future minor such as `1.1` is rejected until intentionally supported. A compatible addition requires an explicit versioned validator, export, and tests that preserve existing 1.0 interpretation. Unsupported major versions never fall back to 1.0. No migration infrastructure exists.
+Unknown fields and unsupported versions fail closed; there is no silent stripping, coercion, defaulting, or fallback. Even a future minor such as `1.1` is rejected until intentionally supported. A compatible addition requires an explicit versioned validator, export, and tests that preserve existing 1.0 interpretation. Unsupported major versions never fall back to 1.0. Release 0.3's local SQL migration bootstraps storage; it does not convert evidence contract versions.
 
 [wire.ts](../src/contracts/wire.ts) and [primitives.ts](../src/contracts/primitives.ts) contain portable Zod schemas without transforms or custom refinements. Zod's [JSON Schema exporter](https://zod.dev/json-schema) produces checked-in Draft 2020-12 artifacts under [schemas](../schemas), so future non-TypeScript consumers can inspect the same wire constraints. JSON Schema validates shape, bounds, literals, and formats; configure consumers to enforce patterns/formats.
 
@@ -83,11 +83,11 @@ Individual wire fields are more narrowly bounded than the generic hash helper. T
 
 [fixtures/synthetic/contracts.json](../fixtures/synthetic/contracts.json) contains an explicit synthetic marker and 28 named examples, covering all 11 registry schemas. Only `tenant-alpha`/`tenant-beta` and fictitious sites/providers are used. Source record IDs intentionally collide across tenants; source schema `7.3` remains distinct from contract `1.0`. No customer or live provider records are included.
 
-Tests use `node:test` and `node:assert`, local fixtures, generated JSON Schema artifacts, and deterministic built-ins. They require no internet, provider services, accounts, or credentials. Installation and advisory inspection are separate network-enabled development steps. Tests exercise the public parsing/hashing/comparison seams plus schema-derived invariant-coverage drift; they do not implement persistence or tenant authorization.
+Contract tests use `node:test` and `node:assert`, local fixtures, generated JSON Schema artifacts, and deterministic built-ins. They require no internet, provider services, accounts, or credentials. Installation and advisory inspection are separate network-enabled development steps. These tests exercise the public parsing/hashing/comparison seams plus schema-derived invariant-coverage drift; the separate [persistence suite](persistence.md) tests actual scoped SQLite behavior. Neither suite implements authentication.
 
 ## Dependency and tool choices
 
-The existing public [Website Quality Toolkit](https://github.com/LowcountryDigitalWorks/website-quality-toolkit) uses npm with a committed lockfile, ESM, Node 24, and Node's test runner. This repository follows those conventions with a smaller contracts-only configuration: Node 24.19.0, npm 11.17.0, strict TypeScript 7.0.2, and no application framework.
+The existing public [Website Quality Toolkit](https://github.com/LowcountryDigitalWorks/website-quality-toolkit) uses npm with a committed lockfile, ESM, Node 24, and Node's test runner. This repository follows those conventions with a small local configuration: Node 24.19.0, npm 11.17.0, strict TypeScript 7.0.2, and no application framework. Release 0.3 uses built-in SQLite with no dependency additions.
 
 | Dependency | Purpose | Upstream license |
 | --- | --- | --- |
