@@ -1,6 +1,6 @@
 # Authenticated bounded ingestion — Release 0.4
 
-Release 0.4 is a draft candidate built on accepted Release 0.3. It proves one bounded authenticated write path while preserving the accepted tenant-safe persistence model. Product ORCH1 owns independent review and release acceptance; this candidate must remain draft and unmerged until that gate is complete.
+Release 0.4 is accepted and merged on top of accepted Release 0.3. It proves one bounded authenticated write path while preserving the accepted tenant-safe persistence model. Product ORCH1 completed independent review and release acceptance; future work must preserve this accepted boundary unless a later bounded release deliberately changes it.
 
 ## Core security invariant
 
