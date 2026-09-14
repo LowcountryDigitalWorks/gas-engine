@@ -1,6 +1,6 @@
 # Architecture baseline
 
-Release 0.1 defines an accepted direction for a bounded LDW internal managed-service evidence-engine proof. It implements no runtime capabilities. Canonical contracts and final schemas are deferred to Release 0.2; persistence, ingestion, adapters, and operator interfaces require subsequent bounded releases.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers for these concepts. They do not implement the operating lifecycle; persistence, ingestion, adapters, and operator interfaces require subsequent bounded releases.
 
 ## Objectives and operating model
 
@@ -51,7 +51,7 @@ Every normalized observation must distinguish at least:
 | `not_collected(reason)` | Collection was not performed for this observation. |
 | `not_applicable(reason)` | The observation does not apply to the specified scope. |
 
-Missing or unavailable data must **never silently become zero**. Preserve the reason and state through normalization, comparison, prioritization, display, and reporting. Do not present an apparent improvement merely because a source stopped reporting. Future contracts will define precise representations and valid transitions.
+Missing or unavailable data must **never silently become zero**. Preserve the reason and state through normalization, comparison, prioritization, display, and reporting. Do not present an apparent improvement merely because a source stopped reporting. Release 0.2 defines explicit value unions; lifecycle transition engines remain future work.
 
 ### Provenance and history
 

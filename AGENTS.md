@@ -5,14 +5,14 @@
 - Read [authorization](docs/authorization.md), [architecture](docs/architecture.md), and the [roadmap](docs/roadmap.md) before meaningful work. LDW internal governance and the current bounded dispatch determine authority.
 - Fetch current `main`; inspect the tree, working-tree changes, open/recent PRs, workflows/configuration, and branch protection/rulesets where available before editing. Live repository state takes precedence over a stale handoff.
 - Stop and return to the Product Orchestrator when live changes or competing work invalidate the dispatch, authority narrows, or completing the work would require a material scope expansion. Preserve others' changes.
-- Use a branch from freshly verified `main` and a PR for meaningful work. Do not commit directly to `main`. Validate before opening the PR, then return evidence to the Product Orchestrator for independent review and release acceptance. Do not self-accept or merge this Release 0.1 workstream.
+- Use a branch from freshly verified `main` and a PR for meaningful work. Do not commit directly to `main`. Validate before opening the PR, then return evidence to the Product Orchestrator for independent review and release acceptance. Do not self-accept or merge this implementation workstream.
 - Choose the smallest useful next release. Roadmap entries do not independently authorize implementation; stop or collapse work when evidence shows duplication or poor value.
 
-## Release 0.1 scope
+## Release 0.2 scope
 
-Documentation and a narrow `.gitignore` only. Do not add runtime/source code, dependencies, package metadata, lockfiles, schemas, migrations, fixtures, tests, API definitions, authentication, provider implementations, GitHub Actions, or deployment configuration. Canonical contracts belong to a later bounded Release 0.2.
+Release 0.1's documentation foundation is accepted. The bounded Release 0.2 dispatch permits domain/wire contracts, canonical schemas, deterministic helpers, clearly synthetic fixtures, contract tests, and minimal project/build/test scaffolding. It permits a least-privilege repository-local CI check using included capacity and no secrets. Do not add persistence/databases/migrations, ingestion, provider access, API servers/routes, authentication/authorization middleware, UI, or deployment configuration. Do not proceed into Release 0.3.
 
-Before any future functional/runtime merge, establish the separately governed, enforceable public-repository branch/ruleset and applicable CI baseline. This document does not authorize account/security changes or workflow installation during Release 0.1.
+Before any functional/runtime merge, establish the separately governed, enforceable public-repository branch/ruleset and applicable CI baseline. This workstream does not authorize account/security setting changes. An implementation PR may be prepared while Product ORCH1 reconciles that merge prerequisite separately.
 
 ## Persistent boundaries
 
@@ -28,6 +28,8 @@ Before any future functional/runtime merge, establish the separately governed, e
 
 ## Validation and handoff
 
-Run `git diff --check`, inspect the complete diff, verify the release's file allowlist and relative Markdown links, and review for secrets, customer/private material, licensing, unsupported maturity claims, and cost guarantees. Use existing tooling; do not install a linting dependency solely for documentation. Later releases require validation appropriate to their behavior and applicable governance.
+Use Node 24 and the committed npm lockfile. Run `npm ci --ignore-scripts --no-audit --no-fund`, `npm run check`, and `git diff --check`. Inspect the complete diff and generated schemas; verify documentation links, synthetic fixtures, privacy, dependency licenses/advisories, and scope. If CI exists, confirm it passes on the final head. Keep checks deterministic and local; never require provider credentials or live services. Do not install a formatter/linter solely for cosmetic changes.
+
+Keep portable Zod wire schemas free of hidden transforms/refinements; cross-field checks belong in `src/domain/validate.ts` and must be documented separately from JSON Schema. Use `parseContract` at the application contract boundary. Unknown fields and unsupported versions fail closed; additions need deliberate version support and tests. Never infer trusted tenant authority from successful parsing or hashing. See [contract guide](docs/contracts.md).
 
 Report the starting revision, final head, changed files, validation results, PR, exclusions, cost/security impact, and unresolved issues to the Product Orchestrator. Do not advance to the next release without a bounded dispatch.

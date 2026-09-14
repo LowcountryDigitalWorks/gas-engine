@@ -1,0 +1,18 @@
+{
+  "name": "@lowcountrydigitalworks/gas-engine",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.19.0 <25", "npm": ">=11 <12" },
+  "packageManager": "npm@11.17.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "node --permission --allow-fs-read=. --test --test-isolation=none dist/tests/contracts/*.test.js",
+    "schemas:generate": "node dist/scripts/schemas.js",
+    "schemas:check": "node dist/scripts/schemas.js --check",
+    "check": "npm run typecheck && npm run build && npm test && npm run schemas:check"
+  },
+  "dependencies": { "zod": "4.6.2" },
+  "devDependencies": { "@types/node": "24.13.4", "typescript": "7.0.2" }
+}

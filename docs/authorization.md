@@ -6,11 +6,11 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Release 0.1 is authorized as a documentation-only architecture and authority foundation. Its deliverables are `README.md`, `AGENTS.md`, `SECURITY.md`, `.gitignore`, `docs/architecture.md`, `docs/decisions/0001-evidence-core.md`, `docs/roadmap.md`, and this document.
+Release 0.1's documentation-only architecture and authority foundation is accepted. The current bounded Release 0.2 dispatch authorizes canonical domain/wire contracts, versioned schemas, deterministic helpers, clearly synthetic fixtures, contract tests, and minimal build/test scaffolding.
 
-It adds no runtime, source implementation, dependencies, package metadata, lockfiles, schemas, migrations, fixtures, tests, workflows, API definitions, authentication, provider code, or deployment configuration. It performs no ingestion or external execution. Product-Orchestrator independent review and release acceptance remain required; the implementation workstream does not merge or self-accept its Release 0.1 PR.
+Release 0.2 performs no ingestion, provider/network access, persistence, database work, API serving, authentication, external execution, or deployment. A repository-local CI workflow is permitted only with least privilege, included capacity, no secrets, and synthetic/local checks safe for public PRs. Product-Orchestrator independent review and release acceptance remain required; the implementation workstream does not merge or self-accept its PR.
 
-Later Releases 0.2–0.9 may be sequenced only through bounded Product-Orchestrator authority and normal independent review. This workstream does not implement or dispatch them. Before functional/runtime merges, the repository must receive the separately governed, enforceable public-repository governance and applicable CI baseline.
+Later Releases 0.3–0.9 may be sequenced only through bounded Product-Orchestrator authority and normal independent review. This workstream does not implement or dispatch them. Before functional/runtime merges, the repository must receive the separately governed, enforceable public-repository governance and applicable CI baseline. Preparing the Release 0.2 PR does not waive that merge prerequisite or authorize security setting changes.
 
 ## Fixed proof limits
 
@@ -21,7 +21,7 @@ Later Releases 0.2–0.9 may be sequenced only through bounded Product-Orchestra
 - Sensor/read capability never grants action/write authority. Human acceptance of a recommendation does not automatically authorize a production change; future external actions require separately approved execution paths.
 - No account/security, DNS, domain, email, or production changes in this workstream.
 - No public price, SLA, ranking guarantee, citation guarantee, traffic guarantee, lead guarantee, or internal pricing hypothesis belongs in this repository. Internal automation does not prove commercial demand; the audit-first/service-first model continues independently.
-- **No software license grant.** Do not add `LICENSE`, `COPYING`, another license grant, or licensing metadata. Public visibility itself does not create an OSS license; future licensing decisions remain separately governed.
+- **No software license grant.** Do not add `LICENSE`, `COPYING`, another project license grant, or project licensing metadata. Dependencies retain their own licenses and ordinary lockfile metadata. Public visibility itself does not create an OSS license; future project licensing decisions remain separately governed.
 
 ## Public source and private evidence
 
@@ -31,7 +31,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Release 0.1 adds **$0 incremental recurring cost**: it provisions no resources, introduces no paid services, and performs no deployment.
+Releases 0.1 and 0.2 add **$0 incremental recurring cost**: no resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity.
 
 For a later cloud proof, **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -39,4 +39,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to the Product Orchestrator if live repository changes or competing work invalidate the dispatch, governing authority revokes or narrows it, or completion would require functional code, a paid dependency, publication of private/customer material, or a material architecture change. Do not resolve a stop condition by silently expanding scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.
+Return to the Product Orchestrator if live repository changes or competing work invalidate the dispatch, governing authority revokes or narrows it, or completion would require persistence, provider access, a paid dependency, private/customer material, consequential security setting changes, or a material architecture departure. Do not resolve a stop condition by silently expanding scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.
