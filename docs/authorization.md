@@ -6,11 +6,11 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Release 0.1's documentation-only architecture and authority foundation is accepted. Release 0.2's technically reviewed canonical-contract candidate remains open/unmerged in PR #2. The owner has authorized continued development while deliberately deferring repository governance; the functional merge gate remains in force.
+Release 0.1's documentation-only architecture and authority foundation and Release 0.2's canonical-contract implementation are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
-The bounded Release 0.3 dispatch permits local tenant-safe persistence, small deterministic migrations, and adversarial synthetic isolation tests. Its branch starts at exact Release 0.2 head `9020deaf08b371a02fee1128540c237826f55788`, with a draft stacked PR based on `release/0.2-canonical-contracts`, intentionally not `main`. Product ORCH1 decides later rebase/retarget after 0.2 acceptance. Neither PR may merge under this dispatch.
+The bounded Release 0.3 dispatch permits local tenant-safe persistence, small deterministic migrations, and adversarial synthetic isolation tests. Its branch is reconstructed on accepted `main` with a draft PR based on `main`. Accepted Release 0.2 behavior is preserved unchanged. Product ORCH1 owns independent review and release acceptance; this workstream does not merge or self-accept its PR.
 
-There is no ingestion, provider/network access, API serving, authentication, external execution, or deployment. Repository-local CI remains least privilege, included capacity, no secrets, and synthetic/local checks safe for public PRs. Later Releases 0.4–0.9 require separate bounded Product-Orchestrator sequencing. Before functional/runtime merges, establish separately governed enforceable repository protection and applicable CI. Stacked development does not waive that prerequisite or authorize account/security changes.
+There is no ingestion, provider/network access, API serving, authentication, external execution, or deployment. Repository-local CI remains least privilege, included capacity, no secrets, and synthetic/local checks safe for public PRs. Later Releases 0.4–0.9 require separate bounded Product-Orchestrator sequencing. This dispatch does not authorize account, security-setting, or ruleset changes.
 
 ## Fixed proof limits
 
@@ -39,4 +39,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to the Product Orchestrator if the reviewed Release 0.2 base materially changes, competing work invalidates the dispatch, authority narrows, local SQLite is unsuitable, or completion requires cloud/authentication/provider access, a substantial new dependency, paid tooling, private/customer material, security setting changes, governance bypass, or a material architecture departure. Do not silently expand scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.
+Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, local SQLite is unsuitable, or completion requires cloud/authentication/provider access, a substantial new dependency, paid tooling, private/customer material, security setting changes, governance bypass, or a material architecture departure. Do not silently expand scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.

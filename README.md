@@ -4,7 +4,7 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Release 0.3 local persistence candidate, stacked on unmerged Release 0.2 PR #2.** Accepted `main` remains Release 0.1. The candidate adds tenant-scoped SQLite persistence and adversarial synthetic isolation tests to the canonical contracts. Repository governance is deliberately deferred; neither candidate may merge until the merge gate is reconciled. Independent review, acceptance, and later rebase/retarget belong to the Product Orchestrator.
+**Current status: Release 0.3 local persistence candidate, based on accepted `main`.** Releases 0.1 and 0.2 are accepted and merged, so `main` carries the canonical evidence contracts. This candidate adds tenant-scoped SQLite persistence and adversarial synthetic isolation tests on top of them, and changes no accepted contract behavior. Repository governance is established and the candidate may not merge itself; independent review and release acceptance belong to the Product Orchestrator.
 
 The intended operating lifecycle is:
 

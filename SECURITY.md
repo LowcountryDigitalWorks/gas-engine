@@ -1,6 +1,6 @@
 # Security posture
 
-Release 0.1's architecture foundation is accepted. Release 0.2 adds canonical validation; the stacked Release 0.3 candidate adds tenant-scoped local SQLite persistence and adversarial synthetic tests. Both functional candidates remain unmerged pending repository governance and independent acceptance. There is no deployed service, ingestion, provider networking, or authentication implementation.
+Release 0.1's architecture foundation and Release 0.2's canonical validation are accepted and merged. The Release 0.3 candidate adds tenant-scoped local SQLite persistence and adversarial synthetic tests, and remains unmerged pending independent acceptance. There is no deployed service, ingestion, provider networking, or authentication implementation.
 
 Every owned repository operation requires an opaque context recognized by a module-private registry. `createTrustedTestTenantContext` is explicitly trusted test scaffolding. It must never be exposed to untrusted request input; a future authenticated application boundary must establish tenant authority. Record IDs, source fields, successful validation, and hashes cannot create context. The repository exposes no raw SQL handle or caller transaction callback. Composite foreign keys prevent children from crossing tenant/site/scope/connection/run ownership boundaries. See [persistence guide](docs/persistence.md) for the tested surfaces and limitations.
 

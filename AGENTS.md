@@ -5,16 +5,16 @@
 - Read [authorization](docs/authorization.md), [architecture](docs/architecture.md), and the [roadmap](docs/roadmap.md) before meaningful work. LDW internal governance and the current bounded dispatch determine authority.
 - Fetch current `main`; inspect the tree, working-tree changes, open/recent PRs, workflows/configuration, and branch protection/rulesets where available before editing. Live repository state takes precedence over a stale handoff.
 - Stop and return to the Product Orchestrator when live changes or competing work invalidate the dispatch, authority narrows, or completing the work would require a material scope expansion. Preserve others' changes.
-- Use the baseline explicitly authorized by the current dispatch and a PR for meaningful work. The Release 0.3 exception requires a draft stacked PR from the exact reviewed Release 0.2 candidate, with the Release 0.2 branch as base. Do not commit directly to `main`. Validate before opening the PR, then return evidence to the Product Orchestrator for independent review and release acceptance. Do not self-accept or merge this implementation workstream.
+- Use a branch from freshly verified `main` and a PR for meaningful work. Do not commit directly to `main`. Validate before opening the PR, then return evidence to the Product Orchestrator for independent review and release acceptance. Do not self-accept or merge this implementation workstream.
 - Choose the smallest useful next release. Roadmap entries do not independently authorize implementation; stop or collapse work when evidence shows duplication or poor value.
 
-## Release 0.3 stacked scope
+## Release 0.3 scope
 
-Release 0.1's documentation foundation is accepted. Release 0.2 remains open/unmerged in PR #2; its reviewed development head is `9020deaf08b371a02fee1128540c237826f55788`. The Release 0.3 dispatch authorizes only tenant-safe local persistence, deterministic migrations, and adversarial synthetic tests on that exact candidate. Use `release/0.3-tenant-safe-persistence`, with draft PR base `release/0.2-canonical-contracts`. Stop if the base materially changes or competing work invalidates the dispatch. Product ORCH1 decides later rebase/retarget after 0.2 acceptance. Do not merge either PR.
+Release 0.1's documentation foundation and Release 0.2's canonical contracts are accepted and merged. The Release 0.3 dispatch authorizes only tenant-safe local persistence, deterministic migrations, and adversarial synthetic tests on accepted `main`. Use `release/0.3-tenant-safe-persistence` with draft PR base `main`. Preserve accepted Release 0.2 behavior exactly; do not reintroduce superseded contract implementations. Stop if `main` materially changes or competing work invalidates the dispatch. Do not merge the PR.
 
 Persist only tenant, site, site-scope revision, provider connection metadata, collection, source record metadata/reference, and normalized observation. Require trusted tenant context on every owned operation and composite relational ownership constraints. Keep evidence immutable, SQL bounded/parameterized, transactions atomic, and test databases fresh/ignored. See [persistence guide](docs/persistence.md). Prefer built-in SQLite with zero new dependencies. Do not add ingestion, provider access, APIs, authentication, UI, cloud/deployment configuration, or Release 0.4 work.
 
-Before any functional/runtime merge, establish the separately governed, enforceable public-repository branch/ruleset and applicable CI baseline. The owner has deferred repository governance while authorizing stacked development and validation. This does not waive the merge gate or authorize account/security setting changes.
+Repository governance is now established: a repository ruleset targets `main`, requires pull requests with review-thread resolution and linear history, and requires the `contracts` GitHub Actions check. Work with that baseline; this document does not authorize account, security-setting, or ruleset changes.
 
 ## Persistent boundaries
 

@@ -1,6 +1,6 @@
 # Architecture baseline
 
-Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. The [stacked Release 0.3 candidate](persistence.md) adds tenant-safe local persistence for seven ingestion-foundation record groups, with embedded provenance. These candidates remain unmerged. Ingestion, authentication, adapters, and operator interfaces require subsequent bounded releases.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md), now accepted on `main`, implement local wire validation, cross-field checks, and deterministic identity helpers. The [Release 0.3 candidate](persistence.md) adds tenant-safe local persistence for seven ingestion-foundation record groups, with embedded provenance, and remains unmerged. Ingestion, authentication, adapters, and operator interfaces require subsequent bounded releases.
 
 ## Objectives and operating model
 

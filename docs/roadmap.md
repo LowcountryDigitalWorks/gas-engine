@@ -1,12 +1,12 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Release 0.1 is accepted. Release 0.2's reviewed contract candidate remains open/unmerged. Release 0.3 is a local persistence candidate stacked on Release 0.2, with both merges gated by deferred repository governance and independent acceptance. Releases 0.4 onward are unimplemented.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1 and 0.2 are accepted and merged. Release 0.3 is a local persistence candidate on accepted `main`, gated by independent acceptance. Releases 0.4 onward are unimplemented.
 
 | Release | Bounded proof focus |
 | --- | --- |
 | 0.1 | Accepted architecture and authority foundation: publication-safe documentation and repository instructions. |
-| 0.2 | Reviewed development candidate, unmerged PR #2: canonical contracts, validation, deterministic hashing, JSON Schemas, and synthetic fixtures/tests. See [contract guide](contracts.md). |
-| 0.3 | Current stacked candidate: trusted test contexts, local SQLite, composite ownership, atomic evidence batches, scoped idempotency, and adversarial isolation tests. See [persistence guide](persistence.md). |
+| 0.2 | Accepted: canonical contracts, validation, deterministic hashing, JSON Schemas, and synthetic fixtures/tests. See [contract guide](contracts.md). |
+| 0.3 | Current candidate: trusted tenant contexts, local SQLite, composite ownership, atomic bounded collection parts, scoped idempotency, and adversarial isolation tests. See [persistence guide](persistence.md). |
 | 0.4 | Authenticated bounded ingestion: scoped, validated intake of authorized evidence treated as untrusted input. |
 | 0.5 | WQT adapter: adapt existing technical/Search evidence without rebuilding its crawler. |
 | 0.6 | ZeroRank adapter: adapt read-only Generative evidence while preserving provider identity and replaceability. |
@@ -17,7 +17,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 
 ## Gates and evaluation
 
-LDW internal governance remains authoritative. Release 0.3 is the current bounded workstream; Releases 0.4–0.9 need later sequencing, independent review, and acceptance. The owner permits stacked development while deferring governance. Before either functional candidate merges, establish enforceable repository governance and applicable CI through separately governed work. A local CI workflow does not substitute for branch/ruleset protection. Product ORCH1 decides later rebase/retarget after 0.2 acceptance.
+LDW internal governance remains authoritative. Release 0.3 is the current bounded workstream; Releases 0.4–0.9 need later sequencing, independent review, and acceptance. Repository governance is established: a ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check. A local CI workflow does not substitute for that protection.
 
 Future functional releases require adversarial synthetic second-tenant testing for unauthorized list, read, update, correlate, approve, export, remeasure, and delete operations. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
