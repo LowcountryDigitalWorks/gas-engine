@@ -14,7 +14,7 @@ test('actual observation and measurement windows must match the declared cohort 
   const measurement = parseContract('measurement', corpus.records['measurementFollowUp']!.data);
   assert.equal(measurement.result.state, 'measured');
   if (measurement.result.state !== 'measured') assert.fail('Expected measured fixture');
-  measurement.result.observedWindow.end = '2026-01-02T02:00:00.000Z';
+  measurement.result.observedWindow.end = '2026-01-02T00:30:00.000Z';
   assert.throws(() => parseContract('measurement', measurement), /window duration/);
 });
 
