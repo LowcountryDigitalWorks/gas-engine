@@ -417,7 +417,10 @@ test('resolved baseline and follow-up require stable cohorts, methodology, chron
     (value) => { value.relationship = { role: 'baseline' }; },
     (value) => { value.comparability = { state: 'unknown', reason: 'Synthetic comparability has not been established.' }; },
     (value) => { value.result = { state: 'not_measured', reason: 'Synthetic measurement was not performed.' }; },
-    (value) => { value.result = { state: 'not_due', reason: 'Synthetic measurement is not due.' }; },
+    (value) => {
+      value.result = { state: 'not_due', reason: 'Synthetic measurement is not due.' };
+      value.createdAt = '2026-01-01T23:59:59.999Z';
+    },
     (value) => {
       if (value.result.state === 'measured') value.result.observedWindow = { start: '2026-01-01T00:30:00.000Z', end: '2026-01-01T01:30:00.000Z' };
     },
