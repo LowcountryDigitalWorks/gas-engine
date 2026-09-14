@@ -7,6 +7,22 @@ export class ContractInvariantError extends Error {
   override name = 'ContractInvariantError';
 }
 
+export const DOMAIN_INVARIANT_COVERAGE = {
+  timestampProperties: [
+    'start', 'end', 'collectedAt', 'receivedAt', 'startedAt', 'endedAt',
+    'createdAt', 'updatedAt', 'requestedAt', 'executedAt', 'cancelledAt',
+    'verifiedAt', 'checkedAt', 'expiresAt',
+  ],
+  orderedTimestampPairs: [
+    ['start', 'end'], ['createdAt', 'updatedAt'], ['startedAt', 'endedAt'],
+    ['endedAt', 'collectedAt'], ['collectedAt', 'receivedAt'], ['requestedAt', 'executedAt'],
+  ],
+  embeddedScopeProperties: ['scope'],
+} as const;
+
+const timestampProperties = new Set<string>(DOMAIN_INVARIANT_COVERAGE.timestampProperties);
+const embeddedScopeProperties = new Set<string>(DOMAIN_INVARIANT_COVERAGE.embeddedScopeProperties);
+
 function requireInvariant(condition: boolean, message: string): asserts condition {
   if (!condition) throw new ContractInvariantError(message);
 }
@@ -25,16 +41,13 @@ function checkCommon(value: unknown): void {
   if (value === null || typeof value !== 'object') return;
   const record = value as Record<string, unknown>;
   for (const [key, child] of Object.entries(record)) {
-    if (typeof child === 'string' && (key.endsWith('At') || key === 'start' || key === 'end')) {
+    if (typeof child === 'string' && timestampProperties.has(key)) {
       const time = new Date(child);
       requireInvariant(Number.isFinite(time.getTime()) && time.toISOString() === child, `Invalid canonical UTC timestamp at ${key}`);
     }
     checkCommon(child);
   }
-  for (const [first, second] of [
-    ['start', 'end'], ['createdAt', 'updatedAt'], ['startedAt', 'endedAt'],
-    ['endedAt', 'collectedAt'], ['collectedAt', 'receivedAt'], ['requestedAt', 'executedAt'],
-  ] as const) {
+  for (const [first, second] of DOMAIN_INVARIANT_COVERAGE.orderedTimestampPairs) {
     if (typeof record[first] === 'string' && typeof record[second] === 'string') {
       ordered(record[first], record[second], `${first}/${second}`);
     }
@@ -57,7 +70,7 @@ function requireSameScopes(value: unknown, owner: Scope): void {
     value.forEach((child) => requireSameScopes(child, owner));
   } else if (value !== null && typeof value === 'object') {
     for (const [key, child] of Object.entries(value)) {
-      if (key === 'scope') {
+      if (embeddedScopeProperties.has(key)) {
         requireInvariant(canonicalJson(child) === canonicalJson(owner), 'Embedded reference scope differs from the owning tenant/site/scope revision');
       } else requireSameScopes(child, owner);
     }
@@ -153,7 +166,14 @@ function checkSpecific(name: ContractName, value: unknown): void {
       if (record.relationship.role === 'follow_up') {
         requireInvariant(record.relationship.baselineMeasurementId !== record.id, 'A follow-up cannot be its own baseline');
       }
-      if (record.result.state === 'measured') {
+      if (record.result.state === 'not_due') {
+        requireInvariant(record.createdAt < record.dueWindow.start, 'A not-due measurement must be created before its due window starts');
+      } else if (record.result.state === 'not_measured') {
+        ordered(record.dueWindow.start, record.createdAt, 'measurement dueWindow/createdAt');
+      } else {
+        ordered(record.dueWindow.start, record.result.observedWindow.start, 'measurement dueWindow/observedWindow start');
+        ordered(record.result.observedWindow.end, record.dueWindow.end, 'measurement observedWindow/dueWindow end');
+        ordered(record.result.observedWindow.end, record.createdAt, 'measurement observedWindow/createdAt');
         checkWindowDuration(record.result.observedWindow, record.cohort);
         uniqueIds(record.result.observations.map((item) => item.reference), 'Measurement observations');
         record.result.observations.forEach((item) => checkMetricValue(item.value, record.cohort.context.metric.valueType));
@@ -188,9 +208,11 @@ export function sourceRecordIdentityHash(value: unknown): string {
   return hashCanonicalJson({ algorithm: 'gas-source-identity-v1', identity });
 }
 
+/** Semantic cohort identity deliberately excludes wire-envelope metadata. */
 export function cohortIdentityHash(value: unknown): string {
   const cohort = parseContract('cohort', value);
-  return hashCanonicalJson({ algorithm: 'gas-cohort-identity-v1', cohort });
+  const semanticCohort = { id: cohort.id, revision: cohort.revision, context: cohort.context };
+  return hashCanonicalJson({ algorithm: 'gas-cohort-identity-v1', cohort: semanticCohort });
 }
 
 /** Equality is conservative: omitted dimensions are not wildcards. No scoring. */
