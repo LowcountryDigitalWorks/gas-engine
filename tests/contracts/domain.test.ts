@@ -422,7 +422,11 @@ test('resolved baseline and follow-up require stable cohorts, methodology, chron
       value.createdAt = '2026-01-01T23:59:59.999Z';
     },
     (value) => {
-      if (value.result.state === 'measured') value.result.observedWindow = { start: '2026-01-01T00:30:00.000Z', end: '2026-01-01T01:30:00.000Z' };
+      if (value.result.state === 'measured') {
+        value.dueWindow = { start: '2026-01-01T00:30:00.000Z', end: '2026-01-01T01:30:00.000Z' };
+        value.result.observedWindow = { start: '2026-01-01T00:30:00.000Z', end: '2026-01-01T01:30:00.000Z' };
+        value.createdAt = '2026-01-01T01:30:00.000Z';
+      }
     },
   ];
   for (const mutate of mutations) {
