@@ -3,7 +3,7 @@ name: Contracts
 on:
   pull_request:
   push:
-    branches: [main, release/0.3-tenant-safe-persistence, release/0.4-authenticated-ingestion]
+    branches: [main]
 
 permissions:
   contents: read
