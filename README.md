@@ -4,13 +4,13 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Release 0.3 local persistence candidate, based on accepted `main`.** Releases 0.1 and 0.2 are accepted and merged, so `main` carries the canonical evidence contracts. This candidate adds tenant-scoped SQLite persistence and adversarial synthetic isolation tests on top of them, and changes no accepted contract behavior. Repository governance is established and the candidate may not merge itself; independent review and release acceptance belong to the Product Orchestrator.
+**Current status: Release 0.4 authenticated bounded-ingestion candidate, based on accepted Release 0.3 `main`.** Releases 0.1–0.3 are accepted and merged. This candidate adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Repository governance is established and the candidate may not merge itself; independent review and release acceptance belong to Product ORCH1.
 
 The intended operating lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context; Release 0.3 stores validated evidence locally. There is no ingestion, provider networking, authentication, API, operator UI, external execution, or deployment.
+The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, and Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
 
 ## Initial proof and principles
 
@@ -41,11 +41,13 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract and persistence tests, and JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, and ingestion tests, and JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
-Read the [persistence guide](docs/persistence.md) for trusted test contexts, composite ownership, atomic batches, idempotency, and the limits of this local proof. There is no production authentication boundary or deployed D1 database.
+Read the [persistence guide](docs/persistence.md) for trusted contexts, composite ownership, bounded collection parts, idempotency, exact schema verification, and the limits of the local SQLite proof. Persistence itself still cannot mint tenant authority.
+
+Read the [ingestion guide](docs/ingestion.md) for the sole authenticated principal issuer seam, exact grants, one-part transport envelope, 49,152-byte HTTP proof bound, progress semantics, typed part conflicts, and response mapping. Release 0.4 is not a production identity system or deployed API.
 
 ## Documentation
 
@@ -55,6 +57,8 @@ Read the [persistence guide](docs/persistence.md) for trusted test contexts, com
 - [Canonical contracts and validation](docs/contracts.md)
 - [Tenant-safe local persistence](docs/persistence.md)
 - [Persistence boundary decision](docs/decisions/0002-tenant-safe-persistence-boundary.md)
+- [Authenticated bounded ingestion](docs/ingestion.md)
+- [Authenticated ingestion boundary decision](docs/decisions/0003-authenticated-ingestion-boundary.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)

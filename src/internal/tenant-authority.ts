@@ -7,8 +7,8 @@ const trustedContexts = new WeakMap<TenantContext, string>();
 
 // Package-internal authority seam. Nothing on the production persistence surface
 // may import or re-export this issuer: storage trusts a context, it cannot mint one.
-// A later authenticated boundary owns the only production caller; TEST setup uses
-// tests/support/tenant-authority.ts. This is not authentication.
+// The trusted authenticated-principal boundary is the sole production caller; TEST
+// setup uses tests/support/tenant-authority.ts. This is not an identity provider.
 export function issueTenantContext(tenantId: string): TenantContext {
   const id = identifier.parse(tenantId);
   const context = Object.freeze({}) as TenantContext;
