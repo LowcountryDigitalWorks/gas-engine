@@ -10,6 +10,7 @@ import { createTestTenantContext } from '../support/tenant-authority.js';
 
 const issuerModule = 'src/internal/tenant-authority.ts';
 const issuerSeam = 'src/persistence/tenant-context.ts';
+const authenticatedIssuer = 'src/authentication/principal.ts';
 
 function productionFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -18,18 +19,21 @@ function productionFiles(directory: string): string[] {
   });
 }
 
-test('only the internal authority module can issue tenant authority; no production module re-exports it', () => {
+test('tenant authority issuance is limited to the internal module and authenticated principal seam', () => {
   const files = productionFiles('src').map((path) => [path.replaceAll('\\', '/'), readFileSync(path, 'utf8')] as const);
   assert.ok(files.some(([path]) => path === issuerModule), 'The internal authority module must exist');
+  assert.ok(files.some(([path]) => path === authenticatedIssuer), 'The authenticated principal seam must exist');
   for (const [path, content] of files) {
-    if (path !== issuerModule) {
+    if (path !== issuerModule && path !== authenticatedIssuer) {
       assert.doesNotMatch(content, /issueTenantContext/, `${path}: production code cannot mint tenant authority`);
-      assert.doesNotMatch(content, /createTrustedTestTenantContext|createTestTenantContext/, `${path}: test authority must not live in production code`);
     }
-    if (path !== issuerModule && path !== issuerSeam) {
-      assert.doesNotMatch(content, /internal[\\/]tenant-authority/, `${path}: only the storage authority seam may import the issuer`);
+    assert.doesNotMatch(content, /createTrustedTestTenantContext|createTestTenantContext/, `${path}: test authority must not live in production code`);
+    if (path !== issuerModule && path !== issuerSeam && path !== authenticatedIssuer) {
+      assert.doesNotMatch(content, /internal[\\/]tenant-authority/, `${path}: only the storage validation seam and authenticated principal seam may import internal tenant authority`);
     }
   }
+  const principalSource = readFileSync(authenticatedIssuer, 'utf8');
+  assert.match(principalSource, /issueTenantContext/);
 });
 
 test('the production persistence surface exposes validation only and cannot mint an accepted context', () => {

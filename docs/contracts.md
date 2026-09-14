@@ -1,6 +1,6 @@
 # Canonical contracts — Release 0.2
 
-This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. The separate [Release 0.3 persistence boundary](persistence.md) consumes these unchanged contracts and supplies actual adversarial isolation tests. There is no provider access, ingestion, server, authentication, priority engine, execution adapter, or deployment.
+This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. [Release 0.3 persistence](persistence.md) and the [Release 0.4 authenticated bounded ingestion candidate](ingestion.md) consume these unchanged contracts. There is no provider access, network server, production identity provider, priority engine, execution adapter, or deployment. Transport route version `v1` does not change canonical `schemaVersion: "1.0"`.
 
 ## Entry points and contract inventory
 
@@ -83,11 +83,11 @@ Individual wire fields are more narrowly bounded than the generic hash helper. T
 
 [fixtures/synthetic/contracts.json](../fixtures/synthetic/contracts.json) contains an explicit synthetic marker and 28 named examples, covering all 11 registry schemas. Only `tenant-alpha`/`tenant-beta` and fictitious sites/providers are used. Source record IDs intentionally collide across tenants; source schema `7.3` remains distinct from contract `1.0`. No customer or live provider records are included.
 
-Contract tests use `node:test` and `node:assert`, local fixtures, generated JSON Schema artifacts, and deterministic built-ins. They require no internet, provider services, accounts, or credentials. Installation and advisory inspection are separate network-enabled development steps. These tests exercise the public parsing/hashing/comparison seams plus schema-derived invariant-coverage drift; the separate [persistence suite](persistence.md) tests actual scoped SQLite behavior. Neither suite implements authentication.
+Contract tests use `node:test` and `node:assert`, local fixtures, generated JSON Schema artifacts, and deterministic built-ins. They require no internet, provider services, accounts, or credentials. Installation and advisory inspection are separate network-enabled development steps. These tests exercise the public parsing/hashing/comparison seams plus schema-derived invariant-coverage drift; the separate [persistence suite](persistence.md) tests actual scoped SQLite behavior. The Release 0.4 ingestion suite separately tests the synthetic authenticated intake boundary; neither the contract suite nor persistence itself mints production authentication authority.
 
 ## Dependency and tool choices
 
-The existing public [Website Quality Toolkit](https://github.com/LowcountryDigitalWorks/website-quality-toolkit) uses npm with a committed lockfile, ESM, Node 24, and Node's test runner. This repository follows those conventions with a small local configuration: Node 24.19.0, npm 11.17.0, strict TypeScript 7.0.2, and no application framework. Release 0.3 uses built-in SQLite with no dependency additions.
+The existing public [Website Quality Toolkit](https://github.com/LowcountryDigitalWorks/website-quality-toolkit) uses npm with a committed lockfile, ESM, Node 24, and Node's test runner. This repository follows those conventions with a small local configuration: Node 24.19.0, npm 11.17.0, strict TypeScript 7.0.2, and no application framework. Release 0.3 uses built-in SQLite; Release 0.4 adds no dependency.
 
 | Dependency | Purpose | Upstream license |
 | --- | --- | --- |

@@ -3,7 +3,7 @@ name: Contracts
 on:
   pull_request:
   push:
-    branches: [main, release/0.3-tenant-safe-persistence]
+    branches: [main, release/0.3-tenant-safe-persistence, release/0.4-authenticated-ingestion]
 
 permissions:
   contents: read
@@ -28,5 +28,9 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Typecheck, build, test, and check schema drift
         run: npm run check
-      - name: Verify tracked files were not rewritten
-        run: git diff --exit-code
+      - name: Audit locked npm dependencies
+        run: npm audit
+      - name: Verify patch whitespace and tracked files
+        run: |
+          git diff --check
+          git diff --exit-code

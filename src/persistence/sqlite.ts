@@ -4,6 +4,7 @@ import { identifier, scope, shortText } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { parseContract, sourceRecordIdentityHash } from '../domain/validate.js';
 import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
+import { IdempotencyConflictError, PartSequenceConflictError } from './errors.js';
 import { migrateLocalDatabase, STORAGE_BOUNDS } from './migrations.js';
 import type {
   CollectionBatch, CollectionProgress, Connection, Evidence, EvidenceRepository,
@@ -185,18 +186,17 @@ export class LocalEvidenceRepository implements EvidenceRepository {
         AND provider_id = ? AND connection_id = ? AND idempotency_key = ?`)
         .get(tenant, siteId, siteScopeRevisionId, collection.providerId, connection, batch.idempotencyKey);
       if (prior) {
-        invariant(same(decode('collection', prior), collection) && prior['part_count'] === batch.parts,
-          'Idempotency conflict: request differs');
+        if (!same(decode('collection', prior), collection) || prior['part_count'] !== batch.parts) throw new IdempotencyConflictError();
         const replayed = this.#db.prepare('SELECT part_hash FROM collection_parts WHERE tenant_id = ? AND collection_id = ? AND part_index = ?')
           .get(tenant, collection.id, batch.part);
         if (replayed) {
-          invariant(replayed['part_hash'] === partHash, 'Idempotency conflict: request differs');
+          if (replayed['part_hash'] !== partHash) throw new IdempotencyConflictError();
           return { collectionId: collection.id, replayed: true, complete: this.#progress(tenant, collection.id).complete };
         }
-        invariant(this.#db.prepare('SELECT 1 AS present FROM collection_parts WHERE tenant_id = ? AND collection_id = ? AND part_index = ?')
-          .get(tenant, collection.id, batch.part - 1) !== undefined, 'Collection parts must be persisted in order without gaps');
+        if (this.#db.prepare('SELECT 1 AS present FROM collection_parts WHERE tenant_id = ? AND collection_id = ? AND part_index = ?')
+          .get(tenant, collection.id, batch.part - 1) === undefined) throw new PartSequenceConflictError();
       } else {
-        invariant(batch.part === 1, 'A collection must be opened by its first part');
+        if (batch.part !== 1) throw new PartSequenceConflictError('A collection must be opened by its first part');
         this.#db.prepare(`INSERT INTO collections (tenant_id, id, site_id, scope_revision_id, connection_id, provider_id,
           idempotency_key, part_count, received_count, contract_version, payload, payload_hash)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
