@@ -1,6 +1,6 @@
 # Architecture baseline
 
-Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md), now accepted on `main`, implement local wire validation, cross-field checks, and deterministic identity helpers. The [Release 0.3 candidate](persistence.md) adds tenant-safe local persistence for seven ingestion-foundation record groups, with embedded provenance, and remains unmerged. Ingestion, authentication, adapters, and operator interfaces require subsequent bounded releases.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local storage for seven ingestion-foundation record groups with embedded provenance. The current [Release 0.4 candidate](ingestion.md) adds one authenticated, bounded, write-only in-process ingestion boundary. Provider adapters, operator interfaces, external execution, and deployment require subsequent bounded releases.
 
 ## Objectives and operating model
 
@@ -10,7 +10,7 @@ The intended lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-An observation does not establish a conclusion, and approval does not erase the need for separate execution authority. Release 0.1 implements none of this lifecycle.
+An observation does not establish a conclusion, and approval does not erase the need for separate execution authority. Releases through 0.4 implement only contracts, local persistence, and authenticated bounded intake; correlation, prioritization, review, action, measurement, outcome automation, and operator workflow remain future work.
 
 ## Ownership and source-of-truth boundaries
 
@@ -66,34 +66,38 @@ Evidence should ultimately retain enough provenance to identify:
 - normalization/transformation version;
 - retention/availability state.
 
-Preserve historical interpretation and transformation context so a provider or normalization change is distinguishable from a site change. Retention constraints may prevent keeping raw payloads indefinitely; preserve permitted references and an explicit availability state rather than imply the evidence is still retrievable. Release 0.1 defines principles, not final field names, schemas, storage formats, or retention durations.
+Preserve historical interpretation and transformation context so a provider or normalization change is distinguishable from a site change. Retention constraints may prevent keeping raw payloads indefinitely; preserve permitted references and an explicit availability state rather than imply the evidence is still retrievable. Release 0.2 establishes the canonical fields currently used by persistence/ingestion; retention policy and provider adapters remain future work.
 
 ## Providers and adapters
 
 Separate provider-specific reading and transformation from the LDW evidence core. Initially adapt WQT and read-only ZeroRank evidence; preserve provider-specific provenance and avoid coupling core decisions to a single vendor's score or payload structure. Provider-health concepts should distinguish collection failure, incomplete coverage, freshness, and schema/adapter compatibility from actual site observations.
 
-Sensor/read adapters and write/action adapters are separate architectural responsibilities. A sensor's read credential or capability never implies write authority. Recommendation acceptance does not automatically authorize a production change. Future external actions must use separately approved execution/governance mechanisms; Release 0.1 includes no action adapter implementation.
+Sensor/read adapters and write/action adapters are separate architectural responsibilities. A sensor's read credential or capability never implies write authority. Recommendation acceptance does not automatically authorize a production change. Future external actions must use separately approved execution/governance mechanisms. Release 0.4 implements no provider adapter or action adapter.
 
 ## Tenant security invariant
 
-**Tenant identity is an authorization boundary. A globally unique object ID is never by itself authorization.** The Release 0.3 repository requires trusted tenant context; future authenticated application interfaces must preserve it. A tenant value supplied in untrusted evidence cannot establish that context.
+**Tenant identity is an authorization boundary. A globally unique object ID is never by itself authorization. Untrusted request data never creates authority.**
 
-The bounded proof uses LDW-owned and synthetic evidence only, but isolation must be designed before customer use could ever be considered. Release 0.3 tests every implemented persistence surface with an adversarial synthetic second tenant and supplies a local schema with composite ownership constraints. Correlation, approval, export, and remeasurement need isolation tests when implemented. There is no production authentication/authorization implementation; the trusted test factory is not an authentication mechanism.
+Release 0.3 persistence requires a trusted opaque `TenantContext` and structurally scopes every implemented owned operation. Persistence can validate but cannot mint authority. Release 0.4 intentionally makes `src/authentication/principal.ts` the sole additional production caller of the package-internal tenant issuer. An injected authenticator verifies an opaque credential outside the evidence body and may return a registered immutable principal with exact tenant/site/site-scope/provider/provider-connection grants. Plain/cloned/cast/proxied principal-shaped data and evidence tenant IDs do not exist in the private authority registry and therefore cannot authorize anything.
 
-All source content is untrusted input. Evidence must not confer permissions or issue executable instructions. See the [security posture](../SECURITY.md).
+The request body is validated as one bounded collection part before exact-grant authorization and persistence. Authorization never uses raw request strings. After a successful persist, the application queries derived repository progress; response `complete` reflects stored parts/sources, not a canonical completeness assertion alone. Each part is atomic; multipart collection assembly is not one transaction. Observations remain restricted to sources in the same part.
+
+The bounded proof uses LDW-owned and synthetic evidence only. There is no production identity provider, password/JWT/OAuth/session/API-key store, provider networking, customer deployment, or network listener. See the [security posture](../SECURITY.md) and [ingestion guide](ingestion.md).
 
 ## Initial vertical slice and future operator workflow
 
 - Tenant: **Lowcountry Digital Works**.
 - LDW-controlled public site: [https://lowcountrydigitalworks.com](https://lowcountrydigitalworks.com).
 - Sources: WQT and read-only ZeroRank evidence.
-- Second tenant: clearly synthetic, solely for testing/fixtures in later authorized releases.
+- Second tenant: clearly synthetic, solely for testing/fixtures in authorized releases.
 
-The future proof loop is:
+The proof loop is:
 
 > INGEST → NORMALIZE → STORE → DIFF → PRIORITIZE → RECOMMEND → HUMAN REVIEW → DISPLAY
 
-A compact future LDW operator experience should let an operator inspect source health, provenance, missing data, historical differences, and deterministic priority rationale; review a recommendation and record a decision; then compare subsequent measurements and report outcomes. Accepted recommendations still require separate authority for external execution. This workflow is a design target and does not currently exist.
+Release 0.4 proves only the authenticated INGEST boundary into already-validated normalized/store structures. Provider adapters and the downstream DIFF/PRIORITIZE/RECOMMEND/REVIEW/DISPLAY stages remain unimplemented.
+
+A compact future LDW operator experience should let an operator inspect source health, provenance, missing data, historical differences, and deterministic priority rationale; review a recommendation and record a decision; then compare subsequent measurements and report outcomes. Accepted recommendations still require separate authority for external execution.
 
 ## Build, adapt, reuse, and defer
 
@@ -101,15 +105,15 @@ A compact future LDW operator experience should let an operator inspect source h
 | --- | --- |
 | Build | LDW-specific evidence/provenance model, tenant-safe application boundaries, correlation, deterministic prioritization, recommendation lifecycle, measurement/outcome lifecycle. |
 | Adapt | WQT evidence and ZeroRank evidence through replaceable adapters. |
-| Reuse where useful | Existing WQT sensors, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. No dependency is selected in Release 0.1. |
-| Defer until separately justified/authorized | GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
+| Reuse where useful | Existing WQT sensors, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
+| Defer until separately justified/authorized | Production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
 | Do not build | Another generic crawler, browser/scraper farm, generic SEO suite, ZeroRank clone, CRM, workflow engine, or universal proprietary G.A.S. score. Do not fork a generic SEO platform. |
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** are the current candidate architecture for a later bounded cloud proof. No resources, deployment configuration, runtime, database, or provider accounts are created by Release 0.1. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain the candidate architecture for a later bounded cloud proof. Releases through 0.4 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
-Keep the evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with a local SQLite adapter; a later cloud adapter must preserve its tenant/evidence semantics. Reuse useful existing capabilities rather than add components without demonstrated value.
+Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with a local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. A later cloud adapter must preserve tenant/evidence, bounded-part, idempotency, and progress semantics.
 
 **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative CPU/request/query/storage estimates, and rollback/decommission planning assessed before approval. Paid infrastructure, overages, and billing changes require separate authority.
 
@@ -117,4 +121,4 @@ Keep the evidence concepts and provider boundaries portable. Release 0.3 defines
 
 Internal automation does not prove commercial demand. The audit-first/service-first business model continues independently. This is internal managed-service enabling infrastructure, not customer SaaS or a standalone commercial software product. No public price, SLA, ranking/citation/traffic/lead guarantee, or internal pricing hypothesis belongs in this repository.
 
-Publish only safe architecture in this release. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub; later fixtures must be clearly synthetic. There is no software license grant. See [authorization](authorization.md), the [ADR](decisions/0001-evidence-core.md), and the [roadmap](roadmap.md).
+Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. There is no software license grant. See [authorization](authorization.md), the [evidence-core ADR](decisions/0001-evidence-core.md), the [ingestion ADR](decisions/0003-authenticated-ingestion-boundary.md), and the [roadmap](roadmap.md).

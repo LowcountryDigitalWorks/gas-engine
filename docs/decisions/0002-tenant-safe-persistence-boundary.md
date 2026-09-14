@@ -1,6 +1,6 @@
 # 0002 — Explicit tenant ownership at the persistence boundary
 
-Status: proposed in the bounded Release 0.3 candidate on accepted `main`; pending independent acceptance. Builds on [0001](0001-evidence-core.md).
+Status: **Accepted in Release 0.3 and merged to `main`.** Builds on [0001](0001-evidence-core.md). Release 0.4 consumes this boundary without changing the SQLite schema or weakening its ownership/transaction semantics.
 
 ## Decision and reason
 
@@ -14,6 +14,6 @@ A collection is persisted as one or more bounded parts rather than a single unbo
 
 Composite constraints reject malformed ownership even if an application filter is omitted. Required contexts and strict filters prevent data fields from silently selecting tenant authority. Canonical records remain immutable; site-label mutation and collection deletion are explicit, separately scoped operations. A later D1 adapter must preserve these semantics and transaction guarantees; no D1 implementation or compatibility certification is claimed.
 
-Tenant authority can be validated by the production storage surface but only issued from a package-internal module, whose sole caller today is explicitly named test scaffolding. A later authenticated application boundary becomes its first production caller; this release does not authenticate callers. A database owner or hostile code inside the trusted process can bypass these controls. SQLite is a local proof, not a deployed customer isolation system.
+Tenant authority can be validated by the production storage surface but only issued from a package-internal module. Release 0.4 intentionally makes the authenticated principal boundary the sole production caller of that issuer; tests still mint synthetic contexts only through explicit test scaffolding. Persistence itself cannot mint authority, and a database owner or hostile code inside the trusted process can bypass these controls. SQLite is a local proof, not a deployed customer isolation system.
 
-Automatic ORM filters and globally unique IDs were insufficient alternatives because neither expresses relational tenant ownership. A generic SQL abstraction was unnecessary for the eight-table proof. See the [persistence guide](../persistence.md) for implementation, tests, limits, and deferred scope.
+Automatic ORM filters and globally unique IDs were insufficient alternatives because neither expresses relational tenant ownership. A generic SQL abstraction was unnecessary for the eight-table proof. See the [persistence guide](../persistence.md) for implementation, tests, limits, and the [ingestion guide](../ingestion.md) for the authenticated application boundary that now consumes it.
