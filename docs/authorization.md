@@ -6,11 +6,13 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.3 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.4 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
-The bounded Release 0.4 dispatch permits **authenticated bounded ingestion only**. The implementation may add an injected opaque-credential authenticator, trusted immutable principal issuance with exact grants, one application ingestion service, one in-process Web `POST /v1/evidence/collections` handler, typed idempotency/part-sequence conflicts, and synthetic adversarial tests. It must preserve accepted Release 0.3 tenant authority and persistence behavior, query persisted collection progress before reporting completion, remain on `release/0.4-authenticated-ingestion`, and keep PR #4 draft/open/unmerged. Product ORCH1 owns independent review and release acceptance. Release 0.5 is not authorized by this workstream.
+Accepted Release 0.4 proves **authenticated bounded ingestion only**: an injected opaque-credential authenticator, trusted immutable principal issuance with exact grants, one application ingestion service, one in-process Web `POST /v1/evidence/collections` handler, typed idempotency/part-sequence conflicts, and synthetic adversarial tests. It preserves accepted Release 0.3 tenant authority and persistence behavior and queries persisted collection progress before reporting completion.
 
-Release 0.4 does **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, provider/network access, HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. The injected authenticator is an architectural seam; synthetic fixtures are test-only. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This dispatch does not authorize account, security-setting, or ruleset changes.
+Release 0.5 is the next proposed roadmap step and is not automatically authorized by this document. Product ORCH1 must issue a bounded dispatch from live `main` before implementation begins. The roadmap currently proposes a WQT adapter that reuses existing Website Quality Toolkit evidence rather than rebuilding its crawler, but provider-access scope, exact evidence inputs, fixture strategy, and adapter boundary must be explicitly bounded in that dispatch.
+
+Release 0.4 does **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, provider/network access, HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. The injected authenticator is an architectural seam; synthetic fixtures are test-only. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
 
 ## Fixed proof limits
 
@@ -25,7 +27,7 @@ Release 0.4 does **not** authorize a production identity provider, password/JWT/
 
 ## Authority and input boundary
 
-Untrusted request data never creates authority. Accepted Release 0.3 keeps tenant-context issuance package-internal and persistence exposes only validation. Release 0.4 may intentionally make `src/authentication/principal.ts` the sole additional production caller of the tenant-context issuer after trusted credential verification. Transport, application service, evidence fields, IDs, hashes, and headers other than the authenticated credential may not issue contexts or grants.
+Untrusted request data never creates authority. Accepted Release 0.3 keeps tenant-context issuance package-internal and persistence exposes only validation. Accepted Release 0.4 intentionally makes `src/authentication/principal.ts` the sole additional production caller of the tenant-context issuer after trusted credential verification. Transport, application service, evidence fields, IDs, hashes, and headers other than the authenticated credential may not issue contexts or grants.
 
 Exact grants bind tenant, site, site-scope revision, provider, and provider connection. The request body contains one bounded persistence part: `collection`, `part`, `parts`, `sources`, and `observations`; the whole-collection idempotency key remains a header. Canonical `receivedCount` keeps its whole-collection meaning. Each part is atomic, multipart ingestion is not one transaction, and observations remain same-part-source only. `complete` is derived from stored progress after persistence.
 
@@ -45,4 +47,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, local SQLite is unsuitable, or completion requires provider access, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.
+Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, local SQLite is unsuitable, or completion requires provider access beyond an explicit bounded adapter proof, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. The [roadmap](roadmap.md) may be simplified or stopped when evidence shows duplication or poor value.

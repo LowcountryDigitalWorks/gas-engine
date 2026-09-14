@@ -1,6 +1,6 @@
 # Canonical contracts — Release 0.2
 
-This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. [Release 0.3 persistence](persistence.md) and the [Release 0.4 authenticated bounded ingestion candidate](ingestion.md) consume these unchanged contracts. There is no provider access, network server, production identity provider, priority engine, execution adapter, or deployment. Transport route version `v1` does not change canonical `schemaVersion: "1.0"`.
+This local library implements the [accepted evidence-core architecture](decisions/0001-evidence-core.md). It validates records and provides bounded deterministic identity/comparison helpers. [Release 0.3 persistence](persistence.md) and [accepted Release 0.4 authenticated bounded ingestion](ingestion.md) consume these unchanged contracts. There is no provider access, network server, production identity provider, priority engine, execution adapter, or deployment. Transport route version `v1` does not change canonical `schemaVersion: "1.0"`.
 
 ## Entry points and contract inventory
 

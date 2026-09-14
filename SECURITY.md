@@ -1,6 +1,6 @@
 # Security posture
 
-Releases 0.1–0.3 are accepted on `main`. Release 0.4 is a draft authenticated bounded-ingestion candidate. It adds one in-process write-only Request/Response path and a trusted authenticated-principal seam; there is still no deployed service, provider networking, production identity provider, listener, customer evidence, or cloud deployment.
+Releases 0.1–0.4 are accepted on `main`. Release 0.4 adds one in-process write-only Request/Response path and a trusted authenticated-principal seam; there is still no deployed service, provider networking, production identity provider, listener, customer evidence, or cloud deployment.
 
 Every owned repository operation still requires an opaque context recognized by the package-internal tenant-authority registry. The production persistence surface exposes only the `TenantContext` type and `requireTenantContext`; persistence cannot mint authority. Release 0.4 deliberately permits exactly one additional production caller of `issueTenantContext`: `src/authentication/principal.ts`, where a trusted authenticator adapter may register a verified principal and exact tenant/site/site-scope/provider/provider-connection grants. Request/transport/service code cannot call the issuer. Record IDs, scope fields, valid evidence, headers other than the authenticated credential, hashes, clones, casts, and proxies cannot create authority.
 
