@@ -13,6 +13,7 @@ export const DOMAIN_INVARIANT_COVERAGE = {
     'createdAt', 'updatedAt', 'requestedAt', 'executedAt', 'cancelledAt',
     'verifiedAt', 'checkedAt', 'expiresAt',
   ],
+  timeWindowProperties: ['sourceTime', 'dueWindow', 'observedWindow'],
   orderedTimestampPairs: [
     ['start', 'end'], ['createdAt', 'updatedAt'], ['startedAt', 'endedAt'],
     ['endedAt', 'collectedAt'], ['collectedAt', 'receivedAt'], ['requestedAt', 'executedAt'],

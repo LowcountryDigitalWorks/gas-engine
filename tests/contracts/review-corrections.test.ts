@@ -118,6 +118,16 @@ function isScopeSchema(value: unknown): boolean {
   return ['tenantId', 'siteId', 'siteScopeRevisionId'].every((name) => name in properties && required.has(name));
 }
 
+function isTimeWindowSchema(value: unknown): boolean {
+  if (!isObject(value) || !isObject(value['properties']) || !Array.isArray(value['required'])) return false;
+  const properties = value['properties'];
+  const required = new Set(value['required'].filter((item): item is string => typeof item === 'string'));
+  return ['start', 'end'].every((name) => {
+    const field = properties[name];
+    return required.has(name) && isObject(field) && field['format'] === 'date-time';
+  });
+}
+
 function hasConnectedChronology(fields: readonly string[]): boolean {
   if (fields.length < 2) return true;
   const fieldSet = new Set(fields);
@@ -140,11 +150,12 @@ function hasConnectedChronology(fields: readonly string[]): boolean {
   return visited.size === fieldSet.size;
 }
 
-test('generated schemas prove timestamp chronology and embedded-scope invariant coverage', () => {
+test('generated schemas prove timestamp, time-window, and embedded-scope invariant coverage', () => {
   const schemaFiles = readdirSync('schemas').filter((name) => name.endsWith('.schema.json')).sort();
   assert.equal(schemaFiles.length, 11);
 
   const timestampNames = new Set<string>();
+  const timeWindowPropertyNames = new Set<string>();
   const scopePropertyNames = new Set<string>();
   const multiTimestampObjects: string[][] = [];
 
@@ -158,6 +169,7 @@ test('generated schemas prove timestamp chronology and embedded-scope invariant 
           timestampNames.add(name);
           directTimestamps.push(name);
         }
+        if (isTimeWindowSchema(child)) timeWindowPropertyNames.add(name);
         if (isScopeSchema(child)) scopePropertyNames.add(name);
         visit(child);
       }
@@ -180,6 +192,11 @@ test('generated schemas prove timestamp chronology and embedded-scope invariant 
     [...timestampNames].sort(),
     [...DOMAIN_INVARIANT_COVERAGE.timestampProperties].sort(),
     'A new or renamed date-time field must be deliberately added to domain invariant coverage.',
+  );
+  assert.deepEqual(
+    [...timeWindowPropertyNames].sort(),
+    [...DOMAIN_INVARIANT_COVERAGE.timeWindowProperties].sort(),
+    'A new or renamed start/end time-window property must be deliberately reconciled with domain invariants.',
   );
   assert.deepEqual(
     [...scopePropertyNames].sort(),
