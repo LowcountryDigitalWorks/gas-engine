@@ -5,14 +5,15 @@ import type { Contract } from '../../src/contracts/wire.js';
 import { sourceRecordIdentityHash } from '../../src/domain/validate.js';
 import type { CollectionBatch, ObservationFilter, Site } from '../../src/persistence/repository.js';
 import { LocalEvidenceRepository } from '../../src/persistence/sqlite.js';
-import { createTrustedTestTenantContext, type TenantContext } from '../../src/persistence/tenant-context.js';
+import type { TenantContext } from '../../src/persistence/tenant-context.js';
+import { createTestTenantContext } from '../support/tenant-authority.js';
 import { alpha, beta, batch, repository, sourceContext, temporaryDatabase } from './helpers.js';
 
 test('fresh SQLite persists same-tenant metadata and validated evidence with an explicit lifecycle', async (t) => {
   const repo = await repository(t);
   const value = batch();
   assert.deepEqual(await repo.getTenant(alpha), { id: 'tenant-alpha' });
-  assert.deepEqual(await repo.persistCollection(alpha, value), { collectionId: value.collection.id, replayed: false });
+  assert.deepEqual(await repo.persistCollection(alpha, value), { collectionId: value.collection.id, replayed: false, complete: true });
   assert.deepEqual(await repo.getCollection(alpha, value.collection.id), value.collection);
   assert.deepEqual(await repo.getSource(alpha, value.sources[0]!.id), { ...value.sources[0], collectionId: value.collection.id });
   assert.deepEqual(await repo.getObservation(alpha, value.observations[0]!.record.id), value.observations[0]!.record);
@@ -38,6 +39,7 @@ test('every tenant-owned public method rejects absent, forged, cloned and proxie
     getSource: [value.sources[0]!.id], findSource: [sourceContext(value), value.collection.id, value.sources[0]!.record.identity.sourceRecordId],
     getObservation: [value.observations[0]!.record.id], listObservations: [{}], getObservations: [[value.observations[0]!.record.id]],
     getObservationEvidence: [value.observations[0]!.record.id], deleteCollection: [value.collection.id],
+    getCollectionProgress: [value.collection.id],
   };
   assert.deepEqual(Object.getOwnPropertyNames(LocalEvidenceRepository.prototype).filter((key) => !['constructor', 'close'].includes(key)).sort(), Object.keys(calls).sort());
   const methods = repo as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>;
@@ -46,8 +48,8 @@ test('every tenant-owned public method rejects absent, forged, cloned and proxie
       await assert.rejects(methods[method]!.call(repo, forged, ...args), /trusted TenantContext/, method);
     }
   }
-  assert.throws(() => createTrustedTestTenantContext('../tenant-alpha'));
-  assert.equal(await repo.getTenant(createTrustedTestTenantContext('tenant-absent')), null);
+  assert.throws(() => createTestTenantContext('../tenant-alpha'));
+  assert.equal(await repo.getTenant(createTestTenantContext('tenant-absent')), null);
 });
 
 test('Beta cannot list, read known internal IDs, filter, bulk-read or join Alpha-only evidence', async (t) => {
@@ -109,7 +111,7 @@ test('identical internal/provider/external/idempotency IDs persist independently
   const a = batch();
   const b = batch('beta');
   await repo.persistCollection(alpha, a);
-  assert.deepEqual(await repo.persistCollection(beta, b), { collectionId: b.collection.id, replayed: false });
+  assert.deepEqual(await repo.persistCollection(beta, b), { collectionId: b.collection.id, replayed: false, complete: true });
   const external = a.sources[0]!.record.identity.sourceRecordId;
   assert.equal(external, b.sources[0]!.record.identity.sourceRecordId);
   assert.notEqual(sourceRecordIdentityHash(a.sources[0]!.record.identity), sourceRecordIdentityHash(b.sources[0]!.record.identity));
@@ -279,19 +281,18 @@ test('bounded lists fail explicitly above 100 own records without counting or ex
 });
 
 test('file-backed evidence and idempotency survive closing/reopening; same file supports independent repository instances', async (t) => {
-  const { path, cleanup } = temporaryDatabase();
-  const repo = await repository(t, path);
-  t.after(cleanup);
+  const database = temporaryDatabase(t);
+  const repo = await repository(t, database);
   const value = batch();
   await repo.persistCollection(alpha, value);
-  const second = new LocalEvidenceRepository(path);
+  const second = database.track(new LocalEvidenceRepository(database.path));
   try {
     assert.deepEqual(await second.getObservation(alpha, value.observations[0]!.record.id), value.observations[0]!.record);
     assert.equal((await second.persistCollection(alpha, value)).replayed, true);
   } finally { second.close(); }
   // Adapter close is deliberately idempotent for explicit lifecycle/cleanup.
   repo.close();
-  const reopened = new LocalEvidenceRepository(path);
+  const reopened = database.track(new LocalEvidenceRepository(database.path));
   try {
     assert.deepEqual(await reopened.getObservationEvidence(alpha, value.observations[0]!.record.id), {
       collection: value.collection, source: { ...value.sources[0]!, collectionId: value.collection.id }, observation: value.observations[0]!.record,
@@ -301,12 +302,11 @@ test('file-backed evidence and idempotency survive closing/reopening; same file 
 });
 
 test('read paths detect altered canonical evidence and unsupported stored versions', async (t) => {
-  const { path, cleanup } = temporaryDatabase();
-  const repo = await repository(t, path);
-  t.after(cleanup);
+  const database = temporaryDatabase(t);
+  const repo = await repository(t, database);
   const value = batch();
   await repo.persistCollection(alpha, value);
-  const db = new DatabaseSync(path);
+  const db = database.track(new DatabaseSync(database.path));
   try {
     const changed: Contract<'observation'> = structuredClone(value.observations[0]!.record);
     changed.value = { state: 'observed', value: { type: 'number', value: 9 } };
