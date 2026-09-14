@@ -4,7 +4,7 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Release 0.4 authenticated bounded-ingestion candidate, based on accepted Release 0.3 `main`.** Releases 0.1–0.3 are accepted and merged. This candidate adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Repository governance is established and the candidate may not merge itself; independent review and release acceptance belong to Product ORCH1.
+**Current status: Releases 0.1–0.4 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 is the next proposed bounded proof and remains unimplemented until separately dispatched by Product ORCH1.
 
 The intended operating lifecycle is:
 
@@ -47,7 +47,7 @@ Read the [contract guide](docs/contracts.md) for wire/application validation dif
 
 Read the [persistence guide](docs/persistence.md) for trusted contexts, composite ownership, bounded collection parts, idempotency, exact schema verification, and the limits of the local SQLite proof. Persistence itself still cannot mint tenant authority.
 
-Read the [ingestion guide](docs/ingestion.md) for the sole authenticated principal issuer seam, exact grants, one-part transport envelope, 49,152-byte HTTP proof bound, progress semantics, typed part conflicts, and response mapping. Release 0.4 is not a production identity system or deployed API.
+Read the [ingestion guide](docs/ingestion.md) for the sole authenticated principal issuer seam, exact grants, one-part transport envelope, 49,152-byte HTTP proof bound, progress semantics, typed part conflicts, and response mapping. Accepted Release 0.4 is not a production identity system or deployed API.
 
 ## Documentation
 
