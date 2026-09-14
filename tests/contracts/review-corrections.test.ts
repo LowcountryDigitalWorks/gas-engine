@@ -44,23 +44,24 @@ test('measurement due, observed, and creation timestamps obey the declared tempo
   const measured = fixture('measurement', 'measurementBaseline');
   assert.equal(measured.result.state, 'measured');
   if (measured.result.state !== 'measured') assert.fail('Expected measured fixture.');
+  const measuredResult = measured.result;
 
   assert.doesNotThrow(() => parseContract('measurement', {
     ...measured,
-    createdAt: measured.result.observedWindow.end,
+    createdAt: measuredResult.observedWindow.end,
   }));
 
   assert.throws(() => parseContract('measurement', {
     ...measured,
     result: {
-      ...measured.result,
+      ...measuredResult,
       observedWindow: { start: '2025-12-31T23:00:00.000Z', end: '2026-01-01T00:00:00.000Z' },
     },
   }), ContractInvariantError);
   assert.throws(() => parseContract('measurement', {
     ...measured,
     result: {
-      ...measured.result,
+      ...measuredResult,
       observedWindow: { start: '2026-01-01T01:00:00.000Z', end: '2026-01-01T02:00:00.000Z' },
     },
     createdAt: '2026-01-01T02:07:00.000Z',
