@@ -6,13 +6,13 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.4 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.5 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Accepted Release 0.4 proves **authenticated bounded ingestion only**: an injected opaque-credential authenticator, trusted immutable principal issuance with exact grants, one application ingestion service, one in-process Web `POST /v1/evidence/collections` handler, typed idempotency/part-sequence conflicts, and synthetic adversarial tests. It preserves accepted Release 0.3 tenant authority and persistence behavior and queries persisted collection progress before reporting completion.
 
-Release 0.5 is currently authorized only as the draft **WQT normalized-evidence adapter proof** defined by Issue #6. It may consume already-normalized WQT v1/minor1 bytes plus explicit trusted caller configuration and deterministically emit separate SiteOne/Lighthouse `CollectionBatch` streams. It may not execute SiteOne/Lighthouse, dispatch/download WQT Actions, fetch URLs, use provider credentials, import WQT source/package at runtime, modify WQT opportunistically, issue tenant authority, deploy, add recommendation/priority logic, or begin Release 0.6. See [WQT adapter guide](adapters/wqt.md) and [ADR 0004](decisions/0004-wqt-normalized-evidence-adapter.md).
+Accepted Release 0.5 proves the **WQT normalized-evidence adapter boundary** defined by Issue #6. It consumes already-normalized WQT v1/minor1 bytes plus explicit trusted caller configuration and deterministically emits separate SiteOne/Lighthouse `CollectionBatch` streams. It does not execute SiteOne/Lighthouse, dispatch/download WQT Actions, fetch URLs, use provider credentials, import WQT source/package at runtime, modify WQT opportunistically, issue tenant authority, deploy, add recommendation/priority logic, or begin Release 0.6. See [WQT adapter guide](adapters/wqt.md) and [ADR 0004](decisions/0004-wqt-normalized-evidence-adapter.md).
 
-Release 0.5 remains a candidate until Product ORCH1 independently reviews and accepts the exact final head. The development workstream may not mark the PR ready or merge it. Cursor/Claude independent review is a later Product ORCH1-controlled gate after the candidate is frozen.
+Release 0.6 / ZeroRank remains separately gated and is not authorized by acceptance of Release 0.5. No implementation workstream may infer authority for Release 0.6 from the roadmap alone.
 
 Releases through 0.5 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
 
@@ -51,4 +51,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, WQT's normalized contract materially changes, the accepted WQT artifact cannot support the mapping without a WQT-side change, or completion requires live provider access, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Release 0.6 / ZeroRank is not authorized by Release 0.5.
+Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, a provider's normalized contract materially changes, or completion requires live provider access, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Release 0.6 / ZeroRank is not authorized by Release 0.5.
