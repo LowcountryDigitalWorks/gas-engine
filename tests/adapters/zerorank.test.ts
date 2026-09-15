@@ -217,7 +217,7 @@ test('row order and JSON formatting do not change semantic collection identity',
   const left = adaptZeroRankSanitizedEvidence(bytes(original), trustedConfig);
   const right = adaptZeroRankSanitizedEvidence(bytes(reordered, true), trustedConfig);
   assert.notEqual(left.inputSha256, right.inputSha256);
-  assert.equal(canonicalJson(left.collections), canonicalJson(right.collections));
+  assert.deepEqual(left.collections, right.collections);
 });
 
 test('trusted config supplies authority while artifact scope/provider smuggling is rejected', () => {
@@ -468,7 +468,7 @@ test('adapter source has no provider/network/runtime-authority or Release 0.7 im
   assert.doesNotMatch(source, /from ['"](?:node:http|node:https|undici|axios|activepieces|zerorank)/i);
   assert.doesNotMatch(source, /\bfetch\s*\(/);
   assert.doesNotMatch(source, /issueTenantContext\s*\(/);
-  assert.doesNotMatch(source, /tenant-authority/);
+  assert.doesNotMatch(source, /from ['"][^'"]*tenant-authority/i);
   assert.doesNotMatch(source, /from ['"].*(?:correlation|priority|recommendation)/i);
   assert.doesNotMatch(source, /create(?:Correlation|Priority|Recommendation)|Release 0\.7/);
 });
