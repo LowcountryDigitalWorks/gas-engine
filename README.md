@@ -4,13 +4,13 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Releases 0.1–0.4 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 is the next proposed bounded proof and remains unimplemented until separately dispatched by Product ORCH1.
+**Current status: Releases 0.1–0.4 are accepted and merged on `main`; Release 0.5 is a draft candidate under independent review.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. The Release 0.5 candidate adds a pure/local adapter for already-normalized WQT v1/minor1 evidence; it does not execute scanners, access WQT/provider networks, issue tenant authority, or deploy anything.
 
 The intended operating lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, and Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
+The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, and the Release 0.5 candidate deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
 
 ## Initial proof and principles
 
@@ -41,13 +41,15 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, and ingestion tests, and JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, and adapter tests, and JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
 Read the [persistence guide](docs/persistence.md) for trusted contexts, composite ownership, bounded collection parts, idempotency, exact schema verification, and the limits of the local SQLite proof. Persistence itself still cannot mint tenant authority.
 
 Read the [ingestion guide](docs/ingestion.md) for the sole authenticated principal issuer seam, exact grants, one-part transport envelope, 49,152-byte HTTP proof bound, progress semantics, typed part conflicts, and response mapping. Accepted Release 0.4 is not a production identity system or deployed API.
+
+Read the [WQT adapter guide](docs/adapters/wqt.md) for the Release 0.5 candidate's exact supported WQT contract, trusted-config boundary, provider/source/observation mapping, timezone policy, deterministic identity/integrity, and byte-aware multipart packing. The adapter consumes normalized bytes only and has no WQT runtime/network dependency.
 
 ## Documentation
 
@@ -59,6 +61,8 @@ Read the [ingestion guide](docs/ingestion.md) for the sole authenticated princip
 - [Persistence boundary decision](docs/decisions/0002-tenant-safe-persistence-boundary.md)
 - [Authenticated bounded ingestion](docs/ingestion.md)
 - [Authenticated ingestion boundary decision](docs/decisions/0003-authenticated-ingestion-boundary.md)
+- [WQT normalized-evidence adapter](docs/adapters/wqt.md)
+- [WQT adapter decision](docs/decisions/0004-wqt-normalized-evidence-adapter.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
