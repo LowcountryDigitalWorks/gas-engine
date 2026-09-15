@@ -4,13 +4,13 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Releases 0.1–0.4 are accepted and merged on `main`; Release 0.5 is a draft candidate under independent review.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. The Release 0.5 candidate adds a pure/local adapter for already-normalized WQT v1/minor1 evidence; it does not execute scanners, access WQT/provider networks, issue tenant authority, or deploy anything.
+**Current status: Releases 0.1–0.5 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence; it does not execute scanners, access WQT/provider networks, issue tenant authority, or deploy anything.
 
 The intended operating lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, and the Release 0.5 candidate deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
+The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, and Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
 
 ## Initial proof and principles
 
@@ -49,7 +49,7 @@ Read the [persistence guide](docs/persistence.md) for trusted contexts, composit
 
 Read the [ingestion guide](docs/ingestion.md) for the sole authenticated principal issuer seam, exact grants, one-part transport envelope, 49,152-byte HTTP proof bound, progress semantics, typed part conflicts, and response mapping. Accepted Release 0.4 is not a production identity system or deployed API.
 
-Read the [WQT adapter guide](docs/adapters/wqt.md) for the Release 0.5 candidate's exact supported WQT contract, trusted-config boundary, provider/source/observation mapping, timezone policy, deterministic identity/integrity, and byte-aware multipart packing. The adapter consumes normalized bytes only and has no WQT runtime/network dependency.
+Read the [WQT adapter guide](docs/adapters/wqt.md) for accepted Release 0.5's exact supported WQT contract, trusted-config boundary, provider/source/observation mapping, timezone policy, deterministic identity/integrity, and byte-aware multipart packing. The adapter consumes normalized bytes only and has no WQT runtime/network dependency.
 
 ## Documentation
 

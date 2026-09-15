@@ -1,7 +1,8 @@
 # ADR 0004 — Adapt normalized WQT evidence; do not rebuild sensing
 
-- Status: Release 0.5 candidate
+- Status: Accepted — Release 0.5
 - Date: 2026-09-14
+- Accepted on `main`: `da68304acf2527fe01e2dc3aed4b5a888f5c3eb5`
 - Decision scope: bounded WQT normalized-evidence adapter proof
 
 ## Context

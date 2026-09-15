@@ -1,6 +1,6 @@
 # Architecture baseline
 
-Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local storage for seven ingestion-foundation record groups with embedded provenance. [Release 0.4 authenticated ingestion](ingestion.md) is also accepted on `main` and adds one authenticated, bounded, write-only in-process ingestion boundary. The Release 0.5 draft candidate adds one pure/local adapter for already-normalized WQT evidence; operator interfaces, external execution, ZeroRank integration, and deployment remain separately gated.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local storage for seven ingestion-foundation record groups with embedded provenance. [Release 0.4 authenticated ingestion](ingestion.md) is also accepted on `main` and adds one authenticated, bounded, write-only in-process ingestion boundary. [Release 0.5 WQT adaptation](adapters/wqt.md) is accepted on `main` and adds one pure/local adapter for already-normalized WQT evidence; operator interfaces, external execution, ZeroRank integration, and deployment remain separately gated.
 
 ## Objectives and operating model
 
@@ -10,7 +10,7 @@ The intended lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-An observation does not establish a conclusion, and approval does not erase the need for separate execution authority. Accepted Releases through 0.4 implement contracts, local persistence, and authenticated bounded intake. The Release 0.5 candidate adds deterministic WQT evidence adaptation only; correlation, prioritization, review, action, measurement, outcome automation, and operator workflow remain future work.
+An observation does not establish a conclusion, and approval does not erase the need for separate execution authority. Accepted Releases through 0.5 implement contracts, local persistence, authenticated bounded intake, and deterministic WQT evidence adaptation. Correlation, prioritization, review, action, measurement, outcome automation, and operator workflow remain future work.
 
 ## Ownership and source-of-truth boundaries
 
@@ -74,9 +74,9 @@ Separate provider-specific reading and transformation from the LDW evidence core
 
 Sensor/read adapters and write/action adapters are separate architectural responsibilities. A sensor's read credential or capability never implies write authority. Recommendation acceptance does not automatically authorize a production change. Future external actions must use separately approved execution/governance mechanisms.
 
-### Release 0.5 WQT import/export seam
+### Accepted Release 0.5 WQT import/export seam
 
-The Release 0.5 candidate deliberately **does not build a WQT scanner in G.A.S.** WQT remains responsible for SiteOne/Lighthouse execution and its normalized `ldw.website-quality.v1` artifact. G.A.S. accepts exact normalized UTF-8 bytes plus explicit trusted configuration and performs deterministic local mapping only.
+Release 0.5 deliberately **does not build a WQT scanner in G.A.S.** WQT remains responsible for SiteOne/Lighthouse execution and its normalized `ldw.website-quality.v1` artifact. G.A.S. accepts exact normalized UTF-8 bytes plus explicit trusted configuration and performs deterministic local mapping only.
 
 One WQT artifact is split into separate G.A.S. provider collections for `siteone` and `lighthouse`. Individual normalized scores/findings/audits become bounded source units; observations derived from a unit remain beside that source in the same persistence part. The adapter preserves source/tool version in integrity and cohort configuration, rejects duplicate source keys/contradictory flattened copies, and uses byte-aware packing against accepted persistence bounds. See [WQT adapter guide](adapters/wqt.md) and [ADR 0004](decisions/0004-wqt-normalized-evidence-adapter.md).
 
@@ -105,7 +105,7 @@ The proof loop is:
 
 > INGEST → NORMALIZE → STORE → DIFF → PRIORITIZE → RECOMMEND → HUMAN REVIEW → DISPLAY
 
-Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. The Release 0.5 candidate proves one deterministic provider NORMALIZE/adaptation seam from WQT's pre-normalized evidence into current G.A.S. contracts. DIFF/PRIORITIZE/RECOMMEND/REVIEW/DISPLAY remain unimplemented.
+Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Release 0.5 proves one deterministic provider NORMALIZE/adaptation seam from WQT's pre-normalized evidence into current G.A.S. contracts. DIFF/PRIORITIZE/RECOMMEND/REVIEW/DISPLAY remain unimplemented.
 
 A compact future LDW operator experience should let an operator inspect source health, provenance, missing data, historical differences, and deterministic priority rationale; review a recommendation and record a decision; then compare subsequent measurements and report outcomes. Accepted recommendations still require separate authority for external execution.
 
@@ -114,7 +114,7 @@ A compact future LDW operator experience should let an operator inspect source h
 | Direction | Scope |
 | --- | --- |
 | Build | LDW-specific evidence/provenance model, tenant-safe application boundaries, correlation, deterministic prioritization, recommendation lifecycle, measurement/outcome lifecycle. |
-| Adapt | WQT normalized evidence through the Release 0.5 local adapter; ZeroRank only in a separately authorized later release. |
+| Adapt | WQT normalized evidence through the accepted Release 0.5 local adapter; ZeroRank only in a separately authorized later release. |
 | Reuse where useful | Existing WQT sensors, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
 | Defer until separately justified/authorized | ZeroRank adapter (Release 0.6), production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
 | Do not build | Another generic crawler, browser/scraper farm, generic SEO suite, ZeroRank clone, CRM, workflow engine, or universal proprietary G.A.S. score. Do not fork a generic SEO platform. |

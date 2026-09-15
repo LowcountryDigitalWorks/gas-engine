@@ -1,6 +1,6 @@
 # Security posture
 
-Releases 0.1–0.4 are accepted on `main`; Release 0.5 is a draft candidate adding one pure/local adapter for already-normalized WQT evidence. Release 0.5 adds no deployed service, provider networking, production identity provider, listener, customer evidence, cloud deployment, credential handling, or scanner execution.
+Releases 0.1–0.5 are accepted on `main`. Release 0.5 adds one pure/local adapter for already-normalized WQT evidence. Release 0.5 adds no deployed service, provider networking, production identity provider, listener, customer evidence, cloud deployment, credential handling, or scanner execution.
 
 Every owned repository operation still requires an opaque context recognized by the package-internal tenant-authority registry. The production persistence surface exposes only the `TenantContext` type and `requireTenantContext`; persistence cannot mint authority. Release 0.4 deliberately permits exactly one additional production caller of `issueTenantContext`: `src/authentication/principal.ts`, where a trusted authenticator adapter may register a verified principal and exact tenant/site/site-scope/provider/provider-connection grants. Request/transport/service/provider-adapter code cannot call the issuer. Record IDs, scope fields, valid evidence, WQT site/target values, provider/source IDs, hashes, clones, casts, and proxies cannot create authority.
 
@@ -39,7 +39,7 @@ Evidence is always untrusted data. Instruction-like text may be persisted as tex
 - **Untrusted input:** provider payloads, retrieved page content, normalized WQT evidence, and other evidence remain inert input. Future display/adapter paths must preserve that property and provenance.
 - **Least privilege:** separate sensor/read adapters from write/action adapters and their credentials. Read access never grants write access. A recommendation, including one accepted by a human, does not automatically authorize a production change.
 - **Dependencies:** review necessity, maintenance, licenses, and advisories before adoption. Release 0.5 adds no dependency; Zod/TypeScript/Node types remain the existing locked set.
-- **Release controls:** `main` remains governed by PR, linear/squash history, review-thread resolution, and the required `contracts` check. Release 0.5 remains draft/unmerged until Product ORCH1 acceptance. Cloud deployment requires its own later gate.
+- **Release controls:** `main` remains governed by PR, linear/squash history, review-thread resolution, and the required `contracts` check. Release 0.5 is accepted; Release 0.6 and cloud deployment remain separately gated.
 
 ## Report a vulnerability privately
 
