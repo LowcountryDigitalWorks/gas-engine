@@ -27,6 +27,8 @@ const batchSchema = z.strictObject({
   sources: z.array(z.strictObject({ id: identifier, record: z.unknown() })).max(STORAGE_BOUNDS.sourcesPerPart),
   observations: z.array(z.strictObject({ sourceId: identifier, record: z.unknown() })).max(STORAGE_BOUNDS.observationsPerPart),
 });
+const GENERAL_OBSERVATION_LIST_LIMIT = 100;
+const COLLECTION_OBSERVATION_LIST_LIMIT = STORAGE_BOUNDS.parts * STORAGE_BOUNDS.observationsPerPart;
 
 function invariant(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -282,10 +284,14 @@ export class LocalEvidenceRepository implements EvidenceRepository {
     const tenant = requireTenantContext(context);
     canonicalJson(input);
     const filter = filterSchema.parse(input);
+    const limit = filter.collectionId === undefined ? GENERAL_OBSERVATION_LIST_LIMIT : COLLECTION_OBSERVATION_LIST_LIMIT;
     const rows = this.#db.prepare(`SELECT * FROM observations WHERE tenant_id = ?
-      AND (? IS NULL OR site_id = ?) AND (? IS NULL OR collection_id = ?) AND (? IS NULL OR provider_id = ?) ORDER BY id LIMIT 101`)
-      .all(tenant, filter.siteId ?? null, filter.siteId ?? null, filter.collectionId ?? null, filter.collectionId ?? null, filter.providerId ?? null, filter.providerId ?? null);
-    invariant(rows.length <= 100, 'List exceeds 100 observations; narrow the filters');
+      AND (? IS NULL OR site_id = ?) AND (? IS NULL OR collection_id = ?) AND (? IS NULL OR provider_id = ?) ORDER BY id LIMIT ?`)
+      .all(tenant, filter.siteId ?? null, filter.siteId ?? null, filter.collectionId ?? null, filter.collectionId ?? null,
+        filter.providerId ?? null, filter.providerId ?? null, limit + 1);
+    invariant(rows.length <= limit, filter.collectionId === undefined
+      ? 'List exceeds 100 observations; narrow the filters'
+      : 'Collection exceeds the accepted 2,048-observation bound');
     return rows.map((row) => decode('observation', row));
   }
   async getObservations(context: TenantContext, input: string[]): Promise<Contract<'observation'>[]> {
