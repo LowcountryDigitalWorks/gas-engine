@@ -18,6 +18,8 @@ Implement a pure comparator over two canonical evidence snapshots and a thin ten
 
 Before comparing observations, require the two collections to be the same semantic stream: same scope, provider, provider-connection presence/value, adapter, source schema, and full collection method, with distinct collection IDs and non-reversed source periods. Incompatibility is a collection discontinuity, not evidence appearance/disappearance.
 
+For repository-backed comparison, require both multipart collections to have complete persisted progress before reading observations. Canonical collection completeness does not prove all declared multipart evidence is already persisted; an in-progress stored collection therefore fails closed as an invalid snapshot rather than creating false absence classifications.
+
 Within a compatible stream, match observations only by accepted `cohortIdentityHash`. Duplicate cohort identities in either snapshot fail closed. Use only five delta states: `unchanged`, `changed`, `appeared`, `missing_from_current`, and `coverage_unknown`.
 
 Only `complete` opposite-side collection coverage can establish appeared/missing-from-current. Partial, unavailable, and failed coverage remain `coverage_unknown`.
@@ -30,7 +32,7 @@ Bound each snapshot to 2,048 observations, equal to the accepted 64-part × 32-o
 
 This proof can deterministically suppress unchanged evidence from the review-attention set while retaining traceability for every changed or uncertain entry. It does not rank the attention set.
 
-The approach deliberately avoids a new schema/table, migration, repository write method, public endpoint, provider access, cross-provider join, AI call, or persistence format.
+The approach deliberately avoids a new schema/table, migration, repository write method, public endpoint, provider access, cross-provider join, AI call, or persistence format. It adds only bounded behavior to an existing collection-filtered repository read and uses existing collection-progress reads to prevent partially persisted snapshots from masquerading as exhaustive evidence.
 
 A future durable diff contract, correlation model, recommendation policy, UI, or prioritization policy requires separate evidence and authorization.
 
