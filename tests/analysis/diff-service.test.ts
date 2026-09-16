@@ -46,7 +46,7 @@ function readOnlyProbe(target: EvidenceRepository): { repository: EvidenceReposi
       const value = Reflect.get(actual, property, actual);
       if (typeof value !== 'function') return value;
       return (...args: unknown[]) => {
-        if (property === 'getCollection' || property === 'listObservations') reads.push(property);
+        if (property === 'getCollection' || property === 'getCollectionProgress' || property === 'listObservations') reads.push(property);
         return value.apply(actual, args);
       };
     },
@@ -83,8 +83,29 @@ test('tenant-safe service resolves collection-filtered snapshots above the gener
     coverageUnknown: 0,
     attentionCount: 0,
   });
-  assert.deepEqual(probe.reads, ['getCollection', 'getCollection', 'listObservations', 'listObservations']);
+  assert.deepEqual(probe.reads, [
+    'getCollection', 'getCollection',
+    'getCollectionProgress', 'getCollectionProgress',
+    'listObservations', 'listObservations',
+  ]);
   assert.deepEqual(probe.writes, []);
+});
+
+test('service rejects incompletely persisted multipart snapshots before absence can be interpreted', async (t) => {
+  const repo = await repository(t);
+  const baselineParts = partedBatches(2, 1, '-diff-service-incomplete-baseline');
+  const current = batch('alpha', '-diff-service-incomplete-current');
+  await repo.persistCollection(alpha, baselineParts[0]!);
+  await repo.persistCollection(alpha, current);
+  assert.equal((await repo.getCollectionProgress(alpha, baselineParts[0]!.collection.id))?.complete, false);
+
+  await assert.rejects(
+    diffEvidenceCollections(repo, alpha, {
+      baselineCollectionId: baselineParts[0]!.collection.id,
+      currentCollectionId: current.collection.id,
+    }),
+    expectCode('invalid_snapshot'),
+  );
 });
 
 test('missing baseline and current collections fail explicitly under trusted context', async (t) => {
