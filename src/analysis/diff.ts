@@ -355,6 +355,15 @@ export async function diffEvidenceCollections(
   if (current === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
 
   const compatible = validateCollectionPair(baseline, current);
+  const baselineProgress = await repository.getCollectionProgress(context, compatible.baseline.id);
+  if (baselineProgress === null || !baselineProgress.complete) {
+    fail('invalid_snapshot', 'Baseline collection persistence is incomplete and cannot be diffed safely.');
+  }
+  const currentProgress = await repository.getCollectionProgress(context, compatible.current.id);
+  if (currentProgress === null || !currentProgress.complete) {
+    fail('invalid_snapshot', 'Current collection persistence is incomplete and cannot be diffed safely.');
+  }
+
   const baselineObservations = await repository.listObservations(context, { collectionId: compatible.baseline.id });
   const currentObservations = await repository.listObservations(context, { collectionId: compatible.current.id });
 
