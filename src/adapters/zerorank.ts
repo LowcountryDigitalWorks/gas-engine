@@ -247,7 +247,7 @@ const rankingsEndpointSchema = listEndpointSchema(rankingsRequestSchema, ranking
 const promptsEndpointSchema = listEndpointSchema(promptsRequestSchema, promptRowSchema, promptPaginationSchema);
 const chatsEndpointSchema = listEndpointSchema(chatsRequestSchema, chatRowSchema, emptyPaginationSchema);
 const sourcesEndpointSchema = listEndpointSchema(sourcesRequestSchema, sourceRowSchema, emptyPaginationSchema);
-const sourceUrlsEndpointSchema = listEndpointSchema(sourceUrlsRequestSchema, sourceUrlRowSchema, emptyPaginationSchema);
+const sourceUrlsEndpointSchema = listEndpointSchema(sourceUrlsRequestSchema, sourceUrlRowSchema, promptPaginationSchema);
 
 const artifactSchema = z.strictObject({
   schemaVersion: z.string().min(1).max(128),
@@ -377,17 +377,51 @@ function parseConfig(input: ZeroRankAdapterConfig): ParsedConfig {
   return config;
 }
 
-function validateWorkspaceEndpoint(artifact: ZeroRankArtifact): void {
+function validateWorkspaceEndpoint(artifact: ZeroRankArtifact): ZeroRankWorkspaceId {
+  const rootWorkspaceId = workspaceIdSchema.safeParse(artifact.workspace.id);
+  if (!rootWorkspaceId.success) fail('invalid_source', 'ZeroRank root workspace ID is missing, null, or unusable.');
+
   const endpoint = artifact.endpoints.workspace;
   if (endpoint.status === 'failed') {
     if (endpoint.completeness !== 'failed' || endpoint.record !== null) {
       fail('invalid_source', 'Failed ZeroRank workspace endpoint does not match the published failure envelope.');
     }
-    return;
+    return rootWorkspaceId.data;
   }
   if (endpoint.completeness !== 'not_applicable' || endpoint.record === null) {
     fail('invalid_source', 'Successful ZeroRank workspace endpoint does not match the published envelope.');
   }
+
+  const record = endpoint.record;
+  if (!Object.hasOwn(record, 'id')) {
+    fail('invalid_source', 'Successful ZeroRank workspace endpoint is missing its required projected workspace ID.');
+  }
+  const endpointWorkspaceId = workspaceIdSchema.safeParse(record.id);
+  if (!endpointWorkspaceId.success) {
+    fail('invalid_source', 'Successful ZeroRank workspace endpoint has an unusable projected workspace ID.');
+  }
+  if (canonicalJson(endpointWorkspaceId.data) !== canonicalJson(rootWorkspaceId.data)) {
+    fail('invalid_source', 'ZeroRank root and endpoint workspace ID projections do not reconcile.');
+  }
+
+  const rootOwnsName = Object.hasOwn(artifact.workspace, 'name');
+  const endpointOwnsName = Object.hasOwn(record, 'name');
+  if (rootOwnsName !== endpointOwnsName) {
+    fail('invalid_source', 'ZeroRank root and endpoint workspace name projections do not reconcile.');
+  }
+  if (rootOwnsName) {
+    let namesMatch: boolean;
+    try {
+      namesMatch = canonicalJson(artifact.workspace.name) === canonicalJson(record.name);
+    } catch {
+      fail('invalid_source', 'ZeroRank duplicated workspace name projection is not safely comparable.');
+    }
+    if (!namesMatch) {
+      fail('invalid_source', 'ZeroRank root and endpoint workspace name projections do not reconcile.');
+    }
+  }
+
+  return rootWorkspaceId.data;
 }
 
 function promptCompletenessIsProven(endpoint: ListEndpointLike): boolean {
@@ -425,16 +459,14 @@ function validateListEndpoint(endpointId: ZeroRankEndpointId, endpoint: ListEndp
 }
 
 function validateArtifactSemantics(artifact: ZeroRankArtifact, config: ParsedConfig): void {
-  const workspaceId = workspaceIdSchema.safeParse(artifact.workspace.id);
-  if (!workspaceId.success) fail('invalid_source', 'ZeroRank root workspace ID is missing, null, or unusable.');
-  if (canonicalJson(workspaceId.data) !== canonicalJson(config.expectedWorkspaceId)) {
+  const workspaceId = validateWorkspaceEndpoint(artifact);
+  if (canonicalJson(workspaceId) !== canonicalJson(config.expectedWorkspaceId)) {
     fail('configuration_mismatch', 'ZeroRank workspace ID does not match trusted adapter configuration.');
   }
   if (artifact.targetOrigin !== config.expectedTargetOrigin) {
     fail('configuration_mismatch', 'ZeroRank target origin does not match trusted adapter configuration.');
   }
 
-  validateWorkspaceEndpoint(artifact);
   validateListEndpoint('rankings', artifact.endpoints.rankings as ListEndpointLike);
   validateListEndpoint('prompts', artifact.endpoints.prompts as ListEndpointLike);
   validateListEndpoint('chats', artifact.endpoints.chats as ListEndpointLike);
