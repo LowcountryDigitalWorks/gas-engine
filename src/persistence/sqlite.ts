@@ -7,7 +7,7 @@ import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
 import { IdempotencyConflictError, PartSequenceConflictError } from './errors.js';
 import { migrateLocalDatabase, STORAGE_BOUNDS } from './migrations.js';
 import type {
-  CollectionBatch, CollectionProgress, Connection, Evidence, EvidenceRepository,
+  CollectionBatch, CollectionEvidenceSnapshot, CollectionProgress, Connection, Evidence, EvidenceRepository,
   ObservationFilter, PersistResult, Scope, Site, SourceContext, StoredSource,
 } from './repository.js';
 import { requireTenantContext, type TenantContext } from './tenant-context.js';
@@ -28,7 +28,7 @@ const batchSchema = z.strictObject({
   observations: z.array(z.strictObject({ sourceId: identifier, record: z.unknown() })).max(STORAGE_BOUNDS.observationsPerPart),
 });
 const GENERAL_OBSERVATION_LIST_LIMIT = 100;
-const COLLECTION_OBSERVATION_LIST_LIMIT = STORAGE_BOUNDS.parts * STORAGE_BOUNDS.observationsPerPart;
+const COLLECTION_SNAPSHOT_OBSERVATION_LIMIT = STORAGE_BOUNDS.parts * STORAGE_BOUNDS.observationsPerPart;
 
 function invariant(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -249,6 +249,29 @@ export class LocalEvidenceRepository implements EvidenceRepository {
     return this.#read(() => this.#db.prepare('SELECT 1 AS present FROM collections WHERE tenant_id = ? AND id = ?').get(tenant, id)
       ? this.#progress(tenant, id) : null);
   }
+  async getCollectionSnapshot(context: TenantContext, input: string): Promise<CollectionEvidenceSnapshot | null> {
+    const tenant = requireTenantContext(context);
+    const id = identifier.parse(input);
+    // Collection metadata, derived persisted progress, and the bounded observation set
+    // are resolved synchronously inside one deferred read transaction. Nothing yields
+    // and no caller callback runs while the consistent tenant-scoped snapshot is open.
+    return this.#read(() => {
+      const collectionRow = this.#db.prepare('SELECT * FROM collections WHERE tenant_id = ? AND id = ?').get(tenant, id);
+      if (collectionRow === undefined) return null;
+      const collection = decode('collection', collectionRow);
+      const progress = this.#progress(tenant, id);
+      const observationRows = this.#db.prepare(`SELECT * FROM observations
+        WHERE tenant_id = ? AND collection_id = ? ORDER BY id LIMIT ?`)
+        .all(tenant, id, COLLECTION_SNAPSHOT_OBSERVATION_LIMIT + 1);
+      invariant(observationRows.length <= COLLECTION_SNAPSHOT_OBSERVATION_LIMIT,
+        'Collection snapshot exceeds the accepted 2,048-observation bound');
+      return {
+        collection,
+        progress,
+        observations: observationRows.map((row) => decode('observation', row)),
+      };
+    });
+  }
   async findCollectionByIdempotency(context: TenantContext, input: SourceContext, key: string): Promise<Contract<'collection'> | null> {
     const tenant = requireTenantContext(context);
     canonicalJson(input);
@@ -284,14 +307,11 @@ export class LocalEvidenceRepository implements EvidenceRepository {
     const tenant = requireTenantContext(context);
     canonicalJson(input);
     const filter = filterSchema.parse(input);
-    const limit = filter.collectionId === undefined ? GENERAL_OBSERVATION_LIST_LIMIT : COLLECTION_OBSERVATION_LIST_LIMIT;
     const rows = this.#db.prepare(`SELECT * FROM observations WHERE tenant_id = ?
       AND (? IS NULL OR site_id = ?) AND (? IS NULL OR collection_id = ?) AND (? IS NULL OR provider_id = ?) ORDER BY id LIMIT ?`)
       .all(tenant, filter.siteId ?? null, filter.siteId ?? null, filter.collectionId ?? null, filter.collectionId ?? null,
-        filter.providerId ?? null, filter.providerId ?? null, limit + 1);
-    invariant(rows.length <= limit, filter.collectionId === undefined
-      ? 'List exceeds 100 observations; narrow the filters'
-      : 'Collection exceeds the accepted 2,048-observation bound');
+        filter.providerId ?? null, filter.providerId ?? null, GENERAL_OBSERVATION_LIST_LIMIT + 1);
+    invariant(rows.length <= GENERAL_OBSERVATION_LIST_LIMIT, 'List exceeds 100 observations; narrow the filters');
     return rows.map((row) => decode('observation', row));
   }
   async getObservations(context: TenantContext, input: string[]): Promise<Contract<'observation'>[]> {
