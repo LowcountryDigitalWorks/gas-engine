@@ -3,7 +3,7 @@ import { identifier } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { cohortIdentityHash, parseContract } from '../domain/validate.js';
 import { canonicalJson } from '../lib/canonical-json.js';
-import type { EvidenceRepository } from '../persistence/repository.js';
+import type { CollectionEvidenceSnapshot, EvidenceRepository } from '../persistence/repository.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
 
 /**
@@ -38,6 +38,11 @@ export class EvidenceDiffError extends Error {
   }
 }
 
+/**
+ * Pure-comparator input only. `observations` must be the complete resolved observation
+ * set for the supplied collection snapshot. The pure comparator cannot prove repository
+ * exhaustiveness; use `diffEvidenceCollections` for persisted tenant-safe comparisons.
+ */
 export interface EvidenceSnapshot {
   readonly collection: Contract<'collection'>;
   readonly observations: readonly Contract<'observation'>[];
@@ -298,7 +303,7 @@ function summarize(entries: readonly EvidenceDeltaEntry[]): EvidenceDeltaSummary
 }
 
 /**
- * Pure deterministic comparator over two already-resolved canonical evidence snapshots.
+ * Pure deterministic comparator over two already-resolved complete canonical evidence snapshots.
  * It performs no repository access, persistence, authority issuance, network access, or writes.
  */
 export function compareEvidenceSnapshots(
@@ -329,9 +334,20 @@ export function compareEvidenceSnapshots(
   };
 }
 
+function requirePersistedSnapshot(label: 'Baseline' | 'Current', snapshot: CollectionEvidenceSnapshot): EvidenceSnapshot {
+  if (!snapshot.progress.complete) {
+    fail('invalid_snapshot', `${label} collection persistence is incomplete and cannot be diffed safely.`);
+  }
+  if (snapshot.observations.length > MAX_DIFF_OBSERVATIONS_PER_SNAPSHOT) {
+    fail('observation_limit_exceeded', `${label} snapshot exceeds the bounded Release 0.7 observation limit.`);
+  }
+  return { collection: snapshot.collection, observations: snapshot.observations };
+}
+
 /**
- * Tenant-safe read service. Caller IDs select records only; the already-issued TenantContext
- * remains the repository authority boundary. This service calls no repository write method.
+ * Tenant-safe persisted-snapshot service. Caller IDs select records only; the already-issued
+ * TenantContext remains the repository authority boundary. Each side is resolved through one
+ * repository-consistent collection/progress/observation snapshot, and no write method is called.
  */
 export async function diffEvidenceCollections(
   repository: EvidenceRepository,
@@ -349,26 +365,14 @@ export async function diffEvidenceCollections(
     fail('invalid_request', 'Baseline and current collection IDs must be distinct.');
   }
 
-  const baseline = await repository.getCollection(context, request.baselineCollectionId);
-  if (baseline === null) fail('collection_not_found', 'Baseline collection is unavailable under trusted tenant context.');
-  const current = await repository.getCollection(context, request.currentCollectionId);
-  if (current === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
+  const baselineResolved = await repository.getCollectionSnapshot(context, request.baselineCollectionId);
+  if (baselineResolved === null) fail('collection_not_found', 'Baseline collection is unavailable under trusted tenant context.');
+  const currentResolved = await repository.getCollectionSnapshot(context, request.currentCollectionId);
+  if (currentResolved === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
 
-  const compatible = validateCollectionPair(baseline, current);
-  const baselineProgress = await repository.getCollectionProgress(context, compatible.baseline.id);
-  if (baselineProgress === null || !baselineProgress.complete) {
-    fail('invalid_snapshot', 'Baseline collection persistence is incomplete and cannot be diffed safely.');
-  }
-  const currentProgress = await repository.getCollectionProgress(context, compatible.current.id);
-  if (currentProgress === null || !currentProgress.complete) {
-    fail('invalid_snapshot', 'Current collection persistence is incomplete and cannot be diffed safely.');
-  }
+  const baseline = requirePersistedSnapshot('Baseline', baselineResolved);
+  const current = requirePersistedSnapshot('Current', currentResolved);
+  validateCollectionPair(baseline.collection, current.collection);
 
-  const baselineObservations = await repository.listObservations(context, { collectionId: compatible.baseline.id });
-  const currentObservations = await repository.listObservations(context, { collectionId: compatible.current.id });
-
-  return compareEvidenceSnapshots(
-    { collection: compatible.baseline, observations: baselineObservations },
-    { collection: compatible.current, observations: currentObservations },
-  );
+  return compareEvidenceSnapshots(baseline, current);
 }
