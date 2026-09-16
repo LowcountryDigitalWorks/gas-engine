@@ -31,6 +31,15 @@ export interface CollectionProgress {
   partsPersisted: number;
   complete: boolean;
 }
+/**
+ * One tenant-scoped, transactionally consistent read view of a persisted collection.
+ * Implementations must resolve all three fields from the same repository snapshot.
+ */
+export interface CollectionEvidenceSnapshot {
+  collection: Contract<'collection'>;
+  progress: CollectionProgress;
+  observations: Contract<'observation'>[];
+}
 export interface PersistResult { collectionId: string; replayed: boolean; complete: boolean }
 export interface ObservationFilter { siteId?: string; collectionId?: string; providerId?: string }
 export interface Evidence {
@@ -51,6 +60,7 @@ export interface EvidenceRepository {
   persistCollection(context: TenantContext, batch: CollectionBatch): Promise<PersistResult>;
   getCollection(context: TenantContext, id: string): Promise<Contract<'collection'> | null>;
   getCollectionProgress(context: TenantContext, id: string): Promise<CollectionProgress | null>;
+  getCollectionSnapshot(context: TenantContext, id: string): Promise<CollectionEvidenceSnapshot | null>;
   findCollectionByIdempotency(context: TenantContext, source: SourceContext, key: string): Promise<Contract<'collection'> | null>;
   getSource(context: TenantContext, id: string): Promise<StoredSource | null>;
   findSource(context: TenantContext, source: SourceContext, collectionId: string, externalId: string): Promise<StoredSource | null>;
