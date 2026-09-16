@@ -9,9 +9,11 @@ This document describes a **draft candidate under Issue #12**. Release 0.7 is no
 [`src/analysis/diff.ts`](../../src/analysis/diff.ts) exports two layers:
 
 - `compareEvidenceSnapshots(baseline, current)` — pure comparator over two already-resolved canonical collection snapshots;
-- `diffEvidenceCollections(repository, context, request)` — thin tenant-safe read service that resolves the two collections and their observations through the existing `EvidenceRepository` using an already-issued `TenantContext`.
+- `diffEvidenceCollections(repository, context, request)` — thin tenant-safe read service that resolves each persisted collection through the repository's atomic `getCollectionSnapshot(...)` read surface using an already-issued `TenantContext`.
 
 The result is an application-local `EvidenceDeltaReport`; Release 0.7 adds no wire schema, persistence record, table, migration, public endpoint, listener, or HTTP read route.
+
+The pure comparator's `EvidenceSnapshot.observations` input has an explicit precondition: callers must supply the **complete resolved observation set** for the accompanying collection snapshot. A pure function cannot prove repository exhaustiveness. `diffEvidenceCollections(...)` is therefore the authoritative tenant-safe persisted-snapshot path for Release 0.7.
 
 ## Collection-stream compatibility gate
 
@@ -26,7 +28,9 @@ Absence is meaningful only inside the same semantic collection stream. Before ob
 
 The baseline source period must not be after the current source period. An incompatible pair fails with bounded `collection_discontinuity`; completeness is never used to infer appearance or disappearance across that discontinuity. For example, ZeroRank rankings and ZeroRank chats are different collection streams even when they share a provider connection.
 
-For repository-backed comparison, both collection records must also have **complete persisted multipart progress** before observations are read. Canonical collection completeness and persisted multipart completion are deliberately different concepts in accepted persistence. A collection visible after only an early part is not a safe longitudinal snapshot even when its canonical completeness field says `complete`; Release 0.7 fails that service request as `invalid_snapshot` rather than treating not-yet-persisted observations as absent.
+For repository-backed comparison, each side is resolved as one `CollectionEvidenceSnapshot` containing the canonical collection record, derived persisted `CollectionProgress`, and bounded observations from **one tenant-scoped deferred read transaction**. Both snapshots must report complete persisted multipart progress before comparison. This prevents a concurrent delete/replacement between an earlier progress read and a later observation read from pairing stale `complete` metadata with a changed observation set.
+
+Canonical collection completeness and persisted multipart completion remain deliberately different concepts. A collection visible after only an early part is not a safe longitudinal snapshot even when its canonical completeness field says `complete`; Release 0.7 fails that service request as `invalid_snapshot` rather than treating not-yet-persisted observations as absent.
 
 ## Exact cohort matching
 
@@ -82,22 +86,23 @@ Accepted adapters fit inside that ceiling:
 | ZeroRank sources | 1,024 observations |
 | ZeroRank sourceUrls | 2,048 observations |
 
-The byte-aware 64 KiB part limit can make an actual adapter collection smaller; these are count ceilings, not guaranteed payload capacities. A snapshot above 2,048 fails explicitly with `observation_limit_exceeded`; there is no truncation, sampling, hidden paging, or dropped observation.
+The byte-aware 64 KiB part limit can make an actual adapter collection smaller; these are count ceilings, not guaranteed payload capacities. A snapshot above 2,048 fails explicitly; there is no truncation, sampling, hidden paging, or dropped observation.
 
-The existing general `listObservations` read remains capped at 100 records. A `collectionId`-filtered read is permitted up to the same accepted 2,048-observation collection ceiling so the thin service can resolve any accepted collection without adding a new repository method or schema.
+The accepted general `listObservations(...)` behavior remains uniformly capped at **100 records**, including when a `collectionId` filter is supplied. Release 0.7's larger 2,048 capacity now exists only on the dedicated `getCollectionSnapshot(...)` read, which performs `limit + 1` overflow detection inside the same deferred transaction that resolves collection metadata and persisted progress.
 
 ## Tenant-safe read service
 
-`diffEvidenceCollections` accepts only two collection identifiers plus an already-issued trusted `TenantContext`. Collection IDs are selectors, never authority. The service performs only existing tenant-scoped reads and pure comparison:
+`diffEvidenceCollections` accepts only two collection identifiers plus an already-issued trusted `TenantContext`. Collection IDs are selectors, never authority. The final read sequence is:
 
-1. `getCollection(context, baselineCollectionId)`;
-2. `getCollection(context, currentCollectionId)`;
-3. collection semantic compatibility validation;
-4. `getCollectionProgress(context, collectionId)` for both sides and require persisted completion;
-5. `listObservations(context, { collectionId })` for each compatible, fully persisted collection;
-6. pure comparison.
+1. `getCollectionSnapshot(context, baselineCollectionId)`;
+2. `getCollectionSnapshot(context, currentCollectionId)`;
+3. require both persisted snapshot progress values to be complete;
+4. validate collection semantic-stream compatibility;
+5. invoke the pure comparator over the already-resolved observation arrays.
 
-There is no tenant-authority issuer import, repository write call, persistence of the report, HTTP route, provider/runtime call, or SQLite-specific logic in the analysis module. Existing tenant-scoped repository reads ensure a Beta context cannot resolve Alpha collections.
+`LocalEvidenceRepository.getCollectionSnapshot(...)` uses the existing synchronous `#read(() => ...)` / `BEGIN DEFERRED` transaction. While that transaction is open it resolves the collection row, derives persisted progress, and selects bounded observations without yielding or calling external callbacks. A concurrent mutation can therefore be observed only before or after that coherent snapshot, never between those three components.
+
+There is no tenant-authority issuer import, repository write call, persistence of the report, HTTP route, provider/runtime call, or SQLite-specific logic in the analysis module. Existing tenant-scoped repository reads ensure a Beta context cannot resolve Alpha collection snapshots, and a forged `TenantContext`-shaped object remains unauthorized.
 
 ## Synthetic value proof
 
