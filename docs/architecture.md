@@ -1,26 +1,26 @@
 # Architecture baseline
 
-Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local storage for seven ingestion-foundation record groups with embedded provenance. [Release 0.4 authenticated ingestion](ingestion.md) is also accepted on `main` and adds one authenticated, bounded, write-only in-process ingestion boundary. [Release 0.5 WQT adaptation](adapters/wqt.md) is accepted on `main` and adds one pure/local adapter for already-normalized WQT evidence. [Release 0.6 ZeroRank adaptation](adapters/zerorank.md) is accepted on `main` and adds one pure/local adapter for the exact sanitized ZeroRank v1/minor0 artifact. Operator interfaces, external execution, correlation/prioritization/recommendation logic, and deployment remain separately gated.
+Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local storage for seven ingestion-foundation record groups with embedded provenance. [Release 0.4 authenticated ingestion](ingestion.md) is also accepted on `main` and adds one authenticated, bounded, write-only in-process ingestion boundary. [Release 0.5 WQT adaptation](adapters/wqt.md) is accepted on `main` and adds one pure/local adapter for already-normalized WQT evidence. [Release 0.6 ZeroRank adaptation](adapters/zerorank.md) is accepted on `main` and adds one pure/local adapter for the exact sanitized ZeroRank v1/minor0 artifact. [Release 0.7 longitudinal diff](analysis/diff.md) is an authorized **draft candidate**, not yet accepted, adding only deterministic same-stream evidence comparison and non-ranked review-attention classification. Operator interfaces, external execution, cross-provider correlation, prioritization/recommendation logic, and deployment remain separately gated.
 
 ## Objectives and operating model
 
-G.A.S. means **Generative / Answer / Search**. The engine should normalize replaceable sensor evidence, retain provenance/history, correlate observations, prioritize work deterministically, support human-reviewed recommendations, and measure subsequent outcomes. Its value must be demonstrated through reduced recurring LDW delivery and reconciliation labor and useful recommendations.
+G.A.S. means **Generative / Answer / Search**. The engine should normalize replaceable sensor evidence, retain provenance/history, support deterministic longitudinal comparison, and eventually support separately justified correlation, human-reviewed recommendations, and subsequent measurement/outcome work. Its value must be demonstrated through reduced recurring LDW delivery and reconciliation labor rather than through invented universal scoring.
 
 The intended lifecycle is:
 
-> OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
+> OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-An observation does not establish a conclusion, and approval does not erase the need for separate execution authority. Accepted Releases through 0.6 implement contracts, local persistence, authenticated bounded intake, deterministic WQT evidence adaptation, and deterministic sanitized ZeroRank evidence adaptation. Correlation, prioritization, review, action, measurement, outcome automation, and operator workflow remain future work.
+An observation does not establish a conclusion, a mechanical diff is not an inference, and approval does not erase the need for separate execution authority. Accepted Releases through 0.6 implement contracts, local persistence, authenticated bounded intake, deterministic WQT evidence adaptation, and deterministic sanitized ZeroRank evidence adaptation. The Release 0.7 draft proves only same-semantic-stream longitudinal comparison. Cross-provider correlation, prioritization, review, action, measurement/outcome automation, and operator workflow remain future work.
 
 ## Ownership and source-of-truth boundaries
 
 | System | Intended ownership | Boundary |
 | --- | --- | --- |
-| G.A.S. Engine | Normalized evidence model; provenance/history; provider-health concepts; cross-sensor correlation; deterministic prioritization; recommendation lifecycle; human review/decision state; measurement; outcome history; compact future LDW operator experience | Own the LDW evidence and decision record while preserving links to source observations; no universal proprietary G.A.S. score. |
-| Website Quality Toolkit (WQT) | Existing LDW site-side technical/Search evidence generation through SiteOne and Lighthouse | Consume its normalized evidence; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client in Release 0.5. |
+| G.A.S. Engine | Normalized evidence model; provenance/history; deterministic longitudinal comparison; future provider-health/correlation/recommendation/measurement/outcome concepts; compact future LDW operator experience | Own the LDW evidence and decision record while preserving links to source observations; no universal proprietary G.A.S. score and no Release 0.7 cross-provider correlation/prioritization. |
+| Website Quality Toolkit (WQT) | Existing LDW site-side technical/Search evidence generation through SiteOne and Lighthouse | Consume its normalized evidence; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client. |
 | ZeroRank | Replaceable Generative observation/sensing | Consume the accepted sanitized Release 0.6 evidence boundary without polling ZeroRank from G.A.S.; its observations and scores remain provider evidence, not authoritative LDW truth. |
 | SuiteDash | Customer/company/client-workflow and service-enrollment experience | Do not duplicate CRM or client operations in G.A.S. |
-| Activepieces | Deterministic cross-system workflow/event transport where useful | Must not become the only durable G.A.S. evidence or system-of-record layer. Release 0.6 does not call Activepieces at runtime. |
+| Activepieces | Deterministic cross-system workflow/event transport where useful | Must not become the only durable G.A.S. evidence or system-of-record layer. G.A.S. does not call Activepieces at runtime in Releases 0.6–0.7. |
 | GitHub | Source, technical work, PR/review/release evidence, and separately governed automation paths | No parallel autonomous GitHub-writing mechanism. Private runtime evidence stays outside public GitHub. |
 
 G.A.S. is the intended durable record of its own normalization, derivation, and review decisions. It does not rewrite provider history, become the client-workflow authority, or treat a vendor score as an LDW conclusion. Sources may disagree; retain the disagreement and its provenance rather than overwrite it with an unsupported consensus.
@@ -31,13 +31,14 @@ G.A.S. is the intended durable record of its own normalization, derivation, and 
 | --- | --- |
 | Source/raw evidence | The source material received or referenced, subject to its access and retention constraints. Preserve identity and integrity references. |
 | Normalized observation | A source observation expressed consistently with scope, time, provenance, completeness, and an explicit value or missing-data state. Normalization does not make it a verified conclusion. |
-| Derived inference | An interpretation or correlation derived from identified observations and a recorded method/version. Distinguish uncertainty and conflicting evidence. |
-| Recommendation | A proposed response with supporting evidence, rationale, priority, and review lifecycle. It carries no execution authority. |
+| Mechanical longitudinal delta | Application-local deterministic classification of compatible canonical observations as unchanged/changed/appeared/missing-from-current/coverage-unknown. It is not inference, priority, or recommendation. |
+| Derived inference | A future interpretation or correlation derived from identified observations and a recorded method/version. Distinguish uncertainty and conflicting evidence. |
+| Recommendation | A future proposed response with supporting evidence, rationale, priority policy, and review lifecycle. It carries no execution authority. |
 | Action | A separately authorized execution attempt and its record, including what actually happened. Acceptance of a recommendation is not an action. |
 | Measurement | A subsequent observation under a defined scope and period, retained for comparison. Preserve comparability limits. |
 | Outcome | The assessed result over time, linked to measurements, decisions, and any action. Temporal association alone does not establish causation. |
 
-These concepts must never be collapsed for convenience. Retain links between them so later operators can trace a recommendation or outcome back to its supporting evidence and method.
+These concepts must never be collapsed for convenience. Retain links between them so later operators can trace a future recommendation or outcome back to supporting evidence and method.
 
 ### Missing-data semantics
 
@@ -51,7 +52,7 @@ Every normalized observation must distinguish at least:
 | `not_collected(reason)` | Collection was not performed for this observation. |
 | `not_applicable(reason)` | The observation does not apply to the specified scope. |
 
-Missing or unavailable data must **never silently become zero**. Preserve the reason and state through normalization, comparison, prioritization, display, and reporting. Do not present an apparent improvement merely because a source stopped reporting. Release 0.5 follows this by mapping null/missing WQT source scores/status to explicit `unknown` while preserving numeric zero as observed zero. Release 0.6 likewise preserves ZeroRank zero as observed zero, distinguishes null/absent/wrong-type mapped evidence, maps failed endpoints to `unavailable`, and leaves unknown endpoint exhaustion explicit rather than inventing zero remainder.
+Missing or unavailable data must **never silently become zero**. Preserve the reason and state through normalization, comparison, later analysis, display, and reporting. Do not present an apparent improvement merely because a source stopped reporting. Release 0.5 maps null/missing WQT source scores/status to explicit `unknown` while preserving numeric zero as observed zero. Release 0.6 likewise preserves ZeroRank zero as observed zero, distinguishes null/absent/wrong-type mapped evidence, maps failed endpoints to `unavailable`, and leaves unknown endpoint exhaustion explicit rather than inventing zero remainder. The Release 0.7 draft compares these states exactly: missing-state or reason transitions are `changed`; unmatched observations under partial/unavailable/failed opposite coverage are `coverage_unknown`, never zero or removal/fix claims.
 
 ### Provenance and history
 
@@ -92,6 +93,16 @@ One sanitized artifact is split into five endpoint-specific collections under pr
 
 Only Issue #9-authorized runtime-typed vendor fields become observations. Numeric zero stays observed zero; null, absent, malformed scalar types, and unknown remainder retain explicit missingness. Optional upstream run/start/end values remain source material only. Trusted configuration supplies canonical point `observedAt`, collection lifecycle timestamps, G.A.S. scope, expected workspace/target, provider connection, and availability. Source units are deterministically ordered and packed byte-aware into ordinary accepted `CollectionBatch` parts within the existing 64-part / 16-source / 32-observation / 65,536-byte limits without truncation or hidden paging. See [ZeroRank adapter guide](adapters/zerorank.md) and [ADR 0005](decisions/0005-zerorank-sanitized-evidence-adapter.md).
 
+### Release 0.7 draft longitudinal comparison seam
+
+The Release 0.7 candidate adds no provider adapter or new sensing path. `compareEvidenceSnapshots` is a pure function over two already-resolved canonical collection snapshots. `diffEvidenceCollections` is a thin tenant-safe application service over existing `getCollection` and collection-filtered `listObservations` reads.
+
+Before matching observations, the collections must prove the same semantic stream by exact compatibility of scope, provider, provider-connection presence/value, adapter, source schema, and full collection method. Collection IDs must differ and baseline source time may not be after current source time. An incompatible pair is a discontinuity and is never used for appeared/missing classification. This explicitly prevents comparisons such as ZeroRank rankings baseline versus ZeroRank chats current merely because they share provider/connection.
+
+Within a compatible pair, the only observation key is accepted `cohortIdentityHash`. Omitted dimensions remain significant by omission, never wildcards. Duplicate semantic cohort identity in one snapshot fails closed. Exact canonical observation values determine unchanged versus changed; observed numeric pairs may expose descriptive subtraction only. Complete opposite coverage may establish `appeared` or `missing_from_current`; partial/unavailable/failed opposite coverage produces `coverage_unknown`.
+
+The application-local result is deterministically ordered by cohort hash and bounded to 2,048 observations per snapshot, equal to accepted `64 parts × 32 observations`. It is not persisted and is not a canonical wire contract. The general repository observation list remains bounded at 100; a collection-filtered read through the existing method may return up to the same accepted 2,048-observation collection ceiling. No storage schema or repository write method changes. See [diff guide](analysis/diff.md) and [proposed ADR 0006](decisions/0006-longitudinal-evidence-diff.md).
+
 ## Tenant security invariant
 
 **Tenant identity is an authorization boundary. A globally unique object ID is never by itself authorization. Untrusted request or provider evidence never creates authority.**
@@ -102,9 +113,11 @@ Release 0.5 does not change that issuer whitelist. Its adapter accepts trusted c
 
 Release 0.6 also does not change the issuer whitelist. Its trusted configuration supplies scope, expected ZeroRank workspace/target, provider connection, canonical timing, and source availability. The sanitized artifact's workspace/target/provider/source values, hashes, optional upstream timing, and opaque nested source fields are evidence only. Workspace projection reconciliation validates source consistency before trusted matching but does not mint or substitute authority.
 
+Release 0.7 likewise does not change the issuer whitelist. The read service receives an already-issued trusted `TenantContext`; baseline/current IDs are selectors only. Repository reads enforce tenant ownership before evidence reaches the pure comparator. Beta context cannot resolve Alpha collections, and no result/request field can mint tenant/site/provider authority.
+
 The authenticated request body remains one bounded collection part validated before exact-grant authorization and persistence. Authorization never uses raw request strings. After a successful persist, the application queries derived repository progress; response `complete` reflects stored parts/sources, not a canonical completeness assertion alone. Each part is atomic; multipart collection assembly is not one transaction. Observations remain restricted to sources in the same part.
 
-The bounded proof uses LDW-owned and synthetic evidence only. There is no production identity provider, password/JWT/OAuth/session/API-key store, live provider networking from G.A.S., customer deployment, or network listener. See the [security posture](../SECURITY.md), [ingestion guide](ingestion.md), [WQT adapter guide](adapters/wqt.md), and [ZeroRank adapter guide](adapters/zerorank.md).
+The bounded proof uses LDW-owned and synthetic evidence only. There is no production identity provider, password/JWT/OAuth/session/API-key store, live provider networking from G.A.S., customer deployment, or network listener. See the [security posture](../SECURITY.md), [ingestion guide](ingestion.md), [WQT adapter guide](adapters/wqt.md), [ZeroRank adapter guide](adapters/zerorank.md), and [draft diff guide](analysis/diff.md).
 
 ## Initial vertical slice and future operator workflow
 
@@ -115,32 +128,32 @@ The bounded proof uses LDW-owned and synthetic evidence only. There is no produc
 
 The proof loop is:
 
-> INGEST → NORMALIZE → STORE → DIFF → PRIORITIZE → RECOMMEND → HUMAN REVIEW → DISPLAY
+> INGEST → NORMALIZE → STORE → DIFF → LATER ANALYSIS/RECOMMENDATION ONLY WHEN SEPARATELY AUTHORIZED → HUMAN REVIEW → DISPLAY
 
-Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams from WQT pre-normalized evidence and sanitized ZeroRank evidence into current G.A.S. contracts. DIFF/PRIORITIZE/RECOMMEND/REVIEW/DISPLAY remain unimplemented.
+Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams from WQT pre-normalized evidence and sanitized ZeroRank evidence into current G.A.S. contracts. The Release 0.7 draft proves deterministic DIFF only. Cross-provider correlation, prioritization, recommendation, review lifecycle, and display remain unimplemented.
 
-A compact future LDW operator experience should let an operator inspect source health, provenance, missing data, historical differences, and deterministic priority rationale; review a recommendation and record a decision; then compare subsequent measurements and report outcomes. Accepted recommendations still require separate authority for external execution.
+A compact future LDW operator experience should let an operator inspect source health, provenance, missing data, historical differences, and—only after a separately defined policy exists—reviewable recommendation rationale. Accepted recommendations would still require separate authority for external execution.
 
 ## Build, adapt, reuse, and defer
 
 | Direction | Scope |
 | --- | --- |
-| Build | LDW-specific evidence/provenance model, tenant-safe application boundaries, correlation, deterministic prioritization, recommendation lifecycle, measurement/outcome lifecycle. |
+| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; Release 0.7 draft deterministic longitudinal comparison; future correlation/recommendation/measurement/outcome capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
-| Defer until separately justified/authorized | Release 0.7 diff/correlation/prioritization, production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
+| Defer until separately justified/authorized | Cross-provider/generic correlation, direction/severity/materiality/business-impact policy, prioritization, Release 0.8+, production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
 | Do not build | Another generic crawler, browser/scraper farm, generic SEO suite, ZeroRank clone, CRM, workflow engine, or universal proprietary G.A.S. score. Do not fork a generic SEO platform. |
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain the candidate architecture for a later bounded cloud proof. Releases through 0.6 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain the candidate architecture for a later bounded cloud proof. Releases through accepted 0.6 and the Release 0.7 draft create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
-Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with a local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values and validate them through the existing persistence contract; neither adds a new storage interface or SQL schema. A later cloud adapter must preserve tenant/evidence, bounded-part, idempotency, and progress semantics.
+Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with a local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values and validate them through the existing persistence contract; neither adds a new storage interface or SQL schema. Release 0.7 consumes the same repository interface for reads and keeps its pure comparator free of SQLite details. A later cloud adapter must preserve tenant/evidence, bounded-part, idempotency, progress, and read-isolation semantics.
 
-**$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Releases 0.5 and 0.6 add no dependency or service. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative CPU/request/query/storage estimates, and rollback/decommission planning assessed before approval. Paid infrastructure, overages, and billing changes require separate authority.
+**$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Releases 0.5–0.7 add no dependency or service. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative CPU/request/query/storage estimates, and rollback/decommission planning assessed before approval. Paid infrastructure, overages, and billing changes require separate authority.
 
 ## Commercial and publication limits
 
-Internal automation does not prove commercial demand. The audit-first/service-first business model continues independently. This is internal managed-service enabling infrastructure, not customer SaaS or a standalone commercial software product. No public price, SLA, ranking/citation/traffic/lead guarantee, or internal pricing hypothesis belongs in this repository.
+Internal automation does not prove commercial demand. The audit-first/service-first business model continues independently. This is internal managed-service enabling infrastructure, not customer SaaS or a standalone commercial software product. No public price, SLA, ranking/citation/traffic/lead/time-savings guarantee, or internal pricing hypothesis belongs in this repository.
 
-Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic. There is no software license grant. See [authorization](authorization.md), the [evidence-core ADR](decisions/0001-evidence-core.md), [ingestion ADR](decisions/0003-authenticated-ingestion-boundary.md), [WQT adapter ADR](decisions/0004-wqt-normalized-evidence-adapter.md), [ZeroRank adapter ADR](decisions/0005-zerorank-sanitized-evidence-adapter.md), and [roadmap](roadmap.md).
+Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic; Release 0.7 uses canonical synthetic comparison scenarios only. There is no software license grant. See [authorization](authorization.md), the [evidence-core ADR](decisions/0001-evidence-core.md), [ingestion ADR](decisions/0003-authenticated-ingestion-boundary.md), [WQT adapter ADR](decisions/0004-wqt-normalized-evidence-adapter.md), [ZeroRank adapter ADR](decisions/0005-zerorank-sanitized-evidence-adapter.md), [proposed longitudinal-diff ADR](decisions/0006-longitudinal-evidence-diff.md), and [roadmap](roadmap.md).
