@@ -30,7 +30,7 @@ The caller supplies trusted configuration containing:
 - trusted canonical `observedAt`, `startedAt`, `endedAt`, `collectedAt`, and `receivedAt`;
 - explicit source availability.
 
-Artifact workspace/target values are match data only. Evidence cannot select tenant, site, site-scope revision, provider connection, principal, grant, or `TenantContext`. The adapter imports no authentication or tenant-authority issuer and performs no persistence.
+Artifact workspace/target values are match data only. Before trusted workspace matching, a successful workspace endpoint must own a usable `record.id` that exactly reconciles with root `workspace.id`; optional root/record `name` presence must agree, and when present their JSON semantic values must match. Contradictory duplicate projections fail closed as invalid source material. Evidence cannot select tenant, site, site-scope revision, provider connection, principal, grant, or `TenantContext`. The adapter imports no authentication or tenant-authority issuer and performs no persistence.
 
 The current published proof artifact carries exact target origin `https://lowcountrydigitalworks.com`, cadence `weekly` / `Monday 12:00 UTC`, source API base `https://api.zerorank.ai/api/v1`, and version signal `/api/v1`. Request metadata is validated exactly so exporter drift in paths, days, or limits fails closed.
 
