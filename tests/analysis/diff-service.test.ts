@@ -89,7 +89,7 @@ function snapshotOnlyRepository(
   current: CollectionEvidenceSnapshot,
 ): EvidenceRepository {
   return {
-    async getCollectionSnapshot(_context, id) {
+    async getCollectionSnapshot(_context: TenantContext, id: string) {
       if (id === baseline.collection.id) return baseline;
       if (id === current.collection.id) return current;
       return null;
