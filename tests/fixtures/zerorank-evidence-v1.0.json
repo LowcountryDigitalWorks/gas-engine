@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "ldw.zerorank-evidence.v1",
+  "schemaMinorVersion": 0,
+  "workspace": {
+    "id": "example-workspace",
+    "name": "Synthetic ZeroRank Workspace"
+  },
+  "targetOrigin": "https://lowcountrydigitalworks.com",
+  "collection": {
+    "cadence": {
+      "type": "weekly",
+      "schedule": "Monday 12:00 UTC"
+    },
+    "sourceApiBase": "https://api.zerorank.ai/api/v1",
+    "sourceApiVersionSignal": "/api/v1"
+  },
+  "endpoints": {
+    "workspace": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/workspace"
+      },
+      "completeness": "not_applicable",
+      "record": {
+        "id": "example-workspace",
+        "name": "Synthetic ZeroRank Workspace",
+        "rateLimitPerMinute": 180,
+        "organization": {
+          "plan": "synthetic-plan",
+          "subscriptionStatus": "active"
+        }
+      }
+    },
+    "rankings": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/rankings",
+        "query": {
+          "days": 7
+        }
+      },
+      "returnedCount": 2,
+      "completeness": "unknown",
+      "pagination": {},
+      "rows": [
+        {
+          "id": 1,
+          "name": "Synthetic Example",
+          "type": "domain",
+          "domain": "example.test",
+          "color": "synthetic-blue",
+          "rank": 0,
+          "mentions": 4,
+          "sentiment": null,
+          "visibilityPercentage": 0,
+          "growth": null
+        },
+        {
+          "id": 2,
+          "name": "Synthetic Peer",
+          "type": "domain",
+          "domain": "peer.example.test",
+          "rank": 2,
+          "mentions": 7,
+          "sentiment": 0.4,
+          "visibilityPercentage": 12.5,
+          "growth": 1.25
+        }
+      ]
+    },
+    "prompts": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/prompts",
+        "query": {
+          "limit": 100
+        }
+      },
+      "returnedCount": 2,
+      "completeness": "complete",
+      "pagination": {
+        "total": 2,
+        "page": 1,
+        "perPage": 100,
+        "lastPage": 1
+      },
+      "rows": [
+        {
+          "id": 10,
+          "text": "Synthetic prompt alpha",
+          "status": "active",
+          "location": "Synthetic Location",
+          "workspaceId": "example-workspace",
+          "createdAt": "2026-09-01T00:00:00.000Z",
+          "updatedAt": "2026-09-02T00:00:00.000Z",
+          "topicId": 101,
+          "lastScheduledAt": "2026-09-14T12:00:00.000Z",
+          "source": "synthetic",
+          "sourceMetadata": {
+            "note": "opaque synthetic metadata"
+          },
+          "aiSearchVolume": 0,
+          "lastAnswerAt": "2026-09-14T12:05:00.000Z",
+          "topic": {
+            "name": "Synthetic Topic"
+          },
+          "tags": [
+            "synthetic",
+            "example"
+          ]
+        },
+        {
+          "id": 20,
+          "text": "Synthetic prompt beta",
+          "status": null,
+          "workspaceId": "example-workspace",
+          "aiSearchVolume": null,
+          "sourceMetadata": null,
+          "topic": null,
+          "tags": []
+        }
+      ]
+    },
+    "chats": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/chats",
+        "query": {
+          "limit": 20
+        }
+      },
+      "returnedCount": 2,
+      "completeness": "unknown",
+      "pagination": {},
+      "rows": [
+        {
+          "id": "chat-a",
+          "promptId": 10,
+          "question": "Synthetic question alpha?",
+          "aiModel": "synthetic-model-a",
+          "location": "Synthetic Location",
+          "sourceCount": 0,
+          "citationCount": 2,
+          "parsingStatus": "complete",
+          "createdAt": "2026-09-14T12:05:00.000Z"
+        },
+        {
+          "id": "chat-b",
+          "promptId": 20,
+          "question": "Synthetic question beta?",
+          "aiModel": "synthetic-model-b",
+          "sourceCount": null,
+          "citationCount": 0,
+          "parsingStatus": null,
+          "createdAt": "2026-09-14T12:06:00.000Z"
+        }
+      ]
+    },
+    "sources": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/sources",
+        "query": {
+          "limit": 20
+        }
+      },
+      "returnedCount": 2,
+      "completeness": "unknown",
+      "pagination": {},
+      "rows": [
+        {
+          "id": "source-a",
+          "domain": "reference.example.test",
+          "domainType": "synthetic",
+          "usage": "synthetic-usage",
+          "avgCitations": 0,
+          "urlCount": "2"
+        },
+        {
+          "id": "source-b",
+          "domain": "reference-two.example.test",
+          "domainType": "synthetic",
+          "usage": "synthetic-usage",
+          "avgCitations": null,
+          "urlCount": "0"
+        }
+      ]
+    },
+    "sourceUrls": {
+      "status": "success",
+      "request": {
+        "method": "GET",
+        "path": "/source-urls",
+        "query": {
+          "limit": 20
+        }
+      },
+      "returnedCount": 2,
+      "completeness": "unknown",
+      "pagination": {},
+      "rows": [
+        {
+          "id": "url-a",
+          "sourceUrl": "https://reference.example.test/a",
+          "sourceDomain": "reference.example.test",
+          "domainType": "synthetic",
+          "urlType": "page",
+          "totalUsage": 0,
+          "totalCitations": 3,
+          "uniqueChats": 1,
+          "usagePercentage": 0,
+          "lastUpdated": "2026-09-14T12:00:00.000Z",
+          "brandIds": [
+            "opaque-brand-a"
+          ],
+          "isAnalyzed": true
+        },
+        {
+          "id": "url-b",
+          "sourceUrl": "https://reference-two.example.test/b",
+          "sourceDomain": "reference-two.example.test",
+          "domainType": "synthetic",
+          "urlType": "page",
+          "totalUsage": null,
+          "totalCitations": 0,
+          "uniqueChats": null,
+          "usagePercentage": 5.5,
+          "lastUpdated": null,
+          "brandIds": [],
+          "isAnalyzed": false
+        }
+      ]
+    }
+  }
+}

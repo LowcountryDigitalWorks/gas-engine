@@ -4,13 +4,13 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, correlate observations, prioritize work, support human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current status: Releases 0.1–0.5 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence; it does not execute scanners, access WQT/provider networks, issue tenant authority, or deploy anything.
+**Current status: Releases 0.1–0.5 are accepted and merged on `main`; Release 0.6 is a draft candidate under independent review.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. The Release 0.6 candidate adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything.
 
 The intended operating lifecycle is:
 
 > OBSERVE → NORMALIZE → CORRELATE → PRIORITIZE → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, and Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
+The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams, and the Release 0.6 candidate deterministically maps an already-sanitized ZeroRank artifact into five endpoint-specific `zerorank` collection streams. There is no provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
 
 ## Initial proof and principles
 
@@ -51,6 +51,8 @@ Read the [ingestion guide](docs/ingestion.md) for the sole authenticated princip
 
 Read the [WQT adapter guide](docs/adapters/wqt.md) for accepted Release 0.5's exact supported WQT contract, trusted-config boundary, provider/source/observation mapping, timezone policy, deterministic identity/integrity, and byte-aware multipart packing. The adapter consumes normalized bytes only and has no WQT runtime/network dependency.
 
+Read the [ZeroRank adapter guide](docs/adapters/zerorank.md) for Release 0.6 candidate parsing of the exact sanitized v1/minor0 artifact, trusted-config boundary, endpoint-specific completeness/failure mapping, runtime-type-aware observation mapping, deterministic identity/provenance, and bounded multipart packing. The candidate consumes sanitized bytes only and has no ZeroRank/Activepieces runtime or network dependency.
+
 ## Documentation
 
 - [Architecture and system boundaries](docs/architecture.md)
@@ -63,6 +65,8 @@ Read the [WQT adapter guide](docs/adapters/wqt.md) for accepted Release 0.5's ex
 - [Authenticated ingestion boundary decision](docs/decisions/0003-authenticated-ingestion-boundary.md)
 - [WQT normalized-evidence adapter](docs/adapters/wqt.md)
 - [WQT adapter decision](docs/decisions/0004-wqt-normalized-evidence-adapter.md)
+- [ZeroRank sanitized-evidence adapter](docs/adapters/zerorank.md)
+- [ZeroRank adapter decision](docs/decisions/0005-zerorank-sanitized-evidence-adapter.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
