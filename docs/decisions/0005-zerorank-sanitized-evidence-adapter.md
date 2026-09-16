@@ -1,7 +1,8 @@
 # ADR 0005 — Adapt sanitized ZeroRank evidence; keep sensing and credentials upstream
 
-- Status: Proposed candidate — Release 0.6
+- Status: Accepted — Release 0.6
 - Date: 2026-09-15
+- Accepted on `main`: `016730cd17059a47af613fe127a192865f598da4`
 - Decision scope: bounded ZeroRank sanitized-evidence adapter proof
 
 ## Context
@@ -20,6 +21,7 @@ The adapter:
 - uses strict closed structural schemas for all closed Step 9 surfaces while retaining only the four explicitly open nested passthrough values as opaque JSON evidence;
 - validates exact hardcoded request metadata so source API path/day/limit drift fails closed;
 - treats artifact workspace and target as match data, never authority;
+- reconciles successful endpoint workspace `id` and optional `name` projections with root `workspace` before trusted workspace matching;
 - requires usable unique stable row IDs and normalizes row order deterministically;
 - splits the artifact into five endpoint collections under provider `zerorank`;
 - maps only the Issue #9-approved vendor fields after exact runtime JSON type checks and never coerces scalar values;
