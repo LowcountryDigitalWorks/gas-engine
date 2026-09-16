@@ -26,6 +26,8 @@ Absence is meaningful only inside the same semantic collection stream. Before ob
 
 The baseline source period must not be after the current source period. An incompatible pair fails with bounded `collection_discontinuity`; completeness is never used to infer appearance or disappearance across that discontinuity. For example, ZeroRank rankings and ZeroRank chats are different collection streams even when they share a provider connection.
 
+For repository-backed comparison, both collection records must also have **complete persisted multipart progress** before observations are read. Canonical collection completeness and persisted multipart completion are deliberately different concepts in accepted persistence. A collection visible after only an early part is not a safe longitudinal snapshot even when its canonical completeness field says `complete`; Release 0.7 fails that service request as `invalid_snapshot` rather than treating not-yet-persisted observations as absent.
+
 ## Exact cohort matching
 
 After collection compatibility is proven, the sole observation match key is the accepted `cohortIdentityHash(observation.cohort)`. That identity includes cohort ID/revision and the full semantic context: scope, subject, metric, declared dimensions, method, and time-window rules. Omitted dimensions are not wildcards.
@@ -86,13 +88,14 @@ The existing general `listObservations` read remains capped at 100 records. A `c
 
 ## Tenant-safe read service
 
-`diffEvidenceCollections` accepts only two collection identifiers plus an already-issued trusted `TenantContext`. Collection IDs are selectors, never authority. The service performs only:
+`diffEvidenceCollections` accepts only two collection identifiers plus an already-issued trusted `TenantContext`. Collection IDs are selectors, never authority. The service performs only existing tenant-scoped reads and pure comparison:
 
 1. `getCollection(context, baselineCollectionId)`;
 2. `getCollection(context, currentCollectionId)`;
-3. collection compatibility validation;
-4. `listObservations(context, { collectionId })` for each compatible collection;
-5. pure comparison.
+3. collection semantic compatibility validation;
+4. `getCollectionProgress(context, collectionId)` for both sides and require persisted completion;
+5. `listObservations(context, { collectionId })` for each compatible, fully persisted collection;
+6. pure comparison.
 
 There is no tenant-authority issuer import, repository write call, persistence of the report, HTTP route, provider/runtime call, or SQLite-specific logic in the analysis module. Existing tenant-scoped repository reads ensure a Beta context cannot resolve Alpha collections.
 
