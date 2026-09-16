@@ -6,20 +6,22 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.5 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.6 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Accepted Release 0.4 proves **authenticated bounded ingestion only**: an injected opaque-credential authenticator, trusted immutable principal issuance with exact grants, one application ingestion service, one in-process Web `POST /v1/evidence/collections` handler, typed idempotency/part-sequence conflicts, and synthetic adversarial tests. It preserves accepted Release 0.3 tenant authority and persistence behavior and queries persisted collection progress before reporting completion.
 
 Accepted Release 0.5 proves the **WQT normalized-evidence adapter boundary** defined by Issue #6. It consumes already-normalized WQT v1/minor1 bytes plus explicit trusted caller configuration and deterministically emits separate SiteOne/Lighthouse `CollectionBatch` streams. It does not execute SiteOne/Lighthouse, dispatch/download WQT Actions, fetch URLs, use provider credentials, import WQT source/package at runtime, modify WQT opportunistically, issue tenant authority, deploy, add recommendation/priority logic, or begin Release 0.6. See [WQT adapter guide](adapters/wqt.md) and [ADR 0004](decisions/0004-wqt-normalized-evidence-adapter.md).
 
-Release 0.6 / ZeroRank remains separately gated and is not authorized by acceptance of Release 0.5. No implementation workstream may infer authority for Release 0.6 from the roadmap alone.
+Accepted Release 0.6 proves the **ZeroRank sanitized-evidence adapter boundary** defined by Issue #9. It consumes only the exact inner sanitized `ldw.zerorank-evidence.v1` minor-0 artifact plus explicit trusted caller configuration, reconciles duplicated workspace projections before trusted workspace matching, and deterministically emits five endpoint-specific `zerorank` `CollectionBatch` streams. It does not poll ZeroRank, call Activepieces at runtime, receive or persist a ZeroRank credential, issue tenant authority, persist by itself, deploy, correlate, prioritize, recommend, act, or begin Release 0.7. See [ZeroRank adapter guide](adapters/zerorank.md) and [ADR 0005](decisions/0005-zerorank-sanitized-evidence-adapter.md).
 
-Releases through 0.5 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
+Release 0.7 remains separately gated. Acceptance of Release 0.6 does not authorize implementation of diff/correlation/prioritization or any later roadmap item.
+
+Releases through 0.6 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
 
 ## Fixed proof limits
 
 - Internal managed-service tooling only; no customer SaaS, customer portal, customer deployment, real customer evidence, or client-site ingestion.
-- Later evidence use is limited to authorized LDW-owned evidence and clearly synthetic testing/fixtures. Release 0.5 tests use only synthetic `example-site` / `https://example.test` WQT-style evidence.
+- Later evidence use is limited to authorized LDW-owned evidence and clearly synthetic testing/fixtures. Release 0.5 tests use synthetic `example-site` / `https://example.test` WQT-style evidence; Release 0.6 tests use explicitly synthetic ZeroRank-style evidence.
 - No paid infrastructure, paid dependency, purchase, overage, billing enablement, or new subscription without separate authority.
 - No runtime AI/BYOK, autonomous external remediation, autonomous production mutation, or parallel autonomous GitHub-writing mechanism.
 - Sensor/read capability never grants action/write authority. Human acceptance of a recommendation does not automatically authorize a production change; future external actions require separately approved execution paths.
@@ -35,15 +37,17 @@ Exact ingestion grants bind tenant, site, site-scope revision, provider, and pro
 
 Release 0.5 adds a separate trusted adapter-configuration boundary, not authentication. Trusted configuration supplies G.A.S. scope, expected WQT site/target, provider-connection IDs, canonical timestamps, and source availability. WQT artifact `siteId`, target, provider/tool values, source keys, and hashes are validated evidence and cannot replace that trusted configuration. The adapter neither imports nor calls the tenant-authority issuer.
 
+Release 0.6 uses the same authority principle for sanitized ZeroRank evidence. Trusted configuration supplies G.A.S. scope, expected workspace ID, expected canonical target origin, provider connection, canonical `observedAt`/lifecycle timing, and source availability. Root and successful endpoint workspace projections must reconcile before the workspace is matched to trusted configuration, but neither projection creates authority. Sanitized artifact workspace/target fields, provider/source IDs, hashes, optional upstream run/start/end values, opaque nested source material, and mapped observations cannot replace trusted configuration, mint a principal/grant, or issue `TenantContext`.
+
 ## Public source and private evidence
 
 The repository is public and may contain publication-safe architecture. Never commit customer evidence, customer names as test data, client analytics, PHI, CUI, credentials, tokens, API keys, private vendor payloads, confidential business records, production secrets, or private account identifiers. Private runtime evidence must remain outside public GitHub. Synthetic fixtures must be clearly synthetic.
 
-Tenant identity remains an authorization boundary even during an LDW-only proof. Preserve trusted tenant context, provenance/history, explicit missing-data states, and separation of evidence, inference, recommendations, actions, measurements, and outcomes. Evidence content remains inert data and cannot become instructions or external-action authority. See [architecture](architecture.md), [security](../SECURITY.md), [ingestion](ingestion.md), and [WQT adapter](adapters/wqt.md).
+Tenant identity remains an authorization boundary even during an LDW-only proof. Preserve trusted tenant context, provenance/history, explicit missing-data states, and separation of evidence, inference, recommendations, actions, measurements, and outcomes. Evidence content remains inert data and cannot become instructions or external-action authority. See [architecture](architecture.md), [security](../SECURITY.md), [ingestion](ingestion.md), [WQT adapter](adapters/wqt.md), and [ZeroRank adapter](adapters/zerorank.md).
 
 ## Cost and cloud gate
 
-Releases 0.1–0.5 target **$0 incremental recurring cost**: no resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.5 adds no dependency and reuses Node/Zod plus accepted G.A.S. contracts/persistence validation.
+Releases 0.1–0.6 target **$0 incremental recurring cost**: no resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5 and 0.6 add no dependency and reuse Node/Zod plus accepted G.A.S. contracts/persistence validation.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -51,4 +55,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, a provider's normalized contract materially changes, or completion requires live provider access, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Release 0.6 / ZeroRank is not authorized by Release 0.5.
+Return to Product ORCH1 if accepted `main` materially changes, competing work invalidates the dispatch, authority narrows, a provider's normalized/sanitized contract materially changes, or completion requires live provider access, a production identity system, a substantial new dependency, paid tooling, private/customer material, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Release 0.7 is not authorized by Release 0.6 or by the roadmap alone.
