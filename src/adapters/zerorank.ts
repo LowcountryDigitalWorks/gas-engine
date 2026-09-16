@@ -247,7 +247,7 @@ const rankingsEndpointSchema = listEndpointSchema(rankingsRequestSchema, ranking
 const promptsEndpointSchema = listEndpointSchema(promptsRequestSchema, promptRowSchema, promptPaginationSchema);
 const chatsEndpointSchema = listEndpointSchema(chatsRequestSchema, chatRowSchema, emptyPaginationSchema);
 const sourcesEndpointSchema = listEndpointSchema(sourcesRequestSchema, sourceRowSchema, emptyPaginationSchema);
-const sourceUrlsEndpointSchema = listEndpointSchema(sourceUrlsRequestSchema, sourceUrlRowSchema, promptPaginationSchema);
+const sourceUrlsEndpointSchema = listEndpointSchema(sourceUrlsRequestSchema, sourceUrlRowSchema, emptyPaginationSchema);
 
 const artifactSchema = z.strictObject({
   schemaVersion: z.string().min(1).max(128),
