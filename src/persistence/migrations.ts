@@ -3,7 +3,7 @@ import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
 
 // Migration numbers describe storage layout, not a new evidence contract version.
 const historyTable = 'CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, checksum TEXT NOT NULL) STRICT';
-const migration = `
+const migration1 = `
 CREATE TABLE tenants (
   tenant_id TEXT PRIMARY KEY NOT NULL
 ) STRICT;
@@ -110,7 +110,95 @@ CREATE INDEX observations_by_site ON observations(tenant_id, site_id, id);
 CREATE INDEX observations_by_provider ON observations(tenant_id, provider_id, id);
 `;
 
-const checksum = hashCanonicalJson(migration);
+// Release 0.8 adds only the bounded human-review / measurement / outcome ledger.
+// Canonical wire contracts remain schemaVersion 1.0; this is a local storage migration.
+const migration2 = `
+CREATE TABLE recommendation_revisions (
+  tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+  revision INTEGER NOT NULL CHECK (revision BETWEEN 1 AND 100),
+  site_id TEXT NOT NULL, scope_revision_id TEXT NOT NULL,
+  lifecycle TEXT NOT NULL CHECK (lifecycle IN ('proposed', 'in_review', 'accepted', 'rejected', 'superseded')),
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  contract_version TEXT NOT NULL CHECK (contract_version = '1.0'),
+  payload TEXT NOT NULL CHECK (json_valid(payload) AND length(CAST(payload AS BLOB)) <= 65536),
+  payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
+  PRIMARY KEY (tenant_id, id, revision),
+  FOREIGN KEY (tenant_id, site_id, scope_revision_id)
+    REFERENCES site_scopes(tenant_id, site_id, scope_revision_id),
+  CHECK (json_extract(payload, '$.schemaVersion') IS contract_version),
+  CHECK (json_extract(payload, '$.kind') IS 'recommendation'),
+  CHECK (json_extract(payload, '$.id') IS id),
+  CHECK (json_extract(payload, '$.revision') IS revision),
+  CHECK (json_extract(payload, '$.scope.tenantId') IS tenant_id),
+  CHECK (json_extract(payload, '$.scope.siteId') IS site_id),
+  CHECK (json_extract(payload, '$.scope.siteScopeRevisionId') IS scope_revision_id),
+  CHECK (json_extract(payload, '$.lifecycle') IS lifecycle),
+  CHECK (json_extract(payload, '$.createdAt') IS created_at),
+  CHECK (json_extract(payload, '$.updatedAt') IS updated_at)
+) STRICT;
+CREATE INDEX recommendation_current_lookup
+  ON recommendation_revisions(tenant_id, site_id, scope_revision_id, id, revision DESC);
+CREATE INDEX recommendation_by_lifecycle
+  ON recommendation_revisions(tenant_id, site_id, scope_revision_id, lifecycle, id, revision DESC);
+
+CREATE TABLE measurements (
+  tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+  site_id TEXT NOT NULL, scope_revision_id TEXT NOT NULL,
+  recommendation_id TEXT,
+  relationship_role TEXT NOT NULL CHECK (relationship_role IN ('baseline', 'follow_up')),
+  baseline_measurement_id TEXT,
+  created_at TEXT NOT NULL,
+  contract_version TEXT NOT NULL CHECK (contract_version = '1.0'),
+  payload TEXT NOT NULL CHECK (json_valid(payload) AND length(CAST(payload AS BLOB)) <= 65536),
+  payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, site_id, scope_revision_id)
+    REFERENCES site_scopes(tenant_id, site_id, scope_revision_id),
+  FOREIGN KEY (tenant_id, baseline_measurement_id)
+    REFERENCES measurements(tenant_id, id),
+  CHECK ((relationship_role = 'baseline' AND baseline_measurement_id IS NULL)
+    OR (relationship_role = 'follow_up' AND baseline_measurement_id IS NOT NULL)),
+  CHECK (json_extract(payload, '$.schemaVersion') IS contract_version),
+  CHECK (json_extract(payload, '$.kind') IS 'measurement'),
+  CHECK (json_extract(payload, '$.id') IS id),
+  CHECK (json_extract(payload, '$.cohort.context.scope.tenantId') IS tenant_id),
+  CHECK (json_extract(payload, '$.cohort.context.scope.siteId') IS site_id),
+  CHECK (json_extract(payload, '$.cohort.context.scope.siteScopeRevisionId') IS scope_revision_id),
+  CHECK (json_extract(payload, '$.relationship.role') IS relationship_role),
+  CHECK (json_extract(payload, '$.relationship.baselineMeasurementId') IS baseline_measurement_id),
+  CHECK (json_extract(payload, '$.createdAt') IS created_at)
+) STRICT;
+CREATE INDEX measurements_by_scope ON measurements(tenant_id, site_id, scope_revision_id, created_at, id);
+CREATE INDEX measurements_by_recommendation
+  ON measurements(tenant_id, site_id, scope_revision_id, recommendation_id, created_at, id);
+
+CREATE TABLE outcomes (
+  tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+  site_id TEXT NOT NULL, scope_revision_id TEXT NOT NULL,
+  recommendation_id TEXT,
+  created_at TEXT NOT NULL,
+  contract_version TEXT NOT NULL CHECK (contract_version = '1.0'),
+  payload TEXT NOT NULL CHECK (json_valid(payload) AND length(CAST(payload AS BLOB)) <= 65536),
+  payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, site_id, scope_revision_id)
+    REFERENCES site_scopes(tenant_id, site_id, scope_revision_id),
+  CHECK (json_extract(payload, '$.schemaVersion') IS contract_version),
+  CHECK (json_extract(payload, '$.kind') IS 'outcome'),
+  CHECK (json_extract(payload, '$.id') IS id),
+  CHECK (json_extract(payload, '$.scope.tenantId') IS tenant_id),
+  CHECK (json_extract(payload, '$.scope.siteId') IS site_id),
+  CHECK (json_extract(payload, '$.scope.siteScopeRevisionId') IS scope_revision_id),
+  CHECK (json_extract(payload, '$.recommendationId') IS recommendation_id),
+  CHECK (json_extract(payload, '$.createdAt') IS created_at)
+) STRICT;
+CREATE INDEX outcomes_by_scope ON outcomes(tenant_id, site_id, scope_revision_id, created_at, id);
+CREATE INDEX outcomes_by_recommendation
+  ON outcomes(tenant_id, site_id, scope_revision_id, recommendation_id, created_at, id);
+`;
+
+const migration1Checksum = hashCanonicalJson(migration1);
+const migration2Checksum = hashCanonicalJson(migration2);
 
 /** Bounded per-part request limits. A collection admits at most PARTS * SOURCES sources. */
 export const STORAGE_BOUNDS = { parts: 64, sourcesPerPart: 16, observationsPerPart: 32 } as const;
@@ -130,14 +218,7 @@ function pragma(db: DatabaseSync, name: string, argument: string): Record<string
   return db.prepare(`PRAGMA ${name}(${argument})`).all();
 }
 
-/**
- * The complete live user schema: every user object's exact DDL plus the resolved
- * column, index, and foreign-key definitions SQLite actually enforces. Names alone
- * are insufficient; `ALTER TABLE` rewrites stored DDL and PRAGMA output alike, and
- * unexpected views/triggers/indexes appear as extra objects. Internal `sqlite_*`
- * objects are omitted: they are SQLite-managed and fully determined by the user DDL
- * that is already compared verbatim.
- */
+/** Exact live user schema including resolved SQLite definitions. */
 function userSchema(db: DatabaseSync): unknown {
   const objects = db.prepare(`SELECT type, name, tbl_name, sql FROM sqlite_schema
     WHERE name NOT LIKE 'sqlite~_%' ESCAPE '~' ORDER BY type, name, tbl_name`).all()
@@ -160,49 +241,62 @@ function userSchema(db: DatabaseSync): unknown {
   };
 }
 
-function applySchema(db: DatabaseSync): void {
+function applyMigration1(db: DatabaseSync): void {
   db.exec(historyTable);
-  db.exec(migration);
-  db.prepare('INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)').run(1, checksum);
+  db.exec(migration1);
+  db.prepare('INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)').run(1, migration1Checksum);
   db.exec('PRAGMA user_version = 1');
 }
-
-// Built once from the migration itself, so changing the migration automatically
-// changes what an existing database must match. There is no second hand-maintained
-// inventory to drift out of step.
-let expected: string | undefined;
-function expectedUserSchema(): string {
-  if (expected === undefined) {
-    const reference = new DatabaseSync(':memory:');
-    try {
-      applySchema(reference);
-      expected = canonicalJson(userSchema(reference));
-    } finally { reference.close(); }
-  }
-  return expected;
+function applyMigration2(db: DatabaseSync): void {
+  db.exec(migration2);
+  db.prepare('INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)').run(2, migration2Checksum);
+  db.exec('PRAGMA user_version = 2');
 }
 
-function requireExpectedUserSchema(db: DatabaseSync): void {
+const expected = new Map<number, string>();
+function expectedUserSchema(version: 1 | 2): string {
+  const prior = expected.get(version);
+  if (prior !== undefined) return prior;
+  const reference = new DatabaseSync(':memory:');
+  try {
+    applyMigration1(reference);
+    if (version === 2) applyMigration2(reference);
+    const value = canonicalJson(userSchema(reference));
+    expected.set(version, value);
+    return value;
+  } finally { reference.close(); }
+}
+
+function requireExpectedUserSchema(db: DatabaseSync, version: 1 | 2): void {
   const actual = canonicalJson(userSchema(db));
-  if (actual === expectedUserSchema()) return;
+  if (actual === expectedUserSchema(version)) return;
   const live = new Set(db.prepare(`SELECT type || ':' || name AS object FROM sqlite_schema
     WHERE name NOT LIKE 'sqlite~_%' ESCAPE '~'`).all().map((object) => String(object['object'])));
   const reference = new DatabaseSync(':memory:');
   let known: Set<string>;
   try {
-    applySchema(reference);
+    applyMigration1(reference);
+    if (version === 2) applyMigration2(reference);
     known = new Set(reference.prepare(`SELECT type || ':' || name AS object FROM sqlite_schema
       WHERE name NOT LIKE 'sqlite~_%' ESCAPE '~'`).all().map((object) => String(object['object'])));
   } finally { reference.close(); }
   const unexpected = [...live].filter((object) => !known.has(object)).sort();
   const missing = [...known].filter((object) => !live.has(object)).sort();
   const changed = unexpected.length === 0 && missing.length === 0 ? ' (an expected object was modified)' : '';
-  throw new Error(`Local database user schema differs from the expected Release 0.3 storage schema${changed}`
+  throw new Error(`Local database user schema differs from expected storage schema version ${version}${changed}`
     + `${unexpected.length ? `; unexpected: ${unexpected.slice(0, 8).join(', ')}` : ''}`
     + `${missing.length ? `; missing: ${missing.slice(0, 8).join(', ')}` : ''}`);
 }
 
-/** Administrative bootstrap only; never exposed through the repository API. */
+function requireHistory(db: DatabaseSync, version: 1 | 2): void {
+  const history = db.prepare('SELECT version, checksum FROM schema_migrations ORDER BY version').all();
+  const expectedHistory = version === 1
+    ? [{ version: 1, checksum: migration1Checksum }]
+    : [{ version: 1, checksum: migration1Checksum }, { version: 2, checksum: migration2Checksum }];
+  if (canonicalJson(history) !== canonicalJson(expectedHistory)) throw new Error('Local migration history/checksum mismatch');
+}
+
+/** Administrative bootstrap/upgrade only; never exposed through repository APIs. */
 export function migrateLocalDatabase(db: DatabaseSync): void {
   db.exec('PRAGMA foreign_keys = ON');
   if (db.prepare('PRAGMA foreign_keys').get()?.['foreign_keys'] !== 1) throw new Error('SQLite foreign keys are required');
@@ -211,13 +305,20 @@ export function migrateLocalDatabase(db: DatabaseSync): void {
     const objects = db.prepare("SELECT COUNT(*) AS count FROM sqlite_schema WHERE name NOT LIKE 'sqlite~_%' ESCAPE '~'").get()?.['count'];
     const version = db.prepare('PRAGMA user_version').get()?.['user_version'];
     if (objects === 0 && version === 0) {
-      applySchema(db);
+      applyMigration1(db);
+      applyMigration2(db);
+    } else if (version === 1) {
+      requireExpectedUserSchema(db, 1);
+      requireHistory(db, 1);
+      applyMigration2(db);
+    } else if (version === 2) {
+      requireExpectedUserSchema(db, 2);
+      requireHistory(db, 2);
     } else {
-      if (version !== 1) throw new Error('Unknown or incomplete local database schema');
-      requireExpectedUserSchema(db);
-      const history = db.prepare('SELECT version, checksum FROM schema_migrations').all();
-      if (history.length !== 1 || history[0]?.['version'] !== 1 || history[0]?.['checksum'] !== checksum) throw new Error('Local migration history/checksum mismatch');
+      throw new Error('Unknown or incomplete local database schema');
     }
+    requireExpectedUserSchema(db, 2);
+    requireHistory(db, 2);
     if (db.prepare('PRAGMA foreign_key_check').all().length) throw new Error('Local database has broken ownership references');
     db.exec('COMMIT');
   } catch (error) {
