@@ -194,6 +194,12 @@ export class LocalReviewLedgerRepository implements ReviewLedgerRepository {
         'Measurement recommendation is not present in the owning scope');
       }
       const baseline = record.relationship.role === 'follow_up' ? record.relationship.baselineMeasurementId : null;
+      if (baseline !== null) {
+        invariant(this.#db.prepare(`SELECT 1 AS present FROM measurements
+          WHERE tenant_id = ? AND site_id = ? AND scope_revision_id = ? AND id = ? LIMIT 1`)
+          .get(tenant, owner.siteId, owner.siteScopeRevisionId, baseline) !== undefined,
+        'Follow-up baseline measurement is not present in the owning scope');
+      }
       this.#db.prepare(`INSERT INTO measurements
         (tenant_id, id, site_id, scope_revision_id, recommendation_id, relationship_role, baseline_measurement_id,
          created_at, contract_version, payload, payload_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
