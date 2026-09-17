@@ -1,9 +1,7 @@
 import { z } from 'zod';
 import { identifier, revision, scope, timestamp } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
-import {
-  assertComparableMeasurements, compareCohorts, parseContract,
-} from '../domain/validate.js';
+import { assertComparableMeasurements, compareCohorts, parseContract } from '../domain/validate.js';
 import { canonicalJson } from '../lib/canonical-json.js';
 import type { EvidenceRepository, Scope } from '../persistence/repository.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
@@ -28,7 +26,6 @@ function invariant(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 function same(left: unknown, right: unknown): boolean { return canonicalJson(left) === canonicalJson(right); }
-function recommendationOwner(record: Contract<'recommendation'>): Scope { return record.scope; }
 function measurementOwner(record: Contract<'measurement'>): Scope { return record.cohort.context.scope; }
 
 async function resolveRecommendationEvidence(
@@ -156,9 +153,7 @@ export async function recordMeasurement(
     const baseline = await reviewRepository.getMeasurement(context, owner, measurement.relationship.baselineMeasurementId);
     invariant(baseline !== null, 'Follow-up baseline measurement not found in scope');
     invariant(baseline.record.createdAt <= measurement.createdAt, 'Follow-up cannot precede its baseline');
-    if (measurement.comparability.state === 'comparable') {
-      assertComparableMeasurements(baseline.record, measurement);
-    }
+    if (measurement.comparability.state === 'comparable') assertComparableMeasurements(baseline.record, measurement);
   }
   await reviewRepository.persistMeasurement(context, measurement, request.recommendationId);
   return measurement;

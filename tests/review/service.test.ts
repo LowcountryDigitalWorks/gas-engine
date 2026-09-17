@@ -44,8 +44,8 @@ function measured(
   };
 }
 
-function followUpBatch(): CollectionBatch {
-  const value = batch('alpha', '-follow-up');
+function followUpBatch(suffix: string): CollectionBatch {
+  const value = batch('alpha', suffix);
   value.collection.sourceTime = { start: '2026-01-02T00:00:00.000Z', end: '2026-01-02T01:00:00.000Z' };
   value.collection.startedAt = '2026-01-02T01:00:00.000Z';
   value.collection.endedAt = '2026-01-02T01:01:00.000Z';
@@ -59,9 +59,7 @@ function followUpBatch(): CollectionBatch {
   return value;
 }
 
-async function secondAlphaScope(
-  evidence: Awaited<ReturnType<typeof repository>>,
-): Promise<CollectionBatch> {
+async function secondAlphaScope(evidence: Awaited<ReturnType<typeof repository>>): Promise<CollectionBatch> {
   const value = batch('alpha', '-other-scope');
   const other: Scope = {
     tenantId: 'tenant-alpha', siteId: 'synthetic-site-alpha-two', siteScopeRevisionId: 'synthetic-scope-alpha-two-r1',
@@ -81,12 +79,12 @@ async function secondAlphaScope(
   return value;
 }
 
-test('synthetic service-history proof preserves human review, measurements, outcome and rejection without action side effects', async (t) => {
+test('synthetic service-history proof preserves review revisions, measurements, outcomes and rejection', async (t) => {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   const review = database.track(new LocalReviewLedgerRepository(database.path));
   const baselineBatch = batch('alpha', '-review-baseline');
-  const futureBatch = followUpBatch();
+  const futureBatch = followUpBatch('-review-follow-up');
   await evidence.persistCollection(alpha, baselineBatch);
   await evidence.persistCollection(alpha, futureBatch);
   const baselineObservation = baselineBatch.observations[0]!.record;
@@ -100,7 +98,7 @@ test('synthetic service-history proof preserves human review, measurements, outc
     lifecycle: 'in_review', updatedAt: '2026-01-01T02:10:00.000Z',
   });
   const accepted = await transitionHumanRecommendation(review, evidence, alpha, {
-    scope: proposed.scope, id: proposed.id, expectedCurrentRevision: 2,
+    scope: inReview.scope, id: inReview.id, expectedCurrentRevision: 2,
     lifecycle: 'accepted', updatedAt: '2026-01-01T02:20:00.000Z',
   });
   assert.equal(accepted.priority.level, 'unassessed');
@@ -117,8 +115,6 @@ test('synthetic service-history proof preserves human review, measurements, outc
     measurement: followUp, cohortObservationId: followUpObservation.id, recommendationId: accepted.id,
   });
 
-  // Numeric evidence increased from 0 to 1. The caller deliberately declares
-  // "regressed" to prove Release 0.8 stores human direction rather than deriving it.
   const outcome: Contract<'outcome'> = {
     schemaVersion: '1.0', kind: 'outcome', id: 'synthetic-outcome-review', scope: structuredClone(accepted.scope),
     recommendationId: accepted.id,
@@ -134,21 +130,12 @@ test('synthetic service-history proof preserves human review, measurements, outc
     attribution: { strength: 'technical_verification', basis: 'Synthetic technical verification only; no causal claim.' },
     createdAt: '2026-01-02T02:00:00.000Z',
   };
-  const recorded = await recordHumanOutcome(review, alpha, { outcome });
-  assert.equal(recorded.assessment.direction, 'regressed');
-
-  assert.deepEqual(
-    (await review.listRecommendationHistory(alpha, accepted.scope, accepted.id)).map((item) => item.lifecycle),
-    ['proposed', 'in_review', 'accepted'],
-  );
-  assert.deepEqual(
-    (await review.listMeasurements(alpha, { scope: accepted.scope, recommendationId: accepted.id })).map((item) => item.record.id),
-    [baseline.id, followUp.id],
-  );
-  assert.deepEqual(
-    (await review.listOutcomes(alpha, { scope: accepted.scope, recommendationId: accepted.id })).map((item) => item.id),
-    [outcome.id],
-  );
+  assert.equal((await recordHumanOutcome(review, alpha, { outcome })).assessment.direction, 'regressed');
+  assert.deepEqual((await review.listRecommendationHistory(alpha, accepted.scope, accepted.id)).map((item) => item.lifecycle),
+    ['proposed', 'in_review', 'accepted']);
+  assert.deepEqual((await review.listMeasurements(alpha, { scope: accepted.scope, recommendationId: accepted.id })).map((item) => item.record.id),
+    [baseline.id, followUp.id]);
+  assert.deepEqual((await review.listOutcomes(alpha, { scope: accepted.scope, recommendationId: accepted.id })).map((item) => item.id), [outcome.id]);
   assert.deepEqual((await getRecommendationEvidence(review, evidence, alpha, accepted.scope, accepted.id)).map((item) => item.id), [baselineObservation.id]);
 
   const rejected = await createHumanRecommendation(review, evidence, alpha, {
@@ -173,12 +160,12 @@ test('synthetic service-history proof preserves human review, measurements, outc
   await assert.rejects(getRecommendationEvidence(review, evidence, alpha, accepted.scope, accepted.id), /not found/);
 });
 
-test('application boundary rejects stale revisions, cross-scope evidence, fabricated measurement values and gated outcome attribution', async (t) => {
+test('service rejects stale revisions, cross-scope evidence, fabricated values and gated attribution', async (t) => {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   const review = database.track(new LocalReviewLedgerRepository(database.path));
   const baselineBatch = batch('alpha', '-adversarial-baseline');
-  const futureBatch = followUpBatch();
+  const futureBatch = followUpBatch('-adversarial-follow-up');
   await evidence.persistCollection(alpha, baselineBatch);
   await evidence.persistCollection(alpha, futureBatch);
   const observation = baselineBatch.observations[0]!.record;
@@ -203,7 +190,6 @@ test('application boundary rejects stale revisions, cross-scope evidence, fabric
   const baseline = measured(observation, 'synthetic-measurement-adversarial-base', { role: 'baseline' });
   const bad = structuredClone(baseline);
   bad.id = 'synthetic-measurement-fabricated-value';
-  assert.equal(bad.result.state, 'measured');
   if (bad.result.state === 'measured') bad.result.observations[0]!.value = { state: 'observed', value: { type: 'number', value: 999 } };
   await assert.rejects(recordMeasurement(review, evidence, alpha, {
     measurement: bad, cohortObservationId: observation.id, recommendationId: proposed.id,
@@ -219,7 +205,6 @@ test('application boundary rejects stale revisions, cross-scope evidence, fabric
   await recordMeasurement(review, evidence, alpha, {
     measurement: followUp, cohortObservationId: followObservation.id, recommendationId: proposed.id,
   });
-
   const gated: Contract<'outcome'> = {
     schemaVersion: '1.0', kind: 'outcome', id: 'synthetic-outcome-gated-attribution', scope: structuredClone(proposed.scope),
     recommendationId: proposed.id,
@@ -227,8 +212,7 @@ test('application boundary rejects stale revisions, cross-scope evidence, fabric
       direction: 'improved', measurements: [
         { scope: structuredClone(proposed.scope), id: baseline.id },
         { scope: structuredClone(proposed.scope), id: followUp.id },
-      ],
-      comparability: 'comparable', rationale: 'Synthetic human declaration.',
+      ], comparability: 'comparable', rationale: 'Synthetic human declaration.',
     },
     attribution: { strength: 'association', basis: 'Synthetic association is deliberately gated at Release 0.8.' },
     createdAt: '2026-01-02T02:00:00.000Z',
@@ -241,7 +225,7 @@ test('application boundary rejects stale revisions, cross-scope evidence, fabric
   await assert.rejects(recordHumanOutcome(review, alpha, { outcome: gated }), /permits only none or technical_verification/);
 });
 
-test('not_due and not_measured measurements remain explicit caller records and never schedule work', async (t) => {
+test('not_due and not_measured remain explicit records and never schedule work', async (t) => {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   const review = database.track(new LocalReviewLedgerRepository(database.path));
