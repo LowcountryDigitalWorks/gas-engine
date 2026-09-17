@@ -1,8 +1,8 @@
 # ADR 0006 — Deterministic longitudinal evidence diff
 
-- **Status:** Proposed Release 0.7 candidate
+- **Status:** Accepted
 - **Decision owner:** Product ORCH1
-- **Authority:** Issue #12 — Release 0.7 deterministic longitudinal evidence delta proof — AUTHORIZED
+- **Authority:** Issue #12 — Release 0.7 deterministic longitudinal evidence delta proof — AUTHORIZED / ACCEPTED
 
 ## Context
 
@@ -60,4 +60,4 @@ A future durable diff contract, correlation model, recommendation policy, UI, or
 
 ## Acceptance
 
-This ADR remains proposed until Product ORCH1 freezes the exact Release 0.7 candidate, reconciles independent review, and accepts the release. Development does not self-accept or merge it.
+Product ORCH1 accepted Release 0.7 after exact-head review, independent review, correction of the atomic persisted-snapshot consistency defect, a documentation-only correction identified by independent review, and final green Contracts validation. Accepted implementation merge: `9810476ecf66da6af9b976ce5ec1b85703238966`, tree `5d9640cd36f4b2d5eaa70ebe2c459e3bdb87b299`. Post-merge Contracts run `35166092709` / #85 succeeded. Release 0.8 remains separately gated and unimplemented.
