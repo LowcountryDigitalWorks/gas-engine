@@ -1,8 +1,8 @@
-# Deterministic longitudinal evidence diff — Release 0.7 draft
+# Deterministic longitudinal evidence diff — accepted Release 0.7
 
-Release 0.7 is an **application-local deterministic comparison proof** over already-canonical G.A.S. collections and observations. It is intended to reduce recurring operator reconciliation work by separating unchanged evidence from changed or coverage-uncertain evidence without inventing direction, severity, business impact, recommendation priority, inference, or action.
+Release 0.7 is an **accepted application-local deterministic comparison proof** over already-canonical G.A.S. collections and observations. It is intended to reduce recurring operator reconciliation work by separating unchanged evidence from changed or coverage-uncertain evidence without inventing direction, severity, business impact, recommendation priority, inference, or action.
 
-This document describes a **draft candidate under Issue #12**. Release 0.7 is not accepted until Product ORCH1 completes exact-head review, independent review, and the normal release gate.
+Release 0.7 was accepted by Product ORCH1 after exact-head review, independent review, the required atomic persisted-snapshot correction, and final documentation reconciliation. The accepted implementation remains deliberately narrower than broad correlation or prioritization.
 
 ## Public application API
 
@@ -88,7 +88,7 @@ Accepted adapters fit inside that ceiling:
 
 The byte-aware 64 KiB part limit can make an actual adapter collection smaller; these are count ceilings, not guaranteed payload capacities. A snapshot above 2,048 fails explicitly; there is no truncation, sampling, hidden paging, or dropped observation.
 
-The accepted general `listObservations(...)` behavior remains uniformly capped at **100 records**, including when a `collectionId` filter is supplied. Release 0.7's larger 2,048 capacity now exists only on the dedicated `getCollectionSnapshot(...)` read, which performs `limit + 1` overflow detection inside the same deferred transaction that resolves collection metadata and persisted progress.
+The accepted general `listObservations(...)` behavior remains uniformly capped at **100 records**, including when a `collectionId` filter is supplied. Release 0.7's larger 2,048 capacity exists only on the dedicated `getCollectionSnapshot(...)` read, which performs `limit + 1` overflow detection inside the same deferred transaction that resolves collection metadata and persisted progress.
 
 ## Tenant-safe read service
 

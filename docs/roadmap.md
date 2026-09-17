@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.6 are accepted and merged. Release 0.7 has a separately authorized **draft candidate** under Issue #12; Release 0.7 is not accepted until Product ORCH1 completes its release gate. Later releases remain unimplemented and separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.7 are accepted and merged. Later releases remain unimplemented and separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -10,18 +10,18 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.4 | Accepted: authenticated bounded ingestion with opaque injected authentication, exact grants, one-part transport, typed part conflicts, and persisted-progress responses. See [ingestion guide](ingestion.md). |
 | 0.5 | Accepted: deterministic WQT normalized-evidence adapter; consume WQT v1/minor1 bytes plus trusted configuration, split SiteOne/Lighthouse provider streams, preserve provenance/missingness, and pack accepted bounded parts without rebuilding scanners or using provider networking. See [WQT adapter guide](adapters/wqt.md). |
 | 0.6 | Accepted: deterministic sanitized ZeroRank evidence adapter; consume exact v1/minor0 inner artifact bytes plus trusted configuration, reconcile workspace projections, split five endpoint-specific `zerorank` streams, preserve failed/unknown completeness semantics, and pack accepted bounded parts without provider networking or credentials. See [ZeroRank adapter guide](adapters/zerorank.md). |
-| 0.7 | **Authorized draft candidate only:** deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention classification. Exact cohort identity, exact value/missing-state transitions, conservative completeness-aware absence semantics, no persistence of diff output, and no cross-provider correlation or prioritization. See [diff guide](analysis/diff.md). |
+| 0.7 | Accepted: deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering. Uses tenant-scoped atomic collection snapshots, exact cohort identity, exact value/missing-state transitions, conservative completeness-aware absence semantics, application-local output, and no cross-provider correlation or prioritization. See [diff guide](analysis/diff.md). |
 | 0.8 | Proposed only: recommendation, human review, and measurement lifecycle, including outcome history and separate execution authority. |
 | 0.9 | Proposed only: compact LDW operator UI and report preview for the bounded proof. |
 | 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
 
 ## Release 0.7 narrowing decision
 
-The earlier shorthand “diff, correlation, prioritization” was broader than current evidence semantics justify. Accepted canonical metrics do not define universal direction, severity, materiality, business impact, or recommendation priority. Release 0.7 therefore proves only deterministic longitudinal diff and review-attention filtering. Correlation and prioritization remain deferred until a later separately authorized release has evidence and explicit policy sufficient to define them without inventing meaning.
+The earlier shorthand “diff, correlation, prioritization” was broader than current evidence semantics justify. Accepted canonical metrics do not define universal direction, severity, materiality, business impact, or recommendation priority. Accepted Release 0.7 therefore implements only deterministic longitudinal diff and review-attention filtering. Correlation and prioritization remain deferred until a later separately authorized release has evidence and explicit policy sufficient to define them without inventing meaning.
 
 ## Gates and evaluation
 
-Releases 0.1–0.6 are accepted on `main`. The Release 0.7 draft requires exact-head review, independent review, and Product ORCH1 acceptance before it becomes accepted. Releases 0.8–0.9 require their own bounded sequencing, implementation, independent review, and Product ORCH1 acceptance even though Portfolio has delegated authority for the internal $0 proof. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.7 are accepted on `main`. Releases 0.8–0.9 require their own bounded sequencing, implementation, independent review, and Product ORCH1 acceptance even though Portfolio has delegated authority for the internal $0 proof. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Future functional releases require adversarial synthetic second-tenant testing for every newly implemented owned surface. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
