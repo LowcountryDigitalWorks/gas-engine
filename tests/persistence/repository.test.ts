@@ -39,7 +39,7 @@ test('every tenant-owned public method rejects absent, forged, cloned and proxie
     getSource: [value.sources[0]!.id], findSource: [sourceContext(value), value.collection.id, value.sources[0]!.record.identity.sourceRecordId],
     getObservation: [value.observations[0]!.record.id], listObservations: [{}], getObservations: [[value.observations[0]!.record.id]],
     getObservationEvidence: [value.observations[0]!.record.id], deleteCollection: [value.collection.id],
-    getCollectionProgress: [value.collection.id],
+    getCollectionProgress: [value.collection.id], getCollectionSnapshot: [value.collection.id],
   };
   assert.deepEqual(Object.getOwnPropertyNames(LocalEvidenceRepository.prototype).filter((key) => !['constructor', 'close'].includes(key)).sort(), Object.keys(calls).sort());
   const methods = repo as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>;
