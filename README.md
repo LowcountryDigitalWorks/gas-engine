@@ -2,21 +2,23 @@
 
 **Generative / Answer / Search** — LDW-operated internal managed-service enabling infrastructure.
 
-G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, compare longitudinal observations, support later separately authorized analysis/recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
+G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, compare longitudinal observations, support explicitly human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
 **Current accepted baseline: Releases 0.1–0.7 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
+
+**Release 0.8 is currently an authorized draft candidate under Issue #15 and is not accepted or merged.** The candidate adds provider-neutral, evidence-linked human review history plus an explicit measurement/outcome ledger. Recommendations are human/trusted-caller authored only, priority remains `unassessed`, measurements resolve selected canonical observations, outcome direction is human-declared, and accepted recommendations create no action authority. See the [Release 0.8 review-ledger guide](docs/review-ledger.md) and [proposed ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md).
 
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams, Release 0.6 deterministically maps an already-sanitized ZeroRank artifact into five endpoint-specific `zerorank` collection streams, and Release 0.7 deterministically compares compatible longitudinal collection snapshots while separating unchanged evidence from changed or coverage-uncertain evidence. There is no cross-provider correlation engine, prioritization policy, provider networking, production identity provider, network listener, operator UI, external execution, or deployment.
+The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams, Release 0.6 deterministically maps an already-sanitized ZeroRank artifact into five endpoint-specific `zerorank` collection streams, and Release 0.7 deterministically compares compatible longitudinal collection snapshots while separating unchanged evidence from changed or coverage-uncertain evidence. The Release 0.8 draft candidate records human-authored recommendation revision history plus explicit measurements and human-declared outcomes. There is still no cross-provider correlation engine, automated prioritization policy, provider networking, production identity provider, network listener, operator UI, external execution, scheduler, runtime AI, or deployment.
 
 ## Initial proof and principles
 
-The future proof targets LDW's own public site, [lowcountrydigitalworks.com](https://lowcountrydigitalworks.com), using Website Quality Toolkit (WQT) and read-only ZeroRank evidence. A clearly synthetic second tenant is reserved for isolation testing.
+The proof targets LDW's own public site, [lowcountrydigitalworks.com](https://lowcountrydigitalworks.com), using Website Quality Toolkit (WQT) and read-only ZeroRank evidence. A clearly synthetic second tenant is reserved for isolation testing.
 
-- Build the LDW-specific evidence, provenance, recommendation, measurement, and outcome core; adapt replaceable sensors.
+- Build the LDW-specific evidence, provenance, human review, measurement, and outcome core; adapt replaceable sensors.
 - Preserve source evidence separately from normalized observations, derived inferences, recommendations, actions, measurements, and outcomes.
 - Treat tenant identity as an authorization boundary; a globally unique ID is not authorization.
 - Preserve observed zero as a value and missing-data states as distinct states.
@@ -30,7 +32,7 @@ This repository is **public**. Publication-safe architecture, contract code, and
 
 **No software license grant.** Public visibility does not itself grant an open-source license.
 
-Internal automation does not prove commercial demand. LDW's audit-first/service-first business model continues independently. This repository makes no public pricing, SLA, ranking, citation, traffic, lead, or time-savings guarantees.
+Internal automation does not prove commercial demand. LDW's audit-first/service-first business model continues independently. This repository makes no public pricing, SLA, ranking, citation, traffic, lead, causal-performance, or time-savings guarantees.
 
 ## Local validation
 
@@ -41,7 +43,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, and analysis tests, and JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, and review-ledger tests plus JSON Schema drift validation. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -53,7 +55,9 @@ Read the [WQT adapter guide](docs/adapters/wqt.md) for accepted Release 0.5's ex
 
 Read the [ZeroRank adapter guide](docs/adapters/zerorank.md) for accepted Release 0.6's exact sanitized v1/minor0 artifact contract, trusted-config boundary, workspace reconciliation, endpoint-specific completeness/failure mapping, runtime-type-aware observation mapping, deterministic identity/provenance, and bounded multipart packing. The adapter consumes sanitized bytes only and has no ZeroRank/Activepieces runtime or network dependency.
 
-Read the [longitudinal diff guide](docs/analysis/diff.md) for accepted Release 0.7: exact same-stream collection compatibility, cohort-hash matching, non-evaluative delta states, coverage/absence semantics, deterministic ordering, the 2,048-observation snapshot bound, tenant-safe atomic read service, and synthetic WQT/ZeroRank-style value proof. Release 0.7 does not implement correlation, prioritization, inference, recommendation, action, or Release 0.8.
+Read the [longitudinal diff guide](docs/analysis/diff.md) for accepted Release 0.7: exact same-stream collection compatibility, cohort-hash matching, non-evaluative delta states, coverage/absence semantics, deterministic ordering, the 2,048-observation snapshot bound, tenant-safe atomic read service, and synthetic WQT/ZeroRank-style value proof. Release 0.7 itself does not implement correlation, prioritization, inference, recommendation, action, or Release 0.8.
+
+Read the [Release 0.8 review-ledger guide](docs/review-ledger.md) for the authorized draft candidate: human-authored `internal_review` / `unassessed` recommendations, immutable lifecycle revisions, canonical observation resolution, bounded measurement/outcome history, local migration 2, human-declared outcome direction, and explicit no-action/no-network/no-AI boundaries. Candidate status is not acceptance.
 
 ## Documentation
 
@@ -71,6 +75,8 @@ Read the [longitudinal diff guide](docs/analysis/diff.md) for accepted Release 0
 - [ZeroRank adapter decision](docs/decisions/0005-zerorank-sanitized-evidence-adapter.md)
 - [Longitudinal evidence diff — accepted Release 0.7](docs/analysis/diff.md)
 - [Longitudinal diff decision — ADR 0006](docs/decisions/0006-longitudinal-evidence-diff.md)
+- [Release 0.8 review ledger — draft candidate](docs/review-ledger.md)
+- [Human review and measurement/outcome ledger — proposed ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
