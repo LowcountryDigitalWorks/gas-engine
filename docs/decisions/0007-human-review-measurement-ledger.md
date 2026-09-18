@@ -1,8 +1,8 @@
 # ADR 0007 — Human review and measurement/outcome ledger
 
-- **Status:** Proposed Release 0.8 candidate; not accepted
+- **Status:** Accepted
 - **Authority:** Issue #15
-- **Accepted base:** Releases 0.1–0.7
+- **Accepted state:** Releases 0.1–0.8; Release 0.8 merged via PR #16
 
 ## Context
 
@@ -60,4 +60,4 @@ Tradeoffs:
 
 ## Acceptance gate
 
-This ADR remains proposed until Product ORCH2 accepts an independently reviewed exact Release 0.8 candidate. Development has no merge or acceptance authority.
+Product ORCH2 accepted the independently reviewed Release 0.8 candidate and it was merged via PR #16. Release 0.9 remains separately gated; this ADR grants no action/remediation, automated recommendation/inference/ranking/correlation, provider/network, scheduler, UI, AI/BYOK, cloud, or customer-evidence authority.

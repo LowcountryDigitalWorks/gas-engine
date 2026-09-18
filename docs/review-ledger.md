@@ -1,6 +1,6 @@
-# Release 0.8 draft — human review and measurement/outcome ledger
+# Release 0.8 — human review and measurement/outcome ledger
 
-**Status: authorized draft candidate; not accepted or merged.** Issue #15 is the Release 0.8 authority. Releases 0.1–0.7 remain the accepted baseline.
+**Status: accepted and merged through PR #16.** Issue #15 defines the Release 0.8 authority. Releases 0.1–0.8 are accepted on `main`.
 
 Release 0.8 proves one narrow provider-neutral service-history path:
 
@@ -10,7 +10,7 @@ It is not a recommendation engine, priority scorer, cross-provider correlation e
 
 ## Application boundary
 
-The draft adds three separable surfaces under `src/review/`:
+Accepted Release 0.8 adds three separable surfaces under `src/review/`:
 
 - `lifecycle.ts` — pure Release 0.8 recommendation restrictions and caller-driven transition rules;
 - `repository.ts` / `sqlite.ts` — tenant-safe bounded local persistence for review history;
@@ -38,7 +38,7 @@ Caller-driven lifecycle transitions are:
 
 Every transition requires the expected current revision and appends revision `n + 1`. Stale expected revisions fail closed. Previous revisions are never overwritten. Pure lifecycle transitions preserve evidence, rationale, priority basis, scope, ID, and creation time. Material human-authored content edits require an explicit additional revision and cannot silently change lifecycle or scope.
 
-The draft bounds one recommendation history to at most 100 revisions and general recommendation lists to at most 100 current records per exact tenant/site/scope filter. Listing by lifecycle is filtering, not ranking.
+Accepted Release 0.8 bounds one recommendation history to at most 100 revisions and general recommendation lists to at most 100 current records per exact tenant/site/scope filter. Listing by lifecycle is filtering, not ranking.
 
 Acceptance of a recommendation does not create or authorize an `action`.
 
@@ -80,13 +80,13 @@ Outcome creation never creates action/execution authority.
 
 ## Local persistence migration
 
-The draft adds local SQLite migration version 2 while preserving the accepted version-1 evidence schema and checksum as the upgrade base. Migration 2 adds only:
+Accepted Release 0.8 includes local SQLite migration version 2 while preserving the accepted version-1 evidence schema and checksum as the upgrade base. Migration 2 adds only:
 
 1. `recommendation_revisions` — append-only immutable canonical recommendation revisions;
 2. `measurements` — canonical measurements plus an optional local recommendation association;
 3. `outcomes` — canonical outcomes plus the canonical optional recommendation ID.
 
-All three tables carry tenant/site/scope ownership, canonical payload/version/hash integrity checks, strict tables, deterministic indexes, and bounded query surfaces. Measurement follow-ups use a tenant-scoped self-reference to their baseline.
+All three tables carry tenant/site/scope ownership, canonical payload/version/hash integrity checks, strict tables, deterministic indexes, and bounded query surfaces. Measurement follow-ups retain a tenant-scoped self-reference to their baseline, and repository persistence independently requires the baseline to resolve inside the same trusted tenant/site/scope within the atomic write transaction.
 
 Fresh databases apply migrations 1 then 2. Existing exact version-1 databases are schema- and checksum-verified before migration 2 is applied. Version-2 reopen again verifies the complete live user schema, both migration checksums, and foreign-key integrity. Unknown, incomplete, altered, or future schemas fail closed.
 
@@ -94,7 +94,7 @@ No table is added for inference generation, actions, credentials, sessions, jobs
 
 ## Operator proof surface
 
-Without a UI, the draft supports bounded deterministic retrieval of:
+Without a UI, accepted Release 0.8 supports bounded deterministic retrieval of:
 
 - current recommendations for one exact scope;
 - current recommendations filtered by lifecycle state, without ranking;
@@ -124,4 +124,4 @@ This is an internal proof of service-history reconstruction value, not a public 
 
 Release 0.8 adds no automatic recommendation or inference generation, severity/materiality/business-impact score, recommendation ranking, cross-provider automatic correlation, runtime AI/BYOK, generated rationale/content, provider/network access, ZeroRank or Activepieces runtime call, WQT execution, action/remediation, publication, HTTP listener, UI/reporting surface, scheduler/background worker, cloud resource, customer deployment, customer evidence, paid dependency/service, software license grant, or Release 0.9 implementation.
 
-Incremental recurring cost target remains **$0**. The candidate adds no dependency.
+Incremental recurring cost target remains **$0**. Accepted Release 0.8 adds no dependency.
