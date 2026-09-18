@@ -338,7 +338,7 @@ test('operator assembler performs no repository writes and reuses each scope-lev
   assert.deepEqual(listReads.sort(), ['listCurrentRecommendations','listMeasurements','listOutcomes']);
 });
 
-test('accepted list overflow propagates explicitly instead of truncating operator scope history', async (t) => {
+test('recommendation list overflow propagates explicitly instead of truncating operator scope history', async (t) => {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   const review = database.track(new LocalReviewLedgerRepository(database.path));
@@ -364,3 +364,86 @@ test('accepted list overflow propagates explicitly instead of truncating operato
     /Recommendation list exceeds 100 records/,
   );
 });
+
+test('measurement list overflow propagates explicitly through the operator assembler', async (t) => {
+  const database = temporaryDatabase(t);
+  const evidence = await repository(t, database);
+  const review = database.track(new LocalReviewLedgerRepository(database.path));
+  const { baseline, current } = caseBatches();
+  await evidence.persistCollection(alpha, baseline);
+  await evidence.persistCollection(alpha, current);
+  const owner = baseline.collection.scope;
+  const selected = recommendation(
+    baseline.observations[0]!.record,
+    'synthetic-operator-measurement-overflow-selected',
+  );
+  await review.createRecommendation(alpha, selected);
+
+  for (let index = 0; index <= 100; index += 1) {
+    await review.persistMeasurement(
+      alpha,
+      measurement(
+        baseline.observations[0]!.record,
+        `synthetic-operator-measurement-overflow-${String(index).padStart(3, '0')}`,
+        { role: 'baseline' },
+      ),
+      selected.id,
+    );
+  }
+
+  await assert.rejects(
+    assembleOperatorCaseView(evidence, review, alpha, {
+      scope: owner,
+      baselineCollectionId: baseline.collection.id,
+      currentCollectionId: current.collection.id,
+      selectedRecommendationId: selected.id,
+    }),
+    /Measurement list exceeds 100 records/,
+  );
+});
+
+test('outcome list overflow propagates explicitly through the operator assembler', async (t) => {
+  const database = temporaryDatabase(t);
+  const evidence = await repository(t, database);
+  const review = database.track(new LocalReviewLedgerRepository(database.path));
+  const { baseline, current } = caseBatches();
+  await evidence.persistCollection(alpha, baseline);
+  await evidence.persistCollection(alpha, current);
+  const owner = baseline.collection.scope;
+  const selected = recommendation(
+    baseline.observations[0]!.record,
+    'synthetic-operator-outcome-overflow-selected',
+  );
+  await review.createRecommendation(alpha, selected);
+
+  for (let index = 0; index <= 100; index += 1) {
+    const record: Contract<'outcome'> = {
+      schemaVersion: '1.0',
+      kind: 'outcome',
+      id: `synthetic-operator-outcome-overflow-${String(index).padStart(3, '0')}`,
+      scope: structuredClone(owner),
+      recommendationId: selected.id,
+      assessment: {
+        direction: 'not_due',
+        reason: 'Synthetic operator overflow proof has no measurement due.',
+      },
+      attribution: {
+        strength: 'none',
+        reason: 'Synthetic operator overflow proof makes no attribution.',
+      },
+      createdAt: '2026-01-03T00:00:00.000Z',
+    };
+    await review.persistOutcome(alpha, record);
+  }
+
+  await assert.rejects(
+    assembleOperatorCaseView(evidence, review, alpha, {
+      scope: owner,
+      baselineCollectionId: baseline.collection.id,
+      currentCollectionId: current.collection.id,
+      selectedRecommendationId: selected.id,
+    }),
+    /Outcome list exceeds 100 records/,
+  );
+});
+
