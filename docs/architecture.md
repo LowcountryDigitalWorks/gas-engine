@@ -2,7 +2,7 @@
 
 Release 0.1 defines the accepted direction for a bounded LDW internal managed-service evidence-engine proof. [Release 0.2 canonical contracts](contracts.md) implement local wire validation, cross-field checks, and deterministic identity helpers. [Release 0.3 persistence](persistence.md) is accepted on `main` and adds tenant-safe local evidence storage. [Release 0.4 authenticated ingestion](ingestion.md) is accepted on `main` and adds one authenticated, bounded, write-only in-process ingestion boundary. [Release 0.5 WQT adaptation](adapters/wqt.md) is accepted on `main` and adds one pure/local adapter for already-normalized WQT evidence. [Release 0.6 ZeroRank adaptation](adapters/zerorank.md) is accepted on `main` and adds one pure/local adapter for the exact sanitized ZeroRank v1/minor0 artifact. [Release 0.7 longitudinal diff](analysis/diff.md) is accepted on `main` and adds deterministic same-stream evidence comparison plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots.
 
-**Release 0.8 is an authorized draft candidate under Issue #15 and is not accepted or merged.** It adds only evidence-linked human-authored recommendation revision history plus explicit measurement/outcome ledger infrastructure. Operator UI, external execution, cross-provider correlation, automated prioritization/recommendation generation, provider/network runtime, schedulers, AI, cloud deployment, and Release 0.9 remain separately gated. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
+**Release 0.8 is accepted and merged on `main` through PR #16.** It adds only evidence-linked human-authored recommendation revision history plus explicit measurement/outcome ledger infrastructure. Operator UI, external execution, cross-provider correlation, automated prioritization/recommendation generation, provider/network runtime, schedulers, AI, cloud deployment, and Release 0.9 remain separately gated. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
 
 ## Objectives and operating model
 
@@ -12,7 +12,7 @@ The intended lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-An observation does not establish a conclusion, a mechanical diff is not an inference, a human-authored recommendation is not an automatically generated ranking, and approval does not erase the need for separate execution authority. Accepted Releases through 0.7 implement contracts, local evidence persistence, authenticated bounded intake, deterministic WQT evidence adaptation, deterministic sanitized ZeroRank evidence adaptation, and deterministic same-stream longitudinal comparison. The Release 0.8 candidate adds human review history and explicit measurement/outcome records only. Cross-provider correlation, automatic prioritization, action/execution, UI, and cloud workflow remain future separately gated work.
+An observation does not establish a conclusion, a mechanical diff is not an inference, a human-authored recommendation is not an automatically generated ranking, and approval does not erase the need for separate execution authority. Accepted Releases through 0.8 implement contracts, local evidence persistence, authenticated bounded intake, deterministic WQT evidence adaptation, deterministic sanitized ZeroRank evidence adaptation, deterministic same-stream longitudinal comparison, and the bounded human review/measurement/outcome ledger. Release 0.8 adds human review history and explicit measurement/outcome records only. Cross-provider correlation, automatic prioritization, action/execution, UI, and cloud workflow remain future separately gated work.
 
 ## Ownership and source-of-truth boundaries
 
@@ -96,7 +96,7 @@ Within a compatible pair, the only observation key is accepted `cohortIdentityHa
 
 The application-local result is deterministically ordered by cohort hash and bounded to 2,048 observations per snapshot, equal to accepted `64 parts × 32 observations`. It is not persisted and is not a canonical wire contract. General `listObservations(...)` remains uniformly capped at 100 records. The Release 0.7 2,048-observation capacity belongs only to `getCollectionSnapshot(...)`, which fails explicitly on overflow rather than truncating or hiding pagination. See [diff guide](analysis/diff.md) and [ADR 0006](decisions/0006-longitudinal-evidence-diff.md).
 
-### Release 0.8 draft human-review and measurement/outcome seam
+### Accepted Release 0.8 human-review and measurement/outcome seam
 
 Release 0.8 adds no provider adapter, sensor, automatic recommendation engine, or network path. Its application service receives an already-issued trusted `TenantContext` and resolves canonical observations through the accepted evidence repository before recording caller/human intent in the bounded review ledger.
 
@@ -129,7 +129,7 @@ The proof loop is now:
 
 > INGEST → NORMALIZE → STORE → DIFF → HUMAN REVIEW HISTORY → EXPLICIT RE-MEASUREMENT → HUMAN-DECLARED OUTCOME → FUTURE DISPLAY
 
-Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams. Accepted Release 0.7 proves deterministic DIFF. The Release 0.8 draft candidate proves human review history plus measurement/outcome ledger behavior. Cross-provider correlation, automated prioritization/recommendation generation, actions, and display remain unimplemented.
+Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams. Accepted Release 0.7 proves deterministic DIFF. Accepted Release 0.8 proves human review history plus measurement/outcome ledger behavior. Cross-provider correlation, automated prioritization/recommendation generation, actions, and display remain unimplemented.
 
 A compact future LDW operator experience may inspect source health, provenance, missing data, historical differences, preserved human recommendation history, measurements, and outcomes. That UI is Release 0.9+ scope and is not implemented here. Accepted recommendations would still require separate authority for any external execution.
 
@@ -137,7 +137,7 @@ A compact future LDW operator experience may inspect source health, provenance, 
 
 | Direction | Scope |
 | --- | --- |
-| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; Release 0.8 candidate human review/measurement/outcome ledger; future correlation/UI/action capabilities only under separate authority. |
+| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; future correlation/UI/action capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
 | Defer until separately justified/authorized | Cross-provider/generic correlation, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 0.9+, production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
@@ -145,7 +145,7 @@ A compact future LDW operator experience may inspect source health, provenance, 
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases through 0.7 and candidate Release 0.8 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases through 0.8 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
@@ -155,4 +155,4 @@ Keep evidence concepts and provider boundaries portable. Release 0.3 defines a m
 
 Internal automation does not prove commercial demand. The audit-first/service-first business model continues independently. This is internal managed-service enabling infrastructure, not customer SaaS or standalone commercial software. No public price, SLA, ranking/citation/traffic/lead/time-savings/causal-performance guarantee, or internal pricing hypothesis belongs in this repository.
 
-Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic; Releases 0.7–0.8 use canonical synthetic scenarios and synthetic tenant isolation only. There is no software license grant. See [authorization](authorization.md), [roadmap](roadmap.md), and ADRs [0001](decisions/0001-evidence-core.md), [0003](decisions/0003-authenticated-ingestion-boundary.md), [0004](decisions/0004-wqt-normalized-evidence-adapter.md), [0005](decisions/0005-zerorank-sanitized-evidence-adapter.md), [0006](decisions/0006-longitudinal-evidence-diff.md), and proposed [0007](decisions/0007-human-review-measurement-ledger.md).
+Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic; Releases 0.7–0.8 use canonical synthetic scenarios and synthetic tenant isolation only. There is no software license grant. See [authorization](authorization.md), [roadmap](roadmap.md), and ADRs [0001](decisions/0001-evidence-core.md), [0003](decisions/0003-authenticated-ingestion-boundary.md), [0004](decisions/0004-wqt-normalized-evidence-adapter.md), [0005](decisions/0005-zerorank-sanitized-evidence-adapter.md), [0006](decisions/0006-longitudinal-evidence-diff.md), and [0007](decisions/0007-human-review-measurement-ledger.md).

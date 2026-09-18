@@ -6,9 +6,9 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.7 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.8 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
-Release 0.8 is **authorized for bounded development under Issue #15** on `release/0.8-human-review-measurement-ledger`, but the resulting candidate is not accepted or merged until Product ORCH2 completes independent review and release acceptance. The authorized Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, UI, scheduler/background workers, runtime AI/BYOK, cloud resources, customer evidence, or Release 0.9.
+Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, UI, scheduler/background workers, runtime AI/BYOK, cloud resources, customer evidence, or Release 0.9.
 
 Accepted Release 0.4 proves **authenticated bounded ingestion only**: an injected opaque-credential authenticator, trusted immutable principal issuance with exact grants, one application ingestion service, one in-process Web `POST /v1/evidence/collections` handler, typed idempotency/part-sequence conflicts, and synthetic adversarial tests. It preserves accepted Release 0.3 tenant authority and persistence behavior and queries persisted collection progress before reporting completion.
 
@@ -20,18 +20,18 @@ Accepted Release 0.7 proves the **deterministic longitudinal evidence diff bound
 
 Release 0.7 itself explicitly excludes cross-provider/generic correlation, universal scoring, direction/severity/materiality/business-impact policy, recommendation priority, inference, recommendations, causal conclusions, remediation, actions, human-review lifecycle, UI, provider/network access, runtime AI/BYOK, new persistence schema/tables, persistence of diff output, or Release 0.8. See the [accepted diff guide](analysis/diff.md) and [ADR 0006](decisions/0006-longitudinal-evidence-diff.md).
 
-The authorized Release 0.8 candidate reuses unchanged canonical `recommendation`, `measurement`, and `outcome` schemaVersion `1.0` contracts. Recommendation creation is human/trusted-caller authored only, with `authorityClass = internal_review`, `priority.level = unassessed`, observation evidence only, revision 1, and `proposed` lifecycle. Caller-driven lifecycle/content changes append immutable revisions with expected-current-revision checks; `rejected` and `superseded` are terminal and accepted may only become superseded. Acceptance grants no action authority.
+Accepted Release 0.8 reuses unchanged canonical `recommendation`, `measurement`, and `outcome` schemaVersion `1.0` contracts. Recommendation creation is human/trusted-caller authored only, with `authorityClass = internal_review`, `priority.level = unassessed`, observation evidence only, revision 1, and `proposed` lifecycle. Caller-driven lifecycle/content changes append immutable revisions with expected-current-revision checks; `rejected` and `superseded` are terminal and accepted may only become superseded. Acceptance grants no action authority.
 
 Release 0.8 measurements are caller-invoked records built from explicitly selected canonical observations. Caller-supplied measured values must equal canonical persisted observation values. Baseline/follow-up comparability preserves existing cohort/methodology/chronology rules. `dueWindow`, `not_due`, and `not_measured` are data only and authorize no scheduling, polling, or provider read.
 
 Release 0.8 outcomes are explicit human/trusted-caller declarations. G.A.S. must not infer `improved`, `regressed`, or `unchanged` from numeric direction. Directional outcomes require resolved comparable measurements. The Release 0.8 application seam permits only attribution `none` or `technical_verification`; `association` and `controlled_evidence` remain gated. Outcome creation grants no action authority. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
 
-Releases through accepted Release 0.7 and the Release 0.8 draft candidate do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
+Releases through accepted Release 0.8 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, operator UI, or cloud deployment. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
 
 ## Fixed proof limits
 
 - Internal managed-service tooling only; no customer SaaS, customer portal, customer deployment, real customer evidence, or client-site ingestion.
-- Evidence use is limited to authorized LDW-owned evidence and clearly synthetic testing/fixtures. Release 0.5 tests use synthetic `example-site` / `https://example.test` WQT-style evidence; Release 0.6 tests use explicitly synthetic ZeroRank-style evidence; accepted Release 0.7 and candidate Release 0.8 tests use only canonical synthetic evidence and synthetic second-tenant isolation.
+- Evidence use is limited to authorized LDW-owned evidence and clearly synthetic testing/fixtures. Release 0.5 tests use synthetic `example-site` / `https://example.test` WQT-style evidence; Release 0.6 tests use explicitly synthetic ZeroRank-style evidence; accepted Releases 0.7–0.8 tests use only canonical synthetic evidence and synthetic second-tenant isolation.
 - No paid infrastructure, paid dependency, purchase, overage, billing enablement, or new subscription without separate authority.
 - No runtime AI/BYOK, autonomous external remediation, autonomous production mutation, or parallel autonomous GitHub-writing mechanism.
 - Sensor/read capability never grants action/write authority. Human acceptance of a recommendation does not automatically authorize a production change; future external actions require separately approved execution paths.
@@ -61,7 +61,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Releases 0.1–0.7 and the bounded Release 0.8 draft candidate target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.8 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence surfaces.
+Releases 0.1–0.8 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.8 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 

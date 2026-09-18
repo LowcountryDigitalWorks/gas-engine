@@ -1,8 +1,8 @@
-# Tenant-safe local persistence — accepted evidence store + Release 0.8 candidate ledger
+# Tenant-safe local persistence — accepted evidence store + Release 0.8 ledger
 
 Release 0.3 is **accepted and merged to `main`** on top of the [Release 0.2 canonical contracts](contracts.md). It adds tenant-scoped local evidence storage without changing any accepted contract, generated JSON Schema, or domain invariant. Release 0.4 consumes this interface through the [authenticated ingestion boundary](ingestion.md). Accepted Releases 0.5–0.7 reuse the same evidence ownership/storage boundary.
 
-**Release 0.8 is an authorized draft candidate and is not accepted or merged.** Its bounded migration 2 preserves the accepted evidence tables and adds only three local service-history tables: `recommendation_revisions`, `measurements`, and `outcomes`. See [Release 0.8 review ledger](review-ledger.md), [authorization](authorization.md), and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
+**Release 0.8 is accepted and merged through PR #16.** Its accepted migration 2 preserves the accepted evidence tables and adds only three local service-history tables: `recommendation_revisions`, `measurements`, and `outcomes`. See [Release 0.8 review ledger](review-ledger.md), [authorization](authorization.md), and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
 
 ## Application boundary and trusted context
 
@@ -16,11 +16,11 @@ The issuer and validator live in different places on purpose. [tenant-context.ts
 
 ## Local SQLite and migrations
 
-[LocalEvidenceRepository](../src/persistence/sqlite.ts) and Release 0.8 candidate [LocalReviewLedgerRepository](../src/review/sqlite.ts) use built-in `node:sqlite` on pinned Node 24.19.0. The adapters use the same local database file boundary; no D1 API, emulator, deployment config, ORM, or new npm dependency is introduced.
+[LocalEvidenceRepository](../src/persistence/sqlite.ts) and accepted Release 0.8 [LocalReviewLedgerRepository](../src/review/sqlite.ts) use built-in `node:sqlite` on pinned Node 24.19.0. The adapters use the same local database file boundary; no D1 API, emulator, deployment config, ORM, or new npm dependency is introduced.
 
-The pinned [Node SQLite documentation](https://github.com/nodejs/node/blob/v24.19.0/doc/api/sqlite.md) labels the module a release candidate. Its tested behavior is suitable for this bounded local proof; future runtime upgrades require revalidation. Node retains its [upstream license and bundled notices](https://github.com/nodejs/node/blob/v24.19.0/LICENSE); SQLite describes its deliverable as [public domain](https://www.sqlite.org/copyright.html). These upstream terms do not grant a license to this project. The Release 0.8 candidate adds no package dependency.
+The pinned [Node SQLite documentation](https://github.com/nodejs/node/blob/v24.19.0/doc/api/sqlite.md) labels the module a release candidate. Its tested behavior is suitable for this bounded local proof; future runtime upgrades require revalidation. Node retains its [upstream license and bundled notices](https://github.com/nodejs/node/blob/v24.19.0/LICENSE); SQLite describes its deliverable as [public domain](https://www.sqlite.org/copyright.html). These upstream terms do not grant a license to this project. Accepted Release 0.8 adds no package dependency.
 
-[migrations.ts](../src/persistence/migrations.ts) contains deterministic local SQL migrations. Migration 1 is the accepted Release 0.3 evidence schema and retains its original checksum. Migration 2 is the bounded Release 0.8 candidate ledger migration. Bootstrap checks foreign-key enforcement and applies pending migrations atomically with `BEGIN IMMEDIATE`, recording each checksum and setting `PRAGMA user_version` to the latest applied migration. Migration numbers describe storage layout; canonical wire contracts remain `schemaVersion: "1.0"`.
+[migrations.ts](../src/persistence/migrations.ts) contains deterministic local SQL migrations. Migration 1 is the accepted Release 0.3 evidence schema and retains its original checksum. Migration 2 is the accepted bounded Release 0.8 ledger migration. Bootstrap checks foreign-key enforcement and applies pending migrations atomically with `BEGIN IMMEDIATE`, recording each checksum and setting `PRAGMA user_version` to the latest applied migration. Migration numbers describe storage layout; canonical wire contracts remain `schemaVersion: "1.0"`.
 
 A version-1 database must exactly match the accepted migration-1 live schema and checksum before migration 2 may apply. Fresh databases apply migration 1 then migration 2. A version-2 reopen verifies both migration checksums, `user_version = 2`, foreign-key integrity, and the complete expected live user schema. Unknown, incomplete, altered, or future migration histories fail closed without modifying tenant data.
 
@@ -30,7 +30,7 @@ The expected value is derived by applying the same migration sequence to a throw
 
 ## Relational ownership
 
-The Release 0.8 candidate schema contains eleven tenant-owned tables plus administrative `schema_migrations`. The accepted eight evidence tables remain intact, and migration 2 adds exactly three review-ledger tables.
+The accepted Release 0.8 schema contains eleven tenant-owned tables plus administrative `schema_migrations`. The accepted eight evidence tables remain intact, and migration 2 adds exactly three review-ledger tables.
 
 | Table | Key and ownership |
 | --- | --- |
@@ -72,7 +72,7 @@ Recommendation revisions are append-only. New recommendations must be revision 1
 
 Measurement and outcome records are immutable canonical inserts. The application resolves observation/measurement/recommendation references before persistence. Measured values must equal the canonical persisted observation values. Outcome direction is supplied by the caller/human; the persistence layer does not derive direction or attribution.
 
-General Release 0.8 review lists are bounded to 100 records and deterministic. Recommendation revision history is also bounded to 100 revisions. Overflow fails explicitly rather than truncating or looping through hidden pages. The candidate does not add count APIs, generic metadata bags, queues, jobs, schedules, prompts/completions, credentials, sessions, provider payloads, or UI state.
+General Release 0.8 review lists are bounded to 100 records and deterministic. Recommendation revision history is also bounded to 100 revisions. Overflow fails explicitly rather than truncating or looping through hidden pages. Release 0.8 does not add count APIs, generic metadata bags, queues, jobs, schedules, prompts/completions, credentials, sessions, provider payloads, or UI state.
 
 ## Idempotency, queries, mutation, and evidence bounds
 
@@ -86,7 +86,7 @@ Evidence has no update method. `setSiteLabel` is the only metadata mutation. `de
 
 ## Synthetic verification
 
-Run `npm ci --ignore-scripts --no-audit --no-fund`, then `npm run check`. The accepted contract/persistence/ingestion/adapter/analysis suites remain and the Release 0.8 candidate adds review-ledger coverage for:
+Run `npm ci --ignore-scripts --no-audit --no-fund`, then `npm run check`. The accepted contract/persistence/ingestion/adapter/analysis suites remain and accepted Release 0.8 adds review-ledger coverage for:
 
 - trusted-context forgery rejection and Alpha/Beta isolation across every new read/write;
 - cross-site/cross-scope rejection;
@@ -101,6 +101,6 @@ Run `npm ci --ignore-scripts --no-audit --no-fund`, then `npm run check`. The ac
 - v1→v2 migration, schema-drift detection, and exact reopen verification;
 - complete synthetic service-history reconstruction proof with a preserved rejected recommendation.
 
-Tests reuse wholly synthetic Alpha/Beta material and create fresh databases. Temporary files live only in ignored `local-artifacts/`. Node permissions restrict writes to that directory and deny child processes/workers. The preloader is an accidental-network tripwire, not a sandbox for hostile process code. A production-import audit permits `node:sqlite` only in the accepted evidence adapter, administrative migrations, and the explicitly authorized Release 0.8 local review adapter; it continues to reject network/server dependencies and keeps core contracts/domain/hash modules independent of storage.
+Tests reuse wholly synthetic Alpha/Beta material and create fresh databases. Temporary files live only in ignored `local-artifacts/`. Node permissions restrict writes to that directory and deny child processes/workers. The preloader is an accidental-network tripwire, not a sandbox for hostile process code. A production-import audit permits `node:sqlite` only in the accepted evidence adapter, administrative migrations, and the accepted Release 0.8 local review adapter; it continues to reject network/server dependencies and keeps core contracts/domain/hash modules independent of storage.
 
-Contracts CI runs `npm run check`, dependency audit, whitespace/tracked-file checks, keeps `contents: read`, pinned actions, no credentials, and no deployment permissions. No public license grant is made. The Release 0.8 candidate adds no dependency or cloud resource and targets **$0 incremental recurring cost**.
+Contracts CI runs `npm run check`, dependency audit, whitespace/tracked-file checks, keeps `contents: read`, pinned actions, no credentials, and no deployment permissions. No public license grant is made. Accepted Release 0.8 adds no dependency or cloud resource and targets **$0 incremental recurring cost**.
