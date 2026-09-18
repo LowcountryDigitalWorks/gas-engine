@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test, type TestContext } from 'node:test';
 import type { Contract } from '../../src/contracts/wire.js';
 import type { CollectionBatch, EvidenceRepository, Scope } from '../../src/persistence/repository.js';
 import { LocalReviewLedgerRepository } from '../../src/review/sqlite.js';
@@ -117,7 +117,7 @@ function measurement(
   };
 }
 
-async function prepareCase(t: Parameters<typeof test>[1] extends (context: infer C) => unknown ? C : never) {
+async function prepareCase(t: TestContext) {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   const review = database.track(new LocalReviewLedgerRepository(database.path));
