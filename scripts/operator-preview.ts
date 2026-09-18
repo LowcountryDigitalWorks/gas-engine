@@ -223,6 +223,7 @@ async function generatePreview(): Promise<void> {
     });
     const html = renderOperatorCaseHtml(buildOperatorCasePresentation(view));
     writeFileSync(outputPath, html, { encoding: 'utf8', flag: 'wx' });
+    console.log(`Generated synthetic operator preview: local-artifacts/release-0.9-operator-case-preview.html (${new TextEncoder().encode(html).byteLength} bytes)`);
   } finally {
     review.close();
     evidence.close();
