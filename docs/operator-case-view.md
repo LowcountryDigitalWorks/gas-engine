@@ -1,6 +1,6 @@
-# Release 0.9 draft — read-only operator case view + printable report preview
+# Release 0.9 — read-only operator case view + printable report preview
 
-**Status: authorized draft candidate; not accepted or merged.** Issue #18 is the Release 0.9 authority. Releases 0.1–0.8 remain the accepted baseline.
+**Status: accepted and merged through PR #19 after Product ORCH2 exact-head review and independent review.** Releases 0.1–0.9 are the accepted baseline; Release 1.0 remains separately gated.
 
 Release 0.9 proves whether one bounded local document can answer the recurring LDW operator question:
 
@@ -10,7 +10,7 @@ It is not a provider dashboard, recommendation engine, CRM/task manager, custome
 
 ## Architecture
 
-The candidate adds exactly three small layers:
+The accepted release adds exactly three small layers:
 
 1. src/operator/case-view.ts — a read-only application assembler over accepted EvidenceRepository, ReviewLedgerRepository, diffEvidenceCollections(...), and getRecommendationEvidence(...) surfaces.
 2. src/operator/html.ts — pure presentation transformation and standalone deterministic semantic HTML rendering.
@@ -64,6 +64,6 @@ The temporary SQLite file is deleted after generation. local-artifacts/ remains 
 
 Release 0.9 adds no persistence/schema change, production authentication, server/listener/API, customer portal, provider networking, WQT/ZeroRank/Activepieces runtime call, inference generation, recommendation generation, automatic priority/ranking/correlation, action/remediation/task assignment, email/SMS, analytics/tracking, runtime AI/BYOK, PDF package/service, frontend framework, charting dependency, cloud deployment, customer/private evidence, software license grant, or Release 1.0 implementation.
 
-Package target is 0.9.0, new dependencies remain **0**, and incremental recurring cost remains **$0**.
+Package version is 0.9.0, new dependencies remain **0**, and incremental recurring cost remains **$0**.
 
 Release 1.0 cloud proof remains separately gated.

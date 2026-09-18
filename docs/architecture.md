@@ -4,7 +4,7 @@ Release 0.1 defines the accepted direction for a bounded LDW internal managed-se
 
 **Release 0.8 is accepted and merged on `main` through PR #16.** It adds only evidence-linked human-authored recommendation revision history plus explicit measurement/outcome ledger infrastructure. External execution, cross-provider correlation, automated prioritization/recommendation generation, provider/network runtime, schedulers, AI, and cloud deployment remain separately gated. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
 
-**Release 0.9 is an authorized draft candidate under Issue #18 and is not accepted or merged.** It adds only a compact read-only local operator case view and printable static HTML preview over accepted Release 0.7/0.8 read surfaces. It adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, framework, customer portal/evidence, action/remediation, or cloud resource. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md).
+**Release 0.9 is accepted and merged through PR #19** after Product ORCH2 exact-head review and independent review. It adds only a compact read-only local operator case view and printable static HTML preview over accepted Release 0.7/0.8 read surfaces. It adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, framework, customer portal/evidence, action/remediation, or cloud resource. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md).
 
 ## Objectives and operating model
 
@@ -20,7 +20,7 @@ An observation does not establish a conclusion, a mechanical diff is not an infe
 
 | System | Intended ownership | Boundary |
 | --- | --- | --- |
-| G.A.S. Engine | Normalized evidence model; provenance/history; deterministic longitudinal comparison; evidence-linked human review history; measurement/outcome history; Release 0.9 candidate compact local operator case/report preview | Own the LDW evidence/service-history record while preserving links to canonical observations; no universal proprietary G.A.S. score, automatic recommendation engine, or action authority. |
+| G.A.S. Engine | Normalized evidence model; provenance/history; deterministic longitudinal comparison; evidence-linked human review history; measurement/outcome history; accepted Release 0.9 compact local operator case/report preview | Own the LDW evidence/service-history record while preserving links to canonical observations; no universal proprietary G.A.S. score, automatic recommendation engine, or action authority. |
 | Website Quality Toolkit (WQT) | Existing LDW site-side technical/Search evidence generation through SiteOne and Lighthouse | Consume its normalized evidence; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client. |
 | ZeroRank | Replaceable Generative observation/sensing | Consume the accepted sanitized Release 0.6 evidence boundary without polling ZeroRank from G.A.S.; its observations and scores remain provider evidence, not authoritative LDW truth. |
 | SuiteDash | Customer/company/client-workflow and service-enrollment experience | Do not duplicate CRM or client operations in G.A.S. |
@@ -133,13 +133,13 @@ The proof loop is now:
 
 Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams. Accepted Release 0.7 proves deterministic DIFF. Accepted Release 0.8 proves human review history plus measurement/outcome ledger behavior. Cross-provider correlation, automated prioritization/recommendation generation, actions, and display remain unimplemented.
 
-The Release 0.9 draft candidate proves a compact local read-only operator case view over explicit scope, baseline/current comparison, current recommendations, selected immutable recommendation history, canonical evidence, measurements, and human-declared outcomes. It is a standalone static HTML/print preview, not a deployed customer/operator portal. Accepted recommendations still require separate authority for any external execution.
+Accepted Release 0.9 proves a compact local read-only operator case view over explicit scope, baseline/current comparison, current recommendations, selected immutable recommendation history, canonical evidence, measurements, and human-declared outcomes. It is a standalone static HTML/print preview, not a deployed customer/operator portal. Accepted recommendations still require separate authority for any external execution.
 
 ## Build, adapt, reuse, and defer
 
 | Direction | Scope |
 | --- | --- |
-| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; Release 0.9 candidate read-only local operator case/report preview; future correlation/action/cloud capabilities only under separate authority. |
+| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; accepted Release 0.9 read-only local operator case/report preview; future correlation/action/cloud capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
 | Defer until separately justified/authorized | Cross-provider/generic correlation, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 1.0+ cloud/deployment work, production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
@@ -147,11 +147,11 @@ The Release 0.9 draft candidate proves a compact local read-only operator case v
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases through 0.8 and the Release 0.9 draft candidate create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases through 0.9 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
-**$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Releases 0.5–0.8 and the Release 0.9 draft candidate add no dependency or paid service. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
+**$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Releases 0.5–0.9 add no dependency or paid service. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
 
 ## Commercial and publication limits
 

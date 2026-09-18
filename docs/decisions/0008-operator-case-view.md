@@ -1,8 +1,8 @@
 # ADR 0008 — Read-only operator case view and printable local report
 
-- **Status:** Proposed Release 0.9 candidate; not accepted
+- **Status:** ACCEPTED
 - **Date:** 2026-09-18
-- **Accepted base:** Releases 0.1–0.8
+- **Accepted base:** Releases 0.1–0.8; Release 0.9 accepted via PR #19
 - **Authority:** Issue #18
 
 ## Context
@@ -50,4 +50,4 @@ The renderer has no repository/filesystem/network capability, escapes all dynami
 
 This ADR grants no production authentication, provider/network access, customer evidence, cloud deployment, external action, or Release 1.0 authority.
 
-It remains proposed until Product ORCH2 accepts an independently reviewed exact Release 0.9 candidate.
+Product ORCH2 accepted the exact Release 0.9 candidate after independent review; PR #19 is merged. This acceptance does not expand the boundary above or authorize Release 1.0.
