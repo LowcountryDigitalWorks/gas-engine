@@ -274,7 +274,7 @@ th{background:#f3efe6} code{overflow-wrap:anywhere} .muted{color:#4b5f69}
 <section id="changes">
 <h2>2. Evidence-change summary</h2>
 <div class="counts">${summary}</div>
-<div class="note warning"><strong>Interpretation boundary:</strong> Numeric delta is descriptive only. G.A.S. does not convert numeric direction into better/worse, improved/regressed, severity, priority, materiality, or business impact.</div>
+<div class="note warning"><strong>Interpretation boundary:</strong> Numeric delta is descriptive only. G.A.S. does not infer a quality direction, severity, priority, materiality, or business impact from the numeric sign.</div>
 <h2>3. Review-attention table</h2>
 ${table('Mechanical entries requiring review attention',
   ['State','Cohort','Baseline','Current','Numeric delta','Coverage / mechanical note'],
