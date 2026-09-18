@@ -81,6 +81,8 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Longitudinal diff decision — ADR 0006](docs/decisions/0006-longitudinal-evidence-diff.md)
 - [Release 0.8 review ledger — accepted](docs/review-ledger.md)
 - [Human review and measurement/outcome ledger — ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md)
+- [Release 0.9 operator case view — draft candidate](docs/operator-case-view.md)
+- [Operator case-view decision — proposed ADR 0008](docs/decisions/0008-operator-case-view.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
