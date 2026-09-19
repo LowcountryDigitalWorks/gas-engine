@@ -10,6 +10,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.9 is accepted and merged on `main` through PR #19.** It adds a compact read-only local operator case view and printable standalone HTML report preview over accepted Release 0.7/0.8 read surfaces. The accepted release adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, action/remediation, framework, customer evidence, or cloud deployment. See the [Release 0.9 operator case-view guide](docs/operator-case-view.md) and [ADR 0008](docs/decisions/0008-operator-case-view.md).
 
+**Release 1.0 remains separately gated.** Issue #21 authorizes only a local, non-deployed Cloudflare compatibility/cost prototype on PR #22: narrow read-only operator repository boundaries, read-only D1 adapters, one Access-protected local Worker, synthetic data, and free-tier measurements. It does not authorize any remote Cloudflare resource, Zero Trust setup, payment/billing action, customer/private evidence, package 1.0.0, merge, or Release 1.0 acceptance. See the [Cloudflare gate-prep guide](docs/cloudflare-gate-prep.md) and [ADR 0009](docs/decisions/0009-cloudflare-read-only-gate-prep.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -45,7 +47,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation and the synthetic local operator preview generator. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, operator-view, and cloud gate source-boundary tests plus JSON Schema drift validation and the synthetic local operator preview generator. Issue #21 gate prep additionally runs `npm run gate:cloudflare`, which uses only local Wrangler/D1/Access simulation and writes evidence under ignored `local-artifacts/`. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
