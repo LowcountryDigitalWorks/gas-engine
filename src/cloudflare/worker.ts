@@ -144,8 +144,4 @@ async function handle(request: Request, env: CloudflareGateEnv, context: GateAcc
   }
 }
 
-export default {
-  fetch(request: Request, env: CloudflareGateEnv, context: GateAccessContext): Promise<Response> {
-    return handle(request, env, context);
-  },
-};
+export default { fetch: handle };
