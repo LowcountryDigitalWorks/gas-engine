@@ -261,11 +261,10 @@ export class D1OperatorEvidenceReadRepository implements OperatorEvidenceReadRep
     if (rows.length === 0) return null;
     const first = rows[0]!;
     const collection = decodeCollection(first);
-    const observations = rows
-      .filter((row) => row['gate_observation_id'] !== null)
-      .map((row) => decodeObservation(row, 'gate_observation_'));
-    invariant(observations.length <= SNAPSHOT_OBSERVATION_LIMIT,
+    const observationRows = rows.filter((row) => row['gate_observation_id'] !== null);
+    invariant(observationRows.length <= SNAPSHOT_OBSERVATION_LIMIT,
       'Collection snapshot exceeds the accepted 2,048-observation bound');
+    const observations = observationRows.map((row) => decodeObservation(row, 'gate_observation_'));
     const partsPersisted = integer(first, 'gate_parts_persisted');
     const persistedSources = integer(first, 'gate_persisted_sources');
     const parts = integer(first, 'part_count');
