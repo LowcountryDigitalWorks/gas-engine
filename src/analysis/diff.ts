@@ -3,7 +3,8 @@ import { identifier } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { cohortIdentityHash, parseContract } from '../domain/validate.js';
 import { canonicalJson } from '../lib/canonical-json.js';
-import type { CollectionEvidenceSnapshot, EvidenceRepository } from '../persistence/repository.js';
+import type { CollectionEvidenceSnapshot } from '../persistence/repository.js';
+import type { EvidenceSnapshotReadRepository } from '../operator/read-repositories.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
 
 /**
@@ -350,7 +351,7 @@ function requirePersistedSnapshot(label: 'Baseline' | 'Current', snapshot: Colle
  * repository-consistent collection/progress/observation snapshot, and no write method is called.
  */
 export async function diffEvidenceCollections(
-  repository: EvidenceRepository,
+  repository: EvidenceSnapshotReadRepository,
   context: TenantContext,
   input: DiffEvidenceCollectionsRequest,
 ): Promise<EvidenceDeltaReport> {

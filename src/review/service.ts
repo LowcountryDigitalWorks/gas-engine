@@ -4,6 +4,10 @@ import type { Contract } from '../contracts/wire.js';
 import { assertComparableMeasurements, compareCohorts, parseContract } from '../domain/validate.js';
 import { canonicalJson } from '../lib/canonical-json.js';
 import type { EvidenceRepository, Scope } from '../persistence/repository.js';
+import type {
+  RecommendationEvidenceReadRepository,
+  RecommendationEvidenceReviewRepository,
+} from '../operator/read-repositories.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
 import {
   assertRelease08Recommendation, prepareNewRecommendation, reviseRecommendationContent,
@@ -29,7 +33,7 @@ function same(left: unknown, right: unknown): boolean { return canonicalJson(lef
 function measurementOwner(record: Contract<'measurement'>): Scope { return record.cohort.context.scope; }
 
 async function resolveRecommendationEvidence(
-  evidenceRepository: EvidenceRepository,
+  evidenceRepository: RecommendationEvidenceReadRepository,
   context: TenantContext,
   record: Contract<'recommendation'>,
 ): Promise<Contract<'observation'>[]> {
@@ -203,8 +207,8 @@ export async function recordHumanOutcome(
 
 /** Resolve current or historical recommendation evidence. Missing/deleted evidence fails closed. */
 export async function getRecommendationEvidence(
-  reviewRepository: ReviewLedgerRepository,
-  evidenceRepository: EvidenceRepository,
+  reviewRepository: RecommendationEvidenceReviewRepository,
+  evidenceRepository: RecommendationEvidenceReadRepository,
   context: TenantContext,
   ownerInput: Scope,
   recommendationId: string,

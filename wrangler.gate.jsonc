@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gas-engine-gate-local",
+  "main": "dist/src/cloudflare/worker.js",
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gas-engine-gate-local",
+      "database_id": "00000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "vars": {
+    "GATE_OPERATOR_EMAIL": "operator@example.test",
+    "GATE_TENANT_ID": "tenant-alpha",
+    "GATE_SITE_ID": "site-alpha",
+    "GATE_SCOPE_REVISION_ID": "synthetic-scope-alpha-r1",
+    "GATE_PROVIDER_ID": "synthetic-provider",
+    "GATE_PROVIDER_CONNECTION_ID": "synthetic-connection",
+    "GATE_BASELINE_COLLECTION_ID": "synthetic-collection-gate-baseline",
+    "GATE_CURRENT_COLLECTION_ID": "synthetic-collection-gate-current",
+    "GATE_RECOMMENDATION_ID": "synthetic-gate-selected"
+  },
+  "access": {
+    "dev": {
+      "aud": "synthetic-gas-gate",
+      "identity": {
+        "email": "operator@example.test"
+      }
+    }
+  }
+}

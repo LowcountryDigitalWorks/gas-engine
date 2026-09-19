@@ -7,10 +7,13 @@ import {
 import { identifier, scope } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { canonicalJson } from '../lib/canonical-json.js';
-import type { EvidenceRepository, Scope } from '../persistence/repository.js';
+import type { Scope } from '../persistence/repository.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
 import { getRecommendationEvidence } from '../review/service.js';
-import type { ReviewLedgerRepository } from '../review/repository.js';
+import type {
+  OperatorEvidenceReadRepository,
+  OperatorReviewReadRepository,
+} from './read-repositories.js';
 
 export type OperatorCaseViewErrorCode =
   | 'invalid_request'
@@ -73,8 +76,8 @@ function same(left: unknown, right: unknown): boolean {
  * the authority boundary. This function performs no persistence mutation.
  */
 export async function assembleOperatorCaseView(
-  evidenceRepository: EvidenceRepository,
-  reviewRepository: ReviewLedgerRepository,
+  evidenceRepository: OperatorEvidenceReadRepository,
+  reviewRepository: OperatorReviewReadRepository,
   context: TenantContext,
   input: OperatorCaseViewRequest,
 ): Promise<OperatorCaseView> {

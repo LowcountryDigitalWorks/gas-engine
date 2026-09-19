@@ -200,6 +200,22 @@ CREATE INDEX outcomes_by_recommendation
 const migration1Checksum = hashCanonicalJson(migration1);
 const migration2Checksum = hashCanonicalJson(migration2);
 
+/**
+ * Accepted storage schema material for compatibility proofs and administrative
+ * bootstrap tooling only. Exporting these immutable strings does not add a new
+ * migration or change local migration behavior.
+ */
+export const ACCEPTED_STORAGE_SCHEMA = Object.freeze({
+  version: 2 as const,
+  historyTable,
+  migration1,
+  migration2,
+  migrationHistory: Object.freeze([
+    Object.freeze({ version: 1 as const, checksum: migration1Checksum }),
+    Object.freeze({ version: 2 as const, checksum: migration2Checksum }),
+  ]),
+});
+
 /** Bounded per-part request limits. A collection admits at most PARTS * SOURCES sources. */
 export const STORAGE_BOUNDS = { parts: 64, sourcesPerPart: 16, observationsPerPart: 32 } as const;
 
