@@ -17,7 +17,7 @@
     "GATE_SITE_ID": "site-alpha",
     "GATE_SCOPE_REVISION_ID": "synthetic-scope-alpha-r1",
     "GATE_PROVIDER_ID": "synthetic-provider",
-    "GATE_PROVIDER_CONNECTION_ID": "synthetic-provider-connection",
+    "GATE_PROVIDER_CONNECTION_ID": "synthetic-connection",
     "GATE_BASELINE_COLLECTION_ID": "synthetic-collection-gate-baseline",
     "GATE_CURRENT_COLLECTION_ID": "synthetic-collection-gate-current",
     "GATE_RECOMMENDATION_ID": "synthetic-gate-selected"
