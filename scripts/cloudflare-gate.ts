@@ -237,6 +237,18 @@ async function main(): Promise<void> {
   const jsonProbe = rows(d1Command(`SELECT json_valid('{"gate":1}') AS valid, json_extract('{"gate":1}', '$.gate') AS extracted;`))[0]!;
   invariant(Number(jsonProbe['valid']) === 1 && Number(jsonProbe['extracted']) === 1, 'D1 JSON functions are incompatible');
 
+  d1Command(`UPDATE outcomes SET payload = '{'
+    WHERE tenant_id='tenant-alpha' AND id='synthetic-gate-outcome';`, false);
+
+  const oversizedProbe = rows(d1Command(`SELECT length(CAST(
+    json_set(payload, '$.gateOversize', hex(zeroblob(32768))) AS BLOB
+  )) AS bytes FROM outcomes
+  WHERE tenant_id='tenant-alpha' AND id='synthetic-gate-outcome';`))[0]!;
+  invariant(Number(oversizedProbe['bytes']) > 65_536, 'Oversized payload probe did not exceed accepted byte limit');
+  d1Command(`UPDATE outcomes
+    SET payload = json_set(payload, '$.gateOversize', hex(zeroblob(32768)))
+    WHERE tenant_id='tenant-alpha' AND id='synthetic-gate-outcome';`, false);
+
   invariant(rows(d1Command('PRAGMA foreign_key_check;')).length === 0, 'Seeded D1 has broken foreign-key references');
 
   const indexRows = rows(d1Command(`SELECT name FROM sqlite_schema WHERE type = 'index' AND name NOT LIKE 'sqlite_%' ORDER BY name;`));
@@ -448,6 +460,8 @@ async function main(): Promise<void> {
     schemaCompatibility: {
       strictTables: 'PASS',
       jsonFunctions: 'PASS',
+      jsonPayloadConstraint: 'PASS',
+      payloadByteLimit65536: 'PASS',
       foreignKeys: 'PASS',
       checkConstraints: 'PASS',
       compositeOwnershipForeignKey: 'PASS',
