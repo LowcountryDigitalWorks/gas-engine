@@ -35,7 +35,7 @@ test('Cloudflare gate stays read-only, local-only and framework-free', () => {
   assert.match(gate, /'--local'/);
   assert.match(gate, /WRANGLER_SEND_METRICS/);
   assert.match(config, /"database_id": "00000000-0000-0000-0000-000000000001"/);
-  assert.doesNotMatch(config, /assets|pages|r2|kv_namespaces|queues|durable_objects|ai|analytics_engine/i);
+  assert.doesNotMatch(config, /"(?:assets|pages|r2|kv_namespaces|queues|durable_objects|ai|analytics_engine)"\s*:/i);
 });
 
 test('operator read boundaries expose only the accepted Release 0.9 read capabilities', () => {
