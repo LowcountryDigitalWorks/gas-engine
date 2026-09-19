@@ -159,12 +159,14 @@ function decodeObservation(row: Row, prefix = ''): Contract<'observation'> {
     && text(row, `${prefix}scope_revision_id`) === owner.siteScopeRevisionId
     && text(row, `${prefix}id`) === record.id,
   'Persisted D1 observation ownership index mismatch');
-  if (prefix) {
-    invariant(text(row, `${prefix}collection_id`) === record.provenance.runId
-      && text(row, `${prefix}provider_id`) === record.provenance.source.providerId
-      && text(row, `${prefix}connection_id`) === record.provenance.source.providerConnectionId,
-    'Persisted D1 observation provenance index mismatch');
-  }
+  const provenance = record.provenance.source;
+  invariant(text(row, `${prefix}tenant_id`) === provenance.scope.tenantId
+    && text(row, `${prefix}site_id`) === provenance.scope.siteId
+    && text(row, `${prefix}scope_revision_id`) === provenance.scope.siteScopeRevisionId
+    && text(row, `${prefix}collection_id`) === record.provenance.runId
+    && text(row, `${prefix}provider_id`) === provenance.providerId
+    && text(row, `${prefix}connection_id`) === provenance.providerConnectionId,
+  'Persisted D1 observation provenance index mismatch');
   return record;
 }
 
