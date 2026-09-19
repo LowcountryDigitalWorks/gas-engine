@@ -1,4 +1,4 @@
-import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -158,7 +158,7 @@ async function withDevServer<T>(
       NO_COLOR: '1',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
-  }) as ChildProcessWithoutNullStreams;
+  });
   let stderr = '';
   child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString('utf8'); });
   try {
