@@ -101,10 +101,6 @@ function finiteCount(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
-function same(left: unknown, right: unknown): boolean {
-  return canonicalJson(left) === canonicalJson(right);
-}
-
 function owned(tenant: string, owner: Scope): void {
   invariant(owner.tenantId === tenant, 'Record scope does not match trusted tenant context');
 }
