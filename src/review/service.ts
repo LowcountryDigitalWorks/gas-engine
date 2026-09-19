@@ -33,7 +33,7 @@ function same(left: unknown, right: unknown): boolean { return canonicalJson(lef
 function measurementOwner(record: Contract<'measurement'>): Scope { return record.cohort.context.scope; }
 
 async function resolveRecommendationEvidence(
-  evidenceRepository: EvidenceRepository,
+  evidenceRepository: RecommendationEvidenceReadRepository,
   context: TenantContext,
   record: Contract<'recommendation'>,
 ): Promise<Contract<'observation'>[]> {
