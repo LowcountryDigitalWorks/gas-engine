@@ -28,7 +28,9 @@ Release 0.8 measurements are caller-invoked records built from explicitly select
 
 Release 0.8 outcomes are explicit human/trusted-caller declarations. G.A.S. must not infer `improved`, `regressed`, or `unchanged` from numeric direction. Directional outcomes require resolved comparable measurements. The Release 0.8 application seam permits only attribution `none` or `technical_verification`; `association` and `controlled_evidence` remain gated. Outcome creation grants no action authority. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md).
 
-Releases through accepted Release 0.9 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, customer portal, or cloud deployment. Release 0.9 authorizes only its local static read-only operator preview. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
+Releases through accepted Release 0.9 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, customer portal, or cloud deployment. Release 0.9 authorizes only its local static read-only operator preview.
+
+Issue #21 separately authorizes **local Release 1.0 gate prep only**: local Wrangler/D1/Access simulation, read-only D1 adapters, one local Worker, synthetic/public-safe fixtures, tests, measurements, documentation, branch commits, and a DRAFT PR. It does **not** authorize permanent or temporary Cloudflare resources, Zero Trust setup, Access policy creation in the LDW account, Wrangler authentication against Eddie's account, Terms/Privacy acceptance, payment details, billing, paid plan/overage, custom domain/DNS, workers.dev/preview deployment, customer/private evidence, package 1.0.0, merge, or Release 1.0 acceptance. Repository CI remains least privilege and no deployment credential is required.
 
 ## Fixed proof limits
 
@@ -63,9 +65,9 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Releases 0.1–0.9 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.9 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Releases 0.1–0.9 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.9 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces. Issue #21 gate prep adds only pinned `wrangler@4.134.0` as a development dependency and still creates no remote resource or recurring charge.
 
-For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
+For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. The local gate measures a candidate Worker + D1 read path; Workers Static Assets are not needed by the current one-document proof. No remote architecture is approved merely because local compatibility passes.
 
 Release 1.0 cloud deployment remains separately gated. The gate must assess current account headroom, exact identity/auth design and resources, retention/deletion, representative workload and cost measurements, and rollback/decommission planning. Material expansions and any paid costs require separate authority.
 
