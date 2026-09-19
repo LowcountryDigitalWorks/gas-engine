@@ -13,7 +13,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.7 | Accepted: deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering. Uses tenant-scoped atomic collection snapshots, exact cohort identity, exact value/missing-state transitions, conservative completeness-aware absence semantics, application-local output, and no cross-provider correlation or prioritization. See [diff guide](analysis/diff.md). |
 | 0.8 | Accepted: evidence-linked human-authored recommendation review history plus explicit measurement/outcome ledger. Uses unchanged canonical 1.0 recommendation/measurement/outcome contracts, trusted existing `TenantContext`, immutable recommendation revisions, accepted migration 2 with three bounded local SQLite ledger tables, caller-driven measurements, and human-declared outcomes. No automatic recommendation/ranking/correlation/action/UI/network/AI. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md). |
 | 0.9 | Accepted: compact read-only local LDW operator case view + printable standalone HTML report preview over accepted Release 0.7/0.8 reads. Explicit trusted scope and selected collection/recommendation IDs; no new persistence, write controls, server, provider networking, runtime AI, action, framework, customer data, or cloud deployment. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md). |
-| 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
+| 1.0 | Separately gated bounded cloud proof. Issue #21 authorizes only a local read-only Worker + D1 + simulated Access compatibility/cost prototype; no remote deployment or Release 1.0 acceptance. See [Cloudflare gate-prep guide](cloudflare-gate-prep.md) and [ADR 0009](decisions/0009-cloudflare-read-only-gate-prep.md). |
 
 ## Release 0.7 narrowing decision
 
@@ -27,6 +27,10 @@ Issue #15 narrows Release 0.8 to service-history infrastructure rather than a ge
 
 Issue #18 narrows Release 0.9 to a provider-neutral read-only local case view rather than a commodity SEO/AEO dashboard or customer-reporting SaaS. The accepted release assembles only accepted mechanical evidence diff, current human-authored recommendations, one selected immutable recommendation history, canonical supporting evidence, associated measurements, and human-declared outcomes. It preserves coverage uncertainty and non-evaluative numeric delta semantics, uses no write path, and renders one escaped self-contained HTML/print preview without external resources or JavaScript.
 
+## Release 1.0 gate-prep narrowing decision
+
+Issue #21 does not authorize Release 1.0 implementation. It narrows gate prep to local proof that the accepted Release 0.9 read-only operator case can run through one Worker with simulated Access identity and read-only D1 adapters over the accepted storage model. Cloud ingestion/write portability, remote resources, Zero Trust/account setup, customer data, package 1.0.0, merge, and Release 1.0 acceptance remain separately gated. Workers Static Assets are omitted because the existing standalone operator HTML is sufficient.
+
 ## Gates and evaluation
 
 Releases 0.1–0.9 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
@@ -35,7 +39,7 @@ Future functional releases require adversarial synthetic second-tenant testing f
 
 Each step should establish whether the engine reduces recurring delivery/reconciliation labor, improves reviewable evidence handling, and justifies its operating/support burden. Releases may be collapsed, stopped, or returned for authority review if evidence shows duplication, poor value, generic SEO-platform drift, or excessive burden. Delegated authority is permission, not a mandate.
 
-Release 1.0 requires a separate cloud deployment gate covering current account headroom, identity/auth, exact resources, retention/deletion, measured workload/cost estimates, and rollback/decommission planning. **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** No permanent $0 guarantee is made.
+Release 1.0 requires a separate cloud deployment gate covering current account headroom, current Zero Trust state/account prerequisites, identity/auth, exact resources, retention/deletion, measured workload/cost estimates, and rollback/decommission planning. Passing the local Issue #21 prototype is evidence for that gate, not deployment authority. **$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** No permanent $0 guarantee is made.
 
 ## Deferred scope
 
