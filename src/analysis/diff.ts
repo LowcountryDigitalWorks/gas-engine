@@ -371,9 +371,18 @@ export async function diffEvidenceCollections(
   const currentResolved = await repository.getCollectionSnapshot(context, request.currentCollectionId);
   if (currentResolved === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
 
+  return diffResolvedCollectionSnapshots(baselineResolved, currentResolved);
+}
+
+/**
+ * Compare two already-resolved persisted snapshots without issuing a second repository read.
+ * Callers that already paid for getCollectionSnapshot(...) reuse those rows instead of decoding them again.
+ */
+export function diffResolvedCollectionSnapshots(
+  baselineResolved: CollectionEvidenceSnapshot,
+  currentResolved: CollectionEvidenceSnapshot,
+): EvidenceDeltaReport {
   const baseline = requirePersistedSnapshot('Baseline', baselineResolved);
   const current = requirePersistedSnapshot('Current', currentResolved);
-  validateCollectionPair(baseline.collection, current.collection);
-
   return compareEvidenceSnapshots(baseline, current);
 }

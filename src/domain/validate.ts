@@ -66,14 +66,14 @@ function checkCommon(value: unknown): void {
 }
 
 type Scope = z.infer<typeof scope>;
-function requireSameScopes(value: unknown, owner: Scope): void {
+function requireSameScopes(value: unknown, owner: Scope, ownerCanonical = canonicalJson(owner)): void {
   if (Array.isArray(value)) {
-    value.forEach((child) => requireSameScopes(child, owner));
+    value.forEach((child) => requireSameScopes(child, owner, ownerCanonical));
   } else if (value !== null && typeof value === 'object') {
     for (const [key, child] of Object.entries(value)) {
       if (embeddedScopeProperties.has(key)) {
-        requireInvariant(canonicalJson(child) === canonicalJson(owner), 'Embedded reference scope differs from the owning tenant/site/scope revision');
-      } else requireSameScopes(child, owner);
+        requireInvariant(canonicalJson(child) === ownerCanonical, 'Embedded reference scope differs from the owning tenant/site/scope revision');
+      } else requireSameScopes(child, owner, ownerCanonical);
     }
   }
 }

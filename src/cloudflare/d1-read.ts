@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { identifier, revision, scope } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { parseContract } from '../domain/validate.js';
-import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
+import { canonicalJson, sha256Bytes } from '../lib/canonical-json.js';
 import type {
   CollectionEvidenceSnapshot,
   CollectionProgress,
@@ -129,12 +129,18 @@ function payload(row: Row, key = 'payload'): string {
   return value;
 }
 
+function persistedCanonicalHash(raw: string): string {
+  // After raw === canonicalJson(record), SHA-256(raw) equals hashCanonicalJson(record)
+  // without a second canonical serialization of the same object.
+  return sha256Bytes(Buffer.from(raw, 'utf8'));
+}
+
 function decodeCollection(row: Row): Contract<'collection'> {
   const raw = payload(row);
   const record = parseContract('collection', JSON.parse(raw));
   invariant(text(row, 'contract_version') === record.schemaVersion
     && raw === canonicalJson(record)
-    && text(row, 'payload_hash') === hashCanonicalJson(record),
+    && text(row, 'payload_hash') === persistedCanonicalHash(raw),
   'Persisted D1 collection integrity mismatch');
   invariant(text(row, 'tenant_id') === record.scope.tenantId
     && text(row, 'site_id') === record.scope.siteId
@@ -151,7 +157,7 @@ function decodeObservation(row: Row, prefix = ''): Contract<'observation'> {
   const record = parseContract('observation', JSON.parse(raw));
   invariant(text(row, `${prefix}contract_version`) === record.schemaVersion
     && raw === canonicalJson(record)
-    && text(row, `${prefix}payload_hash`) === hashCanonicalJson(record),
+    && text(row, `${prefix}payload_hash`) === persistedCanonicalHash(raw),
   'Persisted D1 observation integrity mismatch');
   const owner = record.cohort.context.scope;
   invariant(text(row, `${prefix}tenant_id`) === owner.tenantId
@@ -175,7 +181,7 @@ function decodeReview<N extends ReviewKind>(kind: N, row: Row): Contract<N> {
   const record = parseContract(kind, JSON.parse(raw));
   invariant(text(row, 'contract_version') === record.schemaVersion
     && raw === canonicalJson(record)
-    && text(row, 'payload_hash') === hashCanonicalJson(record),
+    && text(row, 'payload_hash') === persistedCanonicalHash(raw),
   'Persisted D1 review contract integrity mismatch');
   const owner = kind === 'measurement'
     ? (record as Contract<'measurement'>).cohort.context.scope
@@ -220,14 +226,6 @@ export class D1OperatorEvidenceReadRepository implements OperatorEvidenceReadRep
     private readonly db: GateD1Database,
     private readonly metrics: D1GateMetrics,
   ) {}
-
-  async getCollection(context: TenantContext, input: string): Promise<Contract<'collection'> | null> {
-    const tenant = requireTenantContext(context);
-    const rows = await query<Row>(this.db, this.metrics,
-      'SELECT * FROM collections WHERE tenant_id = ? AND id = ? LIMIT 1',
-      [tenant, identifier.parse(input)]);
-    return rows[0] ? decodeCollection(rows[0]) : null;
-  }
 
   async getCollectionSnapshot(context: TenantContext, input: string): Promise<CollectionEvidenceSnapshot | null> {
     const tenant = requireTenantContext(context);

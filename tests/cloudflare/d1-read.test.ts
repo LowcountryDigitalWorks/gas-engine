@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import type { Contract } from '../../src/contracts/wire.js';
 import { parseContract } from '../../src/domain/validate.js';
-import { canonicalJson, hashCanonicalJson } from '../../src/lib/canonical-json.js';
+import { canonicalJson, hashCanonicalJson, sha256Bytes } from '../../src/lib/canonical-json.js';
 import {
   createD1OperatorReadRepositories,
   type GateD1Database,
@@ -89,6 +89,25 @@ for (const [field, value] of [
     );
   });
 }
+
+test('standalone D1 getObservation still rejects a canonical payload whose stored hash does not match SHA-256(raw)', async () => {
+  const row = validObservationRow();
+  row['payload_hash'] = '0'.repeat(64);
+  await assert.rejects(
+    evidenceFor(row).getObservation(alpha, observation.id),
+    /Persisted D1 observation integrity mismatch/,
+  );
+});
+
+test('standalone D1 getObservation still rejects a non-canonical payload even when the stored hash matches SHA-256 of the raw bytes', async () => {
+  const row = validObservationRow();
+  row['payload'] = `${row['payload']} `;
+  row['payload_hash'] = sha256Bytes(Buffer.from(String(row['payload']), 'utf8'));
+  await assert.rejects(
+    evidenceFor(row).getObservation(alpha, observation.id),
+    /Persisted D1 observation integrity mismatch/,
+  );
+});
 
 test('recommendation evidence resolution still succeeds through corrected standalone D1 observation read', async () => {
   const owner = observation.cohort.context.scope;

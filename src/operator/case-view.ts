@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  diffEvidenceCollections,
+  diffResolvedCollectionSnapshots,
   type EvidenceDeltaEntry,
   type EvidenceDeltaReport,
 } from '../analysis/diff.js';
@@ -93,19 +93,16 @@ export async function assembleOperatorCaseView(
     fail('invalid_request', 'Baseline and current collection IDs must be distinct.');
   }
 
-  const baseline = await evidenceRepository.getCollection(context, request.baselineCollectionId);
-  if (baseline === null) fail('collection_not_found', 'Baseline collection is unavailable under trusted tenant context.');
-  const current = await evidenceRepository.getCollection(context, request.currentCollectionId);
-  if (current === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
+  const baselineSnapshot = await evidenceRepository.getCollectionSnapshot(context, request.baselineCollectionId);
+  if (baselineSnapshot === null) fail('collection_not_found', 'Baseline collection is unavailable under trusted tenant context.');
+  const currentSnapshot = await evidenceRepository.getCollectionSnapshot(context, request.currentCollectionId);
+  if (currentSnapshot === null) fail('collection_not_found', 'Current collection is unavailable under trusted tenant context.');
 
-  if (!same(baseline.scope, request.scope) || !same(current.scope, request.scope)) {
+  if (!same(baselineSnapshot.collection.scope, request.scope) || !same(currentSnapshot.collection.scope, request.scope)) {
     fail('scope_mismatch', 'Selected collection pair is outside the requested operator scope.');
   }
 
-  const evidenceDiff = await diffEvidenceCollections(evidenceRepository, context, {
-    baselineCollectionId: request.baselineCollectionId,
-    currentCollectionId: request.currentCollectionId,
-  });
+  const evidenceDiff = diffResolvedCollectionSnapshots(baselineSnapshot, currentSnapshot);
 
   const recommendations = await reviewRepository.listCurrentRecommendations(context, { scope: request.scope });
   const measurements = await reviewRepository.listMeasurements(context, { scope: request.scope });

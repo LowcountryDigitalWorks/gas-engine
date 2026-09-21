@@ -40,7 +40,7 @@ test('Cloudflare gate stays read-only, local-only and framework-free', () => {
 
 test('operator read boundaries expose only the accepted Release 0.9 read capabilities', () => {
   const source = readFileSync('src/operator/read-repositories.ts', 'utf8');
-  assert.match(source, /OperatorEvidenceReadRepository[\s\S]*?'getCollection' \| 'getCollectionSnapshot' \| 'getObservation'/);
+  assert.match(source, /OperatorEvidenceReadRepository[\s\S]*?'getCollectionSnapshot' \| 'getObservation'/);
   assert.match(source, /OperatorReviewReadRepository[\s\S]*?'getCurrentRecommendation'[\s\S]*?'listOutcomes'/);
   assert.doesNotMatch(source, /persistCollection|deleteCollection|persistMeasurement|persistOutcome|createRecommendation|appendRecommendationRevision/);
 });

@@ -26,7 +26,7 @@ export type RecommendationEvidenceReviewRepository = Pick<
 /** Exact evidence reads consumed by the accepted Release 0.9 operator assembler. */
 export type OperatorEvidenceReadRepository = Pick<
   EvidenceRepository,
-  'getCollection' | 'getCollectionSnapshot' | 'getObservation'
+  'getCollectionSnapshot' | 'getObservation'
 >;
 
 /** Exact review-ledger reads consumed by the accepted Release 0.9 operator assembler. */
