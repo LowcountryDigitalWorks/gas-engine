@@ -3,7 +3,10 @@
   "version": "0.9.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.19.0 <25", "npm": ">=11 <12" },
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "npm": ">=11 <12"
+  },
   "packageManager": "npm@11.17.0",
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -12,8 +15,14 @@
     "schemas:generate": "node dist/scripts/schemas.js",
     "schemas:check": "node dist/scripts/schemas.js --check",
     "preview:operator": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/operator-preview.js",
-    "check": "npm run typecheck && npm run build && npm test && npm run schemas:check && npm run preview:operator"
+    "check": "npm run typecheck && npm run build && npm test && npm run schemas:check && npm run preview:operator",
+    "gate1:wqt": "node dist/scripts/gate1-wqt-runner.js"
   },
-  "dependencies": { "zod": "4.6.2" },
-  "devDependencies": { "@types/node": "24.13.4", "typescript": "7.0.2" }
+  "dependencies": {
+    "zod": "4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.4",
+    "typescript": "7.0.2"
+  }
 }
