@@ -61,6 +61,23 @@ function expectAdapterError(action: () => unknown, code: WqtAdapterErrorCode): v
   assert.throws(action, (error: unknown) => error instanceof WqtAdapterError && error.code === code);
 }
 
+function expectRepresentabilityPolicyError(
+  action: () => unknown,
+  factId: string,
+  valueType: 'number' | 'text',
+  forbiddenRawValue?: string,
+): void {
+  assert.throws(action, (error: unknown) => {
+    if (!(error instanceof WqtAdapterError) || error.code !== 'policy_violation') return false;
+    assert.match(error.message, new RegExp(`Normalized WQT fact ${factId} \\\\(${valueType}\\\\)`));
+    assert.match(error.message, /valid WQT evidence but is not representable by the accepted G\.A\.S\. canonical value contract/);
+    if (forbiddenRawValue !== undefined) assert.doesNotMatch(error.message, new RegExp(forbiddenRawValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\\\function expectAdapterError(action: () => unknown, code: WqtAdapterErrorCode): void {
+  assert.throws(action, (error: unknown) => error instanceof WqtAdapterError && error.code === code);
+}')));
+    return true;
+  });
+}
+
 function collection(result: ReturnType<typeof adaptWqtNormalizedEvidence>, provider: 'siteone' | 'lighthouse'): WqtAdaptedCollection {
   const found = result.collections.find((item) => item.providerId === provider);
   assert.ok(found);
@@ -281,6 +298,69 @@ test('minor2 fact contract fails closed on duplicates, extra keys, invalid bound
   }];
   refreshFlattened(lighthouseFacts);
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(lighthouseFacts), trustedConfig), 'invalid_source');
+});
+
+test('minor2 canonical-representability policy fails closed without coercion or raw-value echo', () => {
+  const emptyText = fixtureMinor2();
+  emptyText.sources.siteone.observations[1].facts = [
+    { id: 'synthetic-text-empty', valueType: 'text', value: '' },
+  ];
+  refreshFlattened(emptyText);
+  expectRepresentabilityPolicyError(
+    () => adaptWqtNormalizedEvidence(bytes(emptyText), trustedConfig),
+    'synthetic-text-empty',
+    'text',
+  );
+
+  const whitespaceText = fixtureMinor2();
+  whitespaceText.sources.siteone.observations[1].facts = [
+    { id: 'synthetic-text-space', valueType: 'text', value: ' ' },
+  ];
+  refreshFlattened(whitespaceText);
+  expectRepresentabilityPolicyError(
+    () => adaptWqtNormalizedEvidence(bytes(whitespaceText), trustedConfig),
+    'synthetic-text-space',
+    'text',
+  );
+
+  const above = fixtureMinor2();
+  above.sources.siteone.observations[1].facts = [
+    { id: 'synthetic-number-high', valueType: 'number', value: 1_000_000_000_000_001 },
+  ];
+  refreshFlattened(above);
+  expectRepresentabilityPolicyError(
+    () => adaptWqtNormalizedEvidence(bytes(above), trustedConfig),
+    'synthetic-number-high',
+    'number',
+    '1000000000000001',
+  );
+
+  const below = fixtureMinor2();
+  below.sources.siteone.observations[1].facts = [
+    { id: 'synthetic-number-low', valueType: 'number', value: -1_000_000_000_000_001 },
+  ];
+  refreshFlattened(below);
+  expectRepresentabilityPolicyError(
+    () => adaptWqtNormalizedEvidence(bytes(below), trustedConfig),
+    'synthetic-number-low',
+    'number',
+    '-1000000000000001',
+  );
+});
+
+test('minor2 exact canonical numeric boundaries remain observed values', () => {
+  const value = fixtureMinor2();
+  value.sources.siteone.observations[1].facts = [
+    { id: 'synthetic-number-min', valueType: 'number', value: -1e15 },
+    { id: 'synthetic-number-max', valueType: 'number', value: 1e15 },
+  ];
+  refreshFlattened(value);
+
+  const mapped = observations(collection(adaptWqtNormalizedEvidence(bytes(value), trustedConfig), 'siteone'));
+  const minimum = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-synthetic-number-min');
+  const maximum = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-synthetic-number-max');
+  assert.deepEqual(minimum?.value, { state: 'observed', value: { type: 'number', value: -1e15 } });
+  assert.deepEqual(maximum?.value, { state: 'observed', value: { type: 'number', value: 1e15 } });
 });
 
 test('minor2 generic text and boolean facts map through existing canonical wire types', () => {
