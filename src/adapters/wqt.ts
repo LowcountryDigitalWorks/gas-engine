@@ -354,14 +354,33 @@ function textValue(value: string | null, reason: string): ObservationValue {
     ? { state: 'unknown', reason }
     : { state: 'observed', value: { type: 'text', value } };
 }
+function unrepresentableFact(
+  fact: z.infer<typeof siteOneFactSchema>,
+  rule: string,
+): never {
+  fail(
+    'policy_violation',
+    `Normalized WQT fact ${fact.id} (${fact.valueType}) is valid WQT evidence but is not representable by the accepted G.A.S. canonical value contract: ${rule}`,
+  );
+}
+
 function factValue(fact: z.infer<typeof siteOneFactSchema>): ObservationValue {
   if (fact.value === null) {
     return { state: 'unknown', reason: `Normalized WQT fact ${fact.id} is explicitly unknown or missing.` };
   }
   switch (fact.valueType) {
-    case 'number': return { state: 'observed', value: { type: 'number', value: fact.value } };
-    case 'text': return { state: 'observed', value: { type: 'text', value: fact.value } };
-    case 'boolean': return { state: 'observed', value: { type: 'boolean', value: fact.value } };
+    case 'number':
+      if (fact.value < -1e15 || fact.value > 1e15) {
+        unrepresentableFact(fact, 'observed numbers must be within -1e15 through +1e15.');
+      }
+      return { state: 'observed', value: { type: 'number', value: fact.value } };
+    case 'text':
+      if (fact.value.length < 1 || fact.value.length > 2_048 || !/\S/.test(fact.value)) {
+        unrepresentableFact(fact, 'observed text must be non-empty, contain non-whitespace, and fit canonical text bounds.');
+      }
+      return { state: 'observed', value: { type: 'text', value: fact.value } };
+    case 'boolean':
+      return { state: 'observed', value: { type: 'boolean', value: fact.value } };
   }
 }
 
