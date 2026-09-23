@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -309,6 +310,44 @@ test('Gate 1 runner imports comparable WQT evidence and exercises accepted human
     ], { stdout: () => {}, stderr: () => {} }),
     /Refusing to overwrite an existing report/,
   );
+});
+
+test('Gate 1 non-init commands fail closed on a missing SQLite path without creating database residue', async (t) => {
+  const root = resolve('local-artifacts');
+  mkdirSync(root, { recursive: true });
+  const directory = mkdtempSync(join(root, 'synthetic-gate1-missing-db-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+
+  const db = join(directory, 'mistyped.sqlite');
+  const ledger = join(directory, 'gate1-ledger.json');
+  const configPath = join(directory, 'config.json');
+  writeJson(configPath, {
+    principalId: 'synthetic-gate1-local-operator',
+    scope: {
+      tenantId: 'tenant-alpha',
+      siteId: 'site-alpha',
+      siteScopeRevisionId: 'synthetic-scope-alpha-r1',
+    },
+    siteLabel: 'Synthetic Gate 1 site',
+    expectedWqtSiteId: 'example-site',
+    expectedTargetOrigin: 'https://example.test',
+    providerConnectionIds: {
+      siteone: 'synthetic-siteone-connection',
+      lighthouse: 'synthetic-lighthouse-connection',
+    },
+  });
+
+  await assert.rejects(
+    runGate1Runner([
+      'list', '--db', db, '--ledger', ledger, '--config', configPath,
+    ], { stdout: () => {}, stderr: () => {} }),
+    /Gate 1 database must already exist as a regular file/,
+  );
+
+  assert.equal(existsSync(db), false);
+  assert.equal(existsSync(`${db}-wal`), false);
+  assert.equal(existsSync(`${db}-shm`), false);
+  assert.equal(existsSync(ledger), false);
 });
 
 test('Gate 1 runner source has no downloader, workflow dispatch, provider execution, network listener or cloud runtime', () => {
