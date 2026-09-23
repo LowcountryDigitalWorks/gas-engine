@@ -10,6 +10,7 @@ import {
   type WqtAdaptedCollection,
 } from '../../src/adapters/wqt.js';
 import type { Contract } from '../../src/contracts/wire.js';
+import { compareEvidenceSnapshots, EvidenceDiffError } from '../../src/analysis/diff.js';
 import { canonicalJson } from '../../src/lib/canonical-json.js';
 import { parseCollectionBatch } from '../../src/persistence/validation.js';
 import { alpha, beta, repository } from '../persistence/helpers.js';
@@ -17,9 +18,14 @@ import { alpha, beta, repository } from '../persistence/helpers.js';
 // This file is intentionally synthetic and mirrors only the public WQT normalized contract.
 type MutableJson = Record<string, any>;
 const fixtureText = readFileSync('tests/fixtures/wqt-normalized-v1.1.json', 'utf8');
+const fixtureMinor2Text = readFileSync('tests/fixtures/wqt-normalized-v1.2.json', 'utf8');
 
 function fixture(): MutableJson {
   return JSON.parse(fixtureText) as MutableJson;
+}
+
+function fixtureMinor2(): MutableJson {
+  return JSON.parse(fixtureMinor2Text) as MutableJson;
 }
 
 const trustedConfig: WqtAdapterConfig = {
@@ -153,7 +159,7 @@ test('rejects oversized, malformed UTF-8/JSON, unsupported versions, and strict 
   wrongMajor.schemaVersion = 'ldw.website-quality.v2';
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(wrongMajor), trustedConfig), 'unsupported_schema');
   const wrongMinor = fixture();
-  wrongMinor.schemaMinorVersion = 2;
+  wrongMinor.schemaMinorVersion = 3;
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(wrongMinor), trustedConfig), 'unsupported_schema');
   const extra = fixture();
   extra.sources.siteone.unexpected = true;
@@ -182,6 +188,310 @@ test('requires flattened WQT observations to exactly reconcile with nested deter
   const changed = fixture();
   changed.observations[0].title = 'Contradictory duplicate';
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(changed), trustedConfig), 'flattened_observation_mismatch');
+});
+
+
+test('historical minor1 keeps accepted mapping/source/method semantics and rejects facts', () => {
+  const result = adaptWqtNormalizedEvidence(bytes(fixture()), trustedConfig);
+  for (const stream of result.collections) {
+    const collectionRecord = stream.batches[0]!.collection;
+    assert.deepEqual(collectionRecord.adapter, { id: 'ldw-wqt-normalized', version: '1.0.0' });
+    assert.deepEqual(collectionRecord.sourceSchema, { id: 'ldw.website-quality', version: 'v1.1' });
+    assert.equal(collectionRecord.method.version, '1.0.0');
+    assert.equal(collectionRecord.method.configurationRevision, 1);
+  }
+
+  const invalid = fixture();
+  invalid.sources.siteone.observations[0].facts = [{
+    id: 'synthetic-count',
+    valueType: 'number',
+    value: 1,
+    unit: 'count',
+  }];
+  refreshFlattened(invalid);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(invalid), trustedConfig), 'invalid_source');
+});
+
+test('minor2 maps SiteOne typed facts generically with deliberate semantic version context', () => {
+  const result = adaptWqtNormalizedEvidence(bytes(fixtureMinor2()), trustedConfig);
+  const siteone = collection(result, 'siteone');
+  const collectionRecord = siteone.batches[0]!.collection;
+  assert.deepEqual(collectionRecord.adapter, { id: 'ldw-wqt-normalized', version: '2.0.0' });
+  assert.deepEqual(collectionRecord.sourceSchema, { id: 'ldw.website-quality', version: 'v1.2' });
+  assert.equal(collectionRecord.method.version, '2.0.0');
+  assert.equal(collectionRecord.method.configurationRevision, 2);
+
+  const mapped = observations(siteone);
+  const affected = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-affected-resource-count');
+  assert.ok(affected);
+  assert.equal(affected.cohort.context.metric.valueType, 'number');
+  assert.equal(affected.cohort.context.metric.unit, 'count');
+  assert.deepEqual(affected.value, { state: 'observed', value: { type: 'number', value: 11 } });
+  assert.equal(affected.cohort.context.dimensions.surface, 'wqt.surface:finding:static-assets-short-cache');
+
+  const redirect = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-redirect-count');
+  assert.ok(redirect);
+  assert.deepEqual(redirect.value, { state: 'observed', value: { type: 'number', value: 1 } });
+
+  const status = mapped.find((item) =>
+    item.cohort.id === 'wqt.cohort.siteone.finding:static-assets-short-cache:status');
+  assert.deepEqual(status?.value, { state: 'observed', value: { type: 'text', value: 'NOTICE' } });
+});
+
+test('minor2 fact contract fails closed on duplicates, extra keys, invalid bounds/type and Lighthouse facts', () => {
+  const duplicate = fixtureMinor2();
+  duplicate.sources.siteone.observations[0].facts.push(structuredClone(duplicate.sources.siteone.observations[0].facts[0]));
+  refreshFlattened(duplicate);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(duplicate), trustedConfig), 'invalid_source');
+
+  const extraKey = fixtureMinor2();
+  extraKey.sources.siteone.observations[0].facts[0].unexpected = true;
+  refreshFlattened(extraKey);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(extraKey), trustedConfig), 'invalid_source');
+
+  const badType = fixtureMinor2();
+  badType.sources.siteone.observations[0].facts[0] = {
+    id: 'redirect-count',
+    valueType: 'number',
+    value: '1',
+    unit: 'count',
+  };
+  refreshFlattened(badType);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(badType), trustedConfig), 'invalid_source');
+
+  const unsafeNumber = fixtureMinor2();
+  unsafeNumber.sources.siteone.observations[0].facts[0].value = Number.MAX_SAFE_INTEGER + 1;
+  refreshFlattened(unsafeNumber);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(unsafeNumber), trustedConfig), 'invalid_source');
+
+  const tooLongText = fixtureMinor2();
+  tooLongText.sources.siteone.observations[0].facts = [{
+    id: 'synthetic-text',
+    valueType: 'text',
+    value: 'x'.repeat(257),
+  }];
+  refreshFlattened(tooLongText);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(tooLongText), trustedConfig), 'invalid_source');
+
+  const lighthouseFacts = fixtureMinor2();
+  lighthouseFacts.sources.lighthouse.observations[0].facts = [{
+    id: 'not-allowed',
+    valueType: 'boolean',
+    value: true,
+  }];
+  refreshFlattened(lighthouseFacts);
+  expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(lighthouseFacts), trustedConfig), 'invalid_source');
+});
+
+test('minor2 generic text and boolean facts map through existing canonical wire types', () => {
+  const value = fixtureMinor2();
+  value.sources.siteone.observations[1].facts.push(
+    { id: 'synthetic-label', valueType: 'text', value: 'reviewed' },
+    { id: 'synthetic-enabled', valueType: 'boolean', value: true },
+  );
+  refreshFlattened(value);
+  const mapped = observations(collection(adaptWqtNormalizedEvidence(bytes(value), trustedConfig), 'siteone'));
+  const text = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-synthetic-label');
+  const boolean = mapped.find((item) => item.cohort.context.metric.id === 'wqt-siteone-fact-synthetic-enabled');
+  assert.deepEqual(text?.value, { state: 'observed', value: { type: 'text', value: 'reviewed' } });
+  assert.deepEqual(boolean?.value, { state: 'observed', value: { type: 'boolean', value: true } });
+});
+
+test('minor2 null fact remains explicit unknown while numeric zero remains observed zero', () => {
+  const before = fixtureMinor2();
+  const after = fixtureMinor2();
+  before.sources.siteone.observations[1].facts[0].value = null;
+  after.sources.siteone.observations[1].facts[0].value = 0;
+  refreshFlattened(before);
+  refreshFlattened(after);
+
+  const baseline = collection(adaptWqtNormalizedEvidence(bytes(before), trustedConfig), 'siteone');
+  const current = collection(adaptWqtNormalizedEvidence(bytes(after), trustedConfig), 'siteone');
+  const beforeFact = observations(baseline).find((item) =>
+    item.cohort.context.metric.id === 'wqt-siteone-fact-affected-resource-count');
+  const afterFact = observations(current).find((item) =>
+    item.cohort.context.metric.id === 'wqt-siteone-fact-affected-resource-count');
+  assert.equal(beforeFact?.value.state, 'unknown');
+  assert.deepEqual(afterFact?.value, { state: 'observed', value: { type: 'number', value: 0 } });
+
+  const report = compareEvidenceSnapshots(
+    { collection: baseline.batches[0]!.collection, observations: observations(baseline) },
+    { collection: current.batches[0]!.collection, observations: observations(current) },
+  );
+  assert.equal(report.summary.changed, 1);
+  const changed = report.entries.find((entry) => entry.state === 'changed');
+  assert.equal(changed?.baselineValue?.state, 'unknown');
+  assert.deepEqual(changed?.currentValue, { state: 'observed', value: { type: 'number', value: 0 } });
+});
+
+test('minor2 fact order and JSON formatting do not change semantic collections or observations', () => {
+  const original = fixtureMinor2();
+  original.sources.siteone.observations[1].facts.push(
+    { id: 'z-last', valueType: 'boolean', value: false },
+    { id: 'a-first', valueType: 'text', value: 'alpha' },
+  );
+  refreshFlattened(original);
+
+  const reordered = structuredClone(original);
+  reordered.sources.siteone.observations[1].facts.reverse();
+  refreshFlattened(reordered);
+
+  const left = adaptWqtNormalizedEvidence(bytes(original), trustedConfig);
+  const right = adaptWqtNormalizedEvidence(bytes(reordered, true), trustedConfig);
+  assert.notEqual(left.inputSha256, right.inputSha256);
+  assert.equal(canonicalJson(left.collections), canonicalJson(right.collections));
+
+  const factMetricIds = observations(collection(left, 'siteone'))
+    .filter((item) => item.cohort.context.metric.id.startsWith('wqt-siteone-fact-'))
+    .map((item) => item.cohort.context.metric.id);
+  assert.deepEqual(factMetricIds.filter((id) => id.includes('a-first') || id.includes('z-last')), [
+    'wqt-siteone-fact-a-first',
+    'wqt-siteone-fact-z-last',
+  ]);
+});
+
+test('minor2 wording-only change stays mechanically unchanged while source integrity changes', () => {
+  const before = fixtureMinor2();
+  const after = fixtureMinor2();
+  after.sources.siteone.observations[1].message = 'Different display wording with the same typed semantics.';
+  refreshFlattened(after);
+
+  const baseline = collection(adaptWqtNormalizedEvidence(bytes(before), trustedConfig), 'siteone');
+  const current = collection(adaptWqtNormalizedEvidence(bytes(after), trustedConfig), 'siteone');
+  assert.notEqual(baseline.collectionId, current.collectionId);
+
+  const report = compareEvidenceSnapshots(
+    { collection: baseline.batches[0]!.collection, observations: observations(baseline) },
+    { collection: current.batches[0]!.collection, observations: observations(current) },
+  );
+  assert.equal(report.summary.changed, 0);
+  assert.equal(report.summary.attentionCount, 0);
+
+  const beforeFindingSource = baseline.batches.flatMap((batch) => batch.sources)
+    .find((item) => item.record.identity.sourceRecordId.includes('static-assets-short-cache'));
+  const afterFindingSource = current.batches.flatMap((batch) => batch.sources)
+    .find((item) => item.record.identity.sourceRecordId.includes('static-assets-short-cache'));
+  assert.notDeepEqual(beforeFindingSource?.record.integrity, afterFindingSource?.record.integrity);
+});
+
+test('minor2 genuine status transition changes status while unchanged fact remains unchanged', () => {
+  const before = fixtureMinor2();
+  const after = fixtureMinor2();
+  after.sources.siteone.observations[1].sourceStatus = 'WARNING';
+  refreshFlattened(after);
+  const baseline = collection(adaptWqtNormalizedEvidence(bytes(before), trustedConfig), 'siteone');
+  const current = collection(adaptWqtNormalizedEvidence(bytes(after), trustedConfig), 'siteone');
+  const report = compareEvidenceSnapshots(
+    { collection: baseline.batches[0]!.collection, observations: observations(baseline) },
+    { collection: current.batches[0]!.collection, observations: observations(current) },
+  );
+  assert.equal(report.summary.changed, 1);
+  const factCohort = observations(baseline).find((item) =>
+    item.cohort.context.metric.id === 'wqt-siteone-fact-affected-resource-count')!.cohort.id;
+  const statusCohort = observations(baseline).find((item) =>
+    item.cohort.id.endsWith('static-assets-short-cache:status'))!.cohort.id;
+  const factEntry = report.entries.find((entry) => {
+    const observation = observations(baseline).find((item) => item.id === entry.baselineObservationId);
+    return observation?.cohort.id === factCohort;
+  });
+  const statusEntry = report.entries.find((entry) => {
+    const observation = observations(baseline).find((item) => item.id === entry.baselineObservationId);
+    return observation?.cohort.id === statusCohort;
+  });
+  assert.equal(factEntry?.state, 'unchanged');
+  assert.equal(statusEntry?.state, 'changed');
+});
+
+test('minor2 same-status 11 to 1 typed magnitude surfaces through generic Release 0.7 comparison', () => {
+  const before = fixtureMinor2();
+  const after = fixtureMinor2();
+  after.sources.siteone.observations[1].facts[0].value = 1;
+  after.sources.siteone.observations[1].message = '1 static resource has a short cache lifetime.';
+  refreshFlattened(after);
+  const baseline = collection(adaptWqtNormalizedEvidence(bytes(before), trustedConfig), 'siteone');
+  const current = collection(adaptWqtNormalizedEvidence(bytes(after), trustedConfig), 'siteone');
+  const report = compareEvidenceSnapshots(
+    { collection: baseline.batches[0]!.collection, observations: observations(baseline) },
+    { collection: current.batches[0]!.collection, observations: observations(current) },
+  );
+  assert.equal(report.summary.changed, 1);
+  const changed = report.entries.find((entry) => entry.state === 'changed');
+  assert.equal(changed?.numericDelta, -10);
+  assert.deepEqual(changed?.baselineValue, { state: 'observed', value: { type: 'number', value: 11 } });
+  assert.deepEqual(changed?.currentValue, { state: 'observed', value: { type: 'number', value: 1 } });
+
+  const status = observations(baseline).find((item) =>
+    item.cohort.id.endsWith('static-assets-short-cache:status'))!;
+  const statusEntry = report.entries.find((entry) => entry.baselineObservationId === status.id);
+  assert.equal(statusEntry?.state, 'unchanged');
+});
+
+test('minor2 redirect-count uses the same generic fact mechanism', () => {
+  const before = fixtureMinor2();
+  const after = fixtureMinor2();
+  after.sources.siteone.observations[0].facts[0].value = 0;
+  after.sources.siteone.observations[0].message = 'Redirects - no redirects found.';
+  refreshFlattened(after);
+  const baseline = collection(adaptWqtNormalizedEvidence(bytes(before), trustedConfig), 'siteone');
+  const current = collection(adaptWqtNormalizedEvidence(bytes(after), trustedConfig), 'siteone');
+  const report = compareEvidenceSnapshots(
+    { collection: baseline.batches[0]!.collection, observations: observations(baseline) },
+    { collection: current.batches[0]!.collection, observations: observations(current) },
+  );
+  assert.equal(report.summary.changed, 1);
+  const changed = report.entries.find((entry) => entry.state === 'changed');
+  assert.equal(changed?.numericDelta, -1);
+  assert.deepEqual(changed?.currentValue, { state: 'observed', value: { type: 'number', value: 0 } });
+});
+
+test('minor2 keeps Lighthouse score/numeric/null/zero behavior and rejects Lighthouse facts', () => {
+  const value = fixtureMinor2();
+  const result = adaptWqtNormalizedEvidence(bytes(value), trustedConfig);
+  const lighthouse = observations(collection(result, 'lighthouse'));
+  const zeroCategory = lighthouse.find((item) =>
+    item.cohort.context.metric.id === 'wqt-lighthouse-category-score'
+    && item.value.state === 'observed'
+    && item.value.value.type === 'number'
+    && item.value.value.value === 0);
+  assert.ok(zeroCategory);
+  const auditScore = lighthouse.find((item) =>
+    item.cohort.context.metric.id === 'wqt-lighthouse-audit-score'
+    && item.cohort.id.includes('document-title'));
+  assert.deepEqual(auditScore?.value, { state: 'observed', value: { type: 'number', value: 1 } });
+  const numeric = lighthouse.find((item) => item.cohort.context.metric.id === 'wqt-lighthouse-audit-numeric');
+  assert.equal(numeric?.cohort.context.metric.unit, 'millisecond');
+  const documentNumeric = lighthouse.find((item) =>
+    item.cohort.id.includes('document-title') && item.cohort.context.metric.id === 'wqt-lighthouse-audit-numeric');
+  assert.equal(documentNumeric, undefined);
+});
+
+test('minor1 and minor2 collections are semantic discontinuities without comparator special-casing', () => {
+  const minor1 = collection(adaptWqtNormalizedEvidence(bytes(fixture()), trustedConfig), 'siteone');
+  const minor2 = collection(adaptWqtNormalizedEvidence(bytes(fixtureMinor2()), trustedConfig), 'siteone');
+  assert.throws(
+    () => compareEvidenceSnapshots(
+      { collection: minor1.batches[0]!.collection, observations: observations(minor1) },
+      { collection: minor2.batches[0]!.collection, observations: observations(minor2) },
+    ),
+    (error: unknown) => error instanceof EvidenceDiffError && error.code === 'collection_discontinuity',
+  );
+});
+
+test('minor2 adapted evidence preserves Alpha/Beta tenant isolation in persistence', async (t) => {
+  const adapted = collection(adaptWqtNormalizedEvidence(bytes(fixtureMinor2()), trustedConfig), 'siteone');
+  const repo = await repository(t);
+  await repo.createConnection(alpha, {
+    id: trustedConfig.providerConnectionIds.siteone,
+    scope: trustedConfig.scope,
+    providerId: 'siteone',
+  });
+  await assert.rejects(repo.persistCollection(beta, adapted.batches[0]!));
+  assert.equal(await repo.getCollection(alpha, adapted.collectionId), null);
+});
+
+test('generic Release 0.7 comparator remains WQT/SiteOne-free', () => {
+  const comparator = readFileSync('src/analysis/diff.ts', 'utf8');
+  assert.doesNotMatch(comparator, /siteone|wqt-siteone|affected-resource-count|redirect-count/i);
 });
 
 test('source ordering and JSON formatting do not change semantic collection/source identity', () => {
@@ -331,4 +641,5 @@ test('adapter production surface has no network/listener, authentication issuer,
   assert.doesNotMatch(source, /authentication|tenant-authority|issueTenantContext/);
   assert.doesNotMatch(source, /website-quality-toolkit|scripts\/normalize|GitHub|actions\/download-artifact/);
   assert.doesNotMatch(source, /ZeroRank|zerorank|Release 0\.6/);
+  assert.doesNotMatch(source, /results\[|tables\.redirects|cacheLifetime|cacheTypeFlags/);
 });
