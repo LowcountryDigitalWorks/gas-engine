@@ -69,11 +69,9 @@ function expectRepresentabilityPolicyError(
 ): void {
   assert.throws(action, (error: unknown) => {
     if (!(error instanceof WqtAdapterError) || error.code !== 'policy_violation') return false;
-    assert.match(error.message, new RegExp(`Normalized WQT fact ${factId} \\\\(${valueType}\\\\)`));
+    assert.match(error.message, new RegExp(`Normalized WQT fact ${factId} \\\(${valueType}\\\)`));
     assert.match(error.message, /valid WQT evidence but is not representable by the accepted G\.A\.S\. canonical value contract/);
-    if (forbiddenRawValue !== undefined) assert.doesNotMatch(error.message, new RegExp(forbiddenRawValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\\\function expectAdapterError(action: () => unknown, code: WqtAdapterErrorCode): void {
-  assert.throws(action, (error: unknown) => error instanceof WqtAdapterError && error.code === code);
-}')));
+    if (forbiddenRawValue !== undefined) assert.equal(error.message.includes(forbiddenRawValue), false);
     return true;
   });
 }
