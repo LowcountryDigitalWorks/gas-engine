@@ -21,7 +21,6 @@ import { availability, identifier, scope, shortText, timestamp, version } from '
 import { canonicalJson } from '../src/lib/canonical-json.js';
 import { diffEvidenceCollections } from '../src/analysis/diff.js';
 import { LocalEvidenceRepository } from '../src/persistence/sqlite.js';
-import type { Scope } from '../src/persistence/repository.js';
 import { assembleOperatorCaseView } from '../src/operator/case-view.js';
 import { buildOperatorCasePresentation, renderOperatorCaseHtml } from '../src/operator/html.js';
 import { LocalReviewLedgerRepository } from '../src/review/sqlite.js';
@@ -222,7 +221,15 @@ function ensureParentExists(path: string): void {
   }
 }
 
-function commonOptions(options: ReadonlyMap<string, string>): {
+function requireExistingDatabase(path: string): void {
+  if (!existsSync(path)) fail(`Gate 1 database must already exist as a regular file: ${path}`);
+  if (!statSync(path).isFile()) fail(`Gate 1 database must already exist as a regular file: ${path}`);
+}
+
+function commonOptions(
+  options: ReadonlyMap<string, string>,
+  requireDatabase = true,
+): {
   db: string;
   ledger: string;
   configPath: string;
@@ -232,6 +239,7 @@ function commonOptions(options: ReadonlyMap<string, string>): {
   const ledger = requireOption(options, 'ledger');
   const configPath = requireOption(options, 'config');
   if (resolve(db) === resolve(ledger)) fail('Database and metadata ledger paths must be distinct.');
+  if (requireDatabase) requireExistingDatabase(db);
   return { db, ledger, configPath, config: readAuthority(configPath) };
 }
 
@@ -256,10 +264,6 @@ function requireOption(options: ReadonlyMap<string, string>, name: string): stri
   const value = options.get(name);
   if (!value) fail(`Missing required option: --${name}`);
   return value;
-}
-
-function optionalOption(options: ReadonlyMap<string, string>, name: string): string | undefined {
-  return options.get(name);
 }
 
 function exactOptions(options: ReadonlyMap<string, string>, allowed: readonly string[]): void {
@@ -325,7 +329,7 @@ function recommendationSummary(record: Awaited<ReturnType<typeof createHumanReco
 
 async function initCommand(options: ReadonlyMap<string, string>, io: Gate1RunnerIo): Promise<void> {
   exactOptions(options, ['db', 'ledger', 'config']);
-  const { db, ledger, config } = commonOptions(options);
+  const { db, ledger, config } = commonOptions(options, false);
   ensureParentExists(db);
   ensureParentExists(ledger);
   if (existsSync(db)) fail(`Refusing to overwrite an existing Gate 1 database: ${db}`);
@@ -364,7 +368,7 @@ async function importCommand(options: ReadonlyMap<string, string>, io: Gate1Runn
   const { db, ledger, config } = commonOptions(options);
   const artifactPath = requireOption(options, 'artifact');
   const metadataPath = requireOption(options, 'metadata');
-  if (!existsSync(db) || !existsSync(ledger)) fail('Gate 1 database and metadata ledger must be initialized before import.');
+  if (!existsSync(ledger)) fail('Gate 1 metadata ledger must be initialized before import.');
   const ledgerValue = readLedger(ledger);
   requireLedgerAuthority(ledgerValue, config);
   const metadata = readImportMetadata(metadataPath);
