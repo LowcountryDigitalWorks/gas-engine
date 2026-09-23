@@ -70,6 +70,19 @@ Facts are sorted by ASCII fact ID before source hashing and observation construc
 
 The G.A.S. adapter is a defensive consumer of the accepted minor2 fact contract: at most 8 facts, bounded/patterned IDs and units, closed objects, number/text/boolean type matching, safe finite numeric bounds, 256-code-unit text bound, duplicate-ID rejection, and strict unknown keys. Unit `count` remains a numeric count semantic and accepts only explicit null or a non-negative safe integer. No finding code is special-cased in the mapping.
 
+### Canonical-representable subset policy
+
+The valid WQT minor2 fact domain is broader than the accepted G.A.S. canonical observed-value domain. G.A.S. therefore supports the **canonical-representable subset** of otherwise-valid minor2 facts.
+
+After WQT shape/type validation succeeds:
+
+- non-null number facts are representable only when `-1e15 <= value <= +1e15`;
+- non-null text facts are representable only when they are non-empty, contain at least one non-whitespace character, and fit the existing canonical observed-text bound;
+- boolean facts are representable normally;
+- explicit `null` remains canonical `unknown` with the deterministic fact-missingness reason.
+
+A WQT-valid fact outside that downstream representability subset fails closed with adapter error `policy_violation`. That is **G.A.S. representability policy, not WQT invalidity**. The adapter does not trim, clamp, round, stringify, coerce, substitute null, map an unrepresentable observed value to unknown, or invent placeholder content. Representability errors identify the fact ID and declared value type but never echo the raw fact value.
+
 Finding message/name/label/command and other source display material remain only in the hashed source slice. SiteOne source scores are scanner evidence with unit `siteone_source_score`, not an LDW quality scale.
 
 ### Lighthouse
