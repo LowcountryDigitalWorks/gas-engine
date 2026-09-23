@@ -67,7 +67,7 @@ Create an owner-controlled directory outside the public repository, for example:
   reports/
 ```
 
-The runner refuses to overwrite an existing database during `init` and refuses to overwrite an existing rendered report.
+The runner refuses to overwrite an existing database during `init` and refuses to overwrite an existing rendered report. Every non-`init` command also requires the supplied SQLite database path to already exist as a regular file, so a mistyped path fails closed instead of silently creating a new empty database.
 
 ## Trusted authority configuration
 
