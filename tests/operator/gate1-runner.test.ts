@@ -355,5 +355,5 @@ test('Gate 1 runner source has no downloader, workflow dispatch, provider execut
   assert.doesNotMatch(source, /from ['"]node:(?:http|https|net|tls|dns|dgram|child_process|worker_threads)['"]/);
   assert.doesNotMatch(source, /\bfetch\s*\(/);
   assert.doesNotMatch(source, /workflow_dispatch|actions\/download-artifact|api\.github\.com|octokit|wrangler|cloudflare|D1Database|Activepieces|ZeroRank/i);
-  assert.doesNotMatch(source, /SiteOne.*(?:spawn|exec)|Lighthouse.*(?:spawn|exec)/i);
+  assert.doesNotMatch(source, /\b(?:spawn|spawnSync|exec|execSync|execFile|execFileSync|fork)\s*\(/);
 });
