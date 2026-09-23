@@ -78,6 +78,26 @@ G.A.S. independently validates the accepted minor2 fact shape:
 
 Lighthouse input remains structurally unchanged and does not accept `facts`.
 
+## Canonical representability policy
+
+Portfolio selected an explicit downstream **canonical-representable subset** rather than widening G.A.S. core contracts or narrowing the accepted WQT minor2 contract.
+
+WQT-valid evidence can therefore fail G.A.S. adapter policy without becoming WQT-invalid:
+
+- non-null numeric facts must fit the accepted canonical range `[-1e15, +1e15]`;
+- non-null text facts must satisfy accepted canonical observed-text semantics: non-empty, at least one non-whitespace character, and within the existing canonical text bound;
+- booleans map normally;
+- null maps to canonical `unknown`.
+
+A valid-but-unrepresentable fact fails closed with `policy_violation`. The error identifies the fact ID, declared value type, and representability rule without echoing the raw source value. No trimming, clamping, rounding, stringification, coercion, null substitution, placeholder invention, or conversion to `unknown` is permitted for a non-null unrepresentable value.
+
+This policy deliberately distinguishes two failure classes:
+
+- malformed WQT source shape/type → existing source-validation error semantics;
+- valid WQT fact outside G.A.S. canonical representability → `policy_violation`.
+
+The two currently approved WQT count facts remain inside this subset for the GAS-SEM-001 real replay.
+
 ## Consequences
 
 - No canonical wire-schema change.
