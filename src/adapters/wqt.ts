@@ -18,11 +18,16 @@ import type { CollectionBatch, Scope } from '../persistence/repository.js';
 import { INGESTION_PART_BOUNDS, parseCollectionBatch } from '../persistence/validation.js';
 
 export const WQT_INPUT_SCHEMA_VERSION = 'ldw.website-quality.v1' as const;
-export const WQT_INPUT_SCHEMA_MINOR_VERSION = 1 as const;
+export const WQT_INPUT_SCHEMA_MINOR_VERSION = 2 as const;
 export const WQT_ADAPTER_ID = 'ldw-wqt-normalized' as const;
-export const WQT_ADAPTER_MAPPING_VERSION = '1.0.0' as const;
+export const WQT_ADAPTER_MAPPING_VERSION = '2.0.0' as const;
 export const WQT_SOURCE_SCHEMA_ID = 'ldw.website-quality' as const;
-export const WQT_SOURCE_SCHEMA_VERSION = 'v1.1' as const;
+export const WQT_SOURCE_SCHEMA_VERSION = 'v1.2' as const;
+
+const WQT_MINOR1_MAPPING_VERSION = '1.0.0' as const;
+const WQT_MINOR1_SOURCE_SCHEMA_VERSION = 'v1.1' as const;
+const WQT_MINOR2_MAPPING_VERSION = WQT_ADAPTER_MAPPING_VERSION;
+const WQT_MINOR2_SOURCE_SCHEMA_VERSION = WQT_SOURCE_SCHEMA_VERSION;
 export const MAX_WQT_NORMALIZED_BYTES = MAX_HASH_INPUT_BYTES;
 
 export type WqtProviderId = 'siteone' | 'lighthouse';
@@ -95,11 +100,60 @@ const siteOneCategorySchema = z.strictObject({
   score: nullableScore,
   label: nullableBoundedText,
 });
-const siteOneObservationSchema = z.strictObject({
+const siteOneFactId = z.string().min(1).max(64).regex(/^[a-z0-9][a-z0-9-]{0,63}$/);
+const siteOneFactUnit = z.string().min(1).max(32).regex(/^[a-z][a-z0-9-]{0,31}$/);
+const siteOneFactSchema = z.discriminatedUnion('valueType', [
+  z.strictObject({
+    id: siteOneFactId,
+    valueType: z.literal('number'),
+    value: z.number().finite().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER).nullable(),
+    unit: siteOneFactUnit.optional(),
+  }),
+  z.strictObject({
+    id: siteOneFactId,
+    valueType: z.literal('text'),
+    value: z.string().max(256).nullable(),
+    unit: siteOneFactUnit.optional(),
+  }),
+  z.strictObject({
+    id: siteOneFactId,
+    valueType: z.literal('boolean'),
+    value: z.boolean().nullable(),
+    unit: siteOneFactUnit.optional(),
+  }),
+]).superRefine((fact, context) => {
+  if (fact.unit === 'count') {
+    if (fact.valueType !== 'number'
+        || (fact.value !== null && (!Number.isSafeInteger(fact.value) || fact.value < 0))) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Normalized WQT count facts must be non-negative safe integers or explicit null.',
+      });
+    }
+  }
+});
+const siteOneFactsSchema = z.array(siteOneFactSchema).max(8).superRefine((facts, context) => {
+  const seen = new Set<string>();
+  for (const fact of facts) {
+    if (seen.has(fact.id)) {
+      context.addIssue({ code: 'custom', message: 'Normalized WQT fact IDs must be unique within one finding.' });
+    }
+    seen.add(fact.id);
+  }
+});
+
+const siteOneObservationMinor1Schema = z.strictObject({
   source: z.literal('siteone'),
   code: sourceKey,
   sourceStatus: z.string().min(1).max(2_048).regex(/\S/).nullable(),
   message: nullableBoundedText,
+});
+const siteOneObservationMinor2Schema = z.strictObject({
+  source: z.literal('siteone'),
+  code: sourceKey,
+  sourceStatus: z.string().min(1).max(2_048).regex(/\S/).nullable(),
+  message: nullableBoundedText,
+  facts: siteOneFactsSchema.optional(),
 });
 const lighthouseCategorySchema = z.strictObject({
   id: sourceKey,
@@ -116,14 +170,23 @@ const lighthouseObservationSchema = z.strictObject({
   numericValue: nullableScore,
   numericUnit: z.string().min(1).max(128).regex(/\S/).nullable(),
 });
-const siteOneSourceSchema = z.strictObject({
+const siteOneSourceMinor1Schema = z.strictObject({
   tool: boundedText,
   version: versionSchema.nullable(),
   executedAt: nullableBoundedText,
   command: nullableBoundedText,
   overallScore: nullableScore,
   categoryScores: z.array(siteOneCategorySchema).max(2_048),
-  observations: z.array(siteOneObservationSchema).max(2_048),
+  observations: z.array(siteOneObservationMinor1Schema).max(2_048),
+});
+const siteOneSourceMinor2Schema = z.strictObject({
+  tool: boundedText,
+  version: versionSchema.nullable(),
+  executedAt: nullableBoundedText,
+  command: nullableBoundedText,
+  overallScore: nullableScore,
+  categoryScores: z.array(siteOneCategorySchema).max(2_048),
+  observations: z.array(siteOneObservationMinor2Schema).max(2_048),
 });
 const lighthouseSourceSchema = z.strictObject({
   tool: boundedText,
@@ -135,9 +198,8 @@ const lighthouseSourceSchema = z.strictObject({
   categoryScores: z.array(lighthouseCategorySchema).max(2_048),
   observations: z.array(lighthouseObservationSchema).max(2_048),
 });
-const artifactSchema = z.strictObject({
-  schemaVersion: z.string().min(1).max(128),
-  schemaMinorVersion: z.number().int().min(0).max(1_000_000),
+const artifactBase = {
+  schemaVersion: z.literal(WQT_INPUT_SCHEMA_VERSION),
   siteId: wqtSiteId,
   target: boundedText.min(1),
   evidenceOnly: z.boolean(),
@@ -145,9 +207,20 @@ const artifactSchema = z.strictObject({
     qualityThresholdsApplied: z.boolean(),
     siteOneCiModeEnabled: z.boolean(),
   }),
-  sources: z.strictObject({ siteone: siteOneSourceSchema, lighthouse: lighthouseSourceSchema }),
-  observations: z.array(z.discriminatedUnion('source', [siteOneObservationSchema, lighthouseObservationSchema])).max(4_096),
+};
+const artifactMinor1Schema = z.strictObject({
+  ...artifactBase,
+  schemaMinorVersion: z.literal(1),
+  sources: z.strictObject({ siteone: siteOneSourceMinor1Schema, lighthouse: lighthouseSourceSchema }),
+  observations: z.array(z.discriminatedUnion('source', [siteOneObservationMinor1Schema, lighthouseObservationSchema])).max(4_096),
 });
+const artifactMinor2Schema = z.strictObject({
+  ...artifactBase,
+  schemaMinorVersion: z.literal(2),
+  sources: z.strictObject({ siteone: siteOneSourceMinor2Schema, lighthouse: lighthouseSourceSchema }),
+  observations: z.array(z.discriminatedUnion('source', [siteOneObservationMinor2Schema, lighthouseObservationSchema])).max(4_096),
+});
+const artifactSchema = z.discriminatedUnion('schemaMinorVersion', [artifactMinor1Schema, artifactMinor2Schema]);
 const configSchema = z.strictObject({
   scope: scopeSchema,
   expectedSiteId: wqtSiteId,
@@ -171,7 +244,7 @@ interface ObservationSpec {
   readonly suffix: string;
   readonly metricId: string;
   readonly meaningVersion: string;
-  readonly valueType: 'number' | 'text';
+  readonly valueType: 'number' | 'text' | 'boolean';
   readonly unit?: string;
   readonly value: ObservationValue;
 }
@@ -218,8 +291,9 @@ function parseInput(bytes: Uint8Array): { artifact: WqtArtifact; inputSha256: st
     fail('invalid_source', 'Normalized WQT input must be an object.');
   }
   const envelope = decoded as Record<string, unknown>;
-  if (envelope['schemaVersion'] !== WQT_INPUT_SCHEMA_VERSION || envelope['schemaMinorVersion'] !== WQT_INPUT_SCHEMA_MINOR_VERSION) {
-    fail('unsupported_schema', `Only ${WQT_INPUT_SCHEMA_VERSION} minor ${WQT_INPUT_SCHEMA_MINOR_VERSION} is supported.`);
+  if (envelope['schemaVersion'] !== WQT_INPUT_SCHEMA_VERSION
+      || (envelope['schemaMinorVersion'] !== 1 && envelope['schemaMinorVersion'] !== 2)) {
+    fail('unsupported_schema', `Only ${WQT_INPUT_SCHEMA_VERSION} minors 1 and 2 are supported.`);
   }
 
   const parsed = artifactSchema.safeParse(decoded);
@@ -280,6 +354,57 @@ function textValue(value: string | null, reason: string): ObservationValue {
     ? { state: 'unknown', reason }
     : { state: 'observed', value: { type: 'text', value } };
 }
+function unrepresentableFact(
+  fact: z.infer<typeof siteOneFactSchema>,
+  rule: string,
+): never {
+  fail(
+    'policy_violation',
+    `Normalized WQT fact ${fact.id} (${fact.valueType}) is valid WQT evidence but is not representable by the accepted G.A.S. canonical value contract: ${rule}`,
+  );
+}
+
+function factValue(fact: z.infer<typeof siteOneFactSchema>): ObservationValue {
+  if (fact.value === null) {
+    return { state: 'unknown', reason: `Normalized WQT fact ${fact.id} is explicitly unknown or missing.` };
+  }
+  switch (fact.valueType) {
+    case 'number':
+      if (fact.value < -1e15 || fact.value > 1e15) {
+        unrepresentableFact(fact, 'observed numbers must be within -1e15 through +1e15.');
+      }
+      return { state: 'observed', value: { type: 'number', value: fact.value } };
+    case 'text':
+      if (fact.value.length < 1 || fact.value.length > 2_048 || !/\S/.test(fact.value)) {
+        unrepresentableFact(fact, 'observed text must be non-empty, contain non-whitespace, and fit canonical text bounds.');
+      }
+      return { state: 'observed', value: { type: 'text', value: fact.value } };
+    case 'boolean':
+      return { state: 'observed', value: { type: 'boolean', value: fact.value } };
+  }
+}
+
+function asciiCompare(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function mappingSemantics(artifact: WqtArtifact): {
+  readonly mappingVersion: string;
+  readonly sourceSchemaVersion: string;
+  readonly configurationRevision: 1 | 2;
+} {
+  return artifact.schemaMinorVersion === 1
+    ? {
+        mappingVersion: WQT_MINOR1_MAPPING_VERSION,
+        sourceSchemaVersion: WQT_MINOR1_SOURCE_SCHEMA_VERSION,
+        configurationRevision: 1,
+      }
+    : {
+        mappingVersion: WQT_MINOR2_MAPPING_VERSION,
+        sourceSchemaVersion: WQT_MINOR2_SOURCE_SCHEMA_VERSION,
+        configurationRevision: 2,
+      };
+}
 
 function sourceDigest(material: unknown): string {
   try {
@@ -332,10 +457,22 @@ function makeSiteOneUnits(artifact: WqtArtifact): SourceUnit[] {
     }]);
   }
   for (const item of [...source.observations].sort((left, right) => left.code.localeCompare(right.code))) {
-    add('finding', item.code, item, [{
+    const facts = 'facts' in item && item.facts !== undefined
+      ? [...item.facts].sort((left, right) => asciiCompare(left.id, right.id))
+      : [];
+    const normalizedSlice = facts.length === 0 ? item : { ...item, facts };
+    const factObservations: ObservationSpec[] = facts.map((fact) => ({
+      suffix: `fact:${fact.id}`,
+      metricId: `wqt-siteone-fact-${fact.id}`,
+      meaningVersion: '1.0.0',
+      valueType: fact.valueType,
+      ...(fact.unit === undefined ? {} : { unit: fact.unit }),
+      value: factValue(fact),
+    }));
+    add('finding', item.code, normalizedSlice, [{
       suffix: 'status', metricId: 'wqt-siteone-source-status', meaningVersion: '1.0.0', valueType: 'text',
       value: textValue(item.sourceStatus, 'SiteOne finding source status is missing.'),
-    }]);
+    }, ...factObservations]);
   }
   return units;
 }
@@ -391,12 +528,15 @@ function providerVersion(artifact: WqtArtifact, providerId: WqtProviderId): stri
   return artifact.sources[providerId].version ?? 'unknown';
 }
 
-function methodFor(providerId: WqtProviderId): Contract<'collection'>['method'] {
+function methodFor(
+  providerId: WqtProviderId,
+  semantics: ReturnType<typeof mappingSemantics>,
+): Contract<'collection'>['method'] {
   return {
     id: `ldw-wqt-${providerId}`,
-    version: WQT_ADAPTER_MAPPING_VERSION,
+    version: semantics.mappingVersion,
     configurationId: `wqt-${providerId}-normalized-v1`,
-    configurationRevision: 1,
+    configurationRevision: semantics.configurationRevision,
   };
 }
 
@@ -405,17 +545,18 @@ function buildProviderCollection(
   config: ParsedConfig,
   providerId: WqtProviderId,
   units: SourceUnit[],
+  semantics: ReturnType<typeof mappingSemantics>,
 ): WqtAdaptedCollection {
   if (units.length > INGESTION_PART_BOUNDS.parts * INGESTION_PART_BOUNDS.sourcesPerPart) {
     fail('too_many_source_units', 'Provider evidence exceeds 1,024 source units and cannot fit within 64 bounded parts.');
   }
   const version = providerVersion(artifact, providerId);
-  const method = methodFor(providerId);
+  const method = methodFor(providerId, semantics);
   const sourceTime = { start: config.timing.observedAt, end: config.timing.observedAt };
   const seedDigest = hashCanonicalJson({
     algorithm: 'gas-wqt-provider-seed-v1',
-    adapter: { id: WQT_ADAPTER_ID, version: WQT_ADAPTER_MAPPING_VERSION },
-    sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: WQT_SOURCE_SCHEMA_VERSION },
+    adapter: { id: WQT_ADAPTER_ID, version: semantics.mappingVersion },
+    sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: semantics.sourceSchemaVersion },
     scope: config.scope,
     siteId: artifact.siteId,
     target: artifact.target,
@@ -443,8 +584,8 @@ function buildProviderCollection(
     scope: config.scope,
     providerId,
     providerConnectionId: config.providerConnectionIds[providerId],
-    adapter: { id: WQT_ADAPTER_ID, version: WQT_ADAPTER_MAPPING_VERSION },
-    sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: WQT_SOURCE_SCHEMA_VERSION },
+    adapter: { id: WQT_ADAPTER_ID, version: semantics.mappingVersion },
+    sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: semantics.sourceSchemaVersion },
     method,
     sourceTime,
     startedAt: config.timing.startedAt,
@@ -499,7 +640,7 @@ function buildProviderCollection(
             },
             method,
             timeWindowRules: {
-              id: 'wqt-point-observation', version: WQT_ADAPTER_MAPPING_VERSION,
+              id: 'wqt-point-observation', version: semantics.mappingVersion,
               alignment: 'point', durationSeconds: 0, timezone: 'UTC',
             },
           },
@@ -508,8 +649,8 @@ function buildProviderCollection(
         provenance: {
           schemaVersion: '1.0',
           source: identity,
-          adapter: { id: WQT_ADAPTER_ID, version: WQT_ADAPTER_MAPPING_VERSION },
-          sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: WQT_SOURCE_SCHEMA_VERSION },
+          adapter: { id: WQT_ADAPTER_ID, version: semantics.mappingVersion },
+          sourceSchema: { id: WQT_SOURCE_SCHEMA_ID, version: semantics.sourceSchemaVersion },
           runId: collectionId,
           sourceTime,
           collectedAt: config.timing.collectedAt,
@@ -517,7 +658,7 @@ function buildProviderCollection(
           sourceTimezone: 'UTC',
           completeness,
           integrity,
-          normalization: { id: WQT_ADAPTER_ID, version: WQT_ADAPTER_MAPPING_VERSION },
+          normalization: { id: WQT_ADAPTER_ID, version: semantics.mappingVersion },
           availability: config.availability[providerId],
         },
       });
@@ -606,9 +747,10 @@ export function adaptWqtNormalizedEvidence(bytes: Uint8Array, trustedConfig: Wqt
   }
 
   reconcileFlattened(artifact);
+  const semantics = mappingSemantics(artifact);
   const siteOneUnits = makeSiteOneUnits(artifact);
   const lighthouseUnits = makeLighthouseUnits(artifact);
-  const siteone = buildProviderCollection(artifact, config, 'siteone', siteOneUnits);
-  const lighthouse = buildProviderCollection(artifact, config, 'lighthouse', lighthouseUnits);
+  const siteone = buildProviderCollection(artifact, config, 'siteone', siteOneUnits, semantics);
+  const lighthouse = buildProviderCollection(artifact, config, 'lighthouse', lighthouseUnits, semantics);
   return { inputSha256, collections: [siteone, lighthouse] };
 }

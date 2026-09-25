@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "ldw.website-quality.v1",
+  "schemaMinorVersion": 2,
+  "siteId": "example-site",
+  "target": "https://example.test",
+  "evidenceOnly": true,
+  "gatePolicy": {
+    "qualityThresholdsApplied": false,
+    "siteOneCiModeEnabled": false
+  },
+  "sources": {
+    "siteone": {
+      "tool": "SiteOne Crawler",
+      "version": "2.5.1",
+      "executedAt": "2026-09-20 00:00:00",
+      "command": "synthetic-siteone-command --target example.test",
+      "overallScore": 0.9,
+      "categoryScores": [
+        {
+          "code": "seo",
+          "name": "SEO",
+          "score": 0.91,
+          "label": "Good"
+        }
+      ],
+      "observations": [
+        {
+          "source": "siteone",
+          "code": "redirects",
+          "sourceStatus": "NOTICE",
+          "message": "Redirects - 1 redirect found.",
+          "facts": [
+            {
+              "id": "redirect-count",
+              "valueType": "number",
+              "value": 1,
+              "unit": "count"
+            }
+          ]
+        },
+        {
+          "source": "siteone",
+          "code": "static-assets-short-cache",
+          "sourceStatus": "NOTICE",
+          "message": "11 static resources have a short cache lifetime.",
+          "facts": [
+            {
+              "id": "affected-resource-count",
+              "valueType": "number",
+              "value": 11,
+              "unit": "count"
+            }
+          ]
+        }
+      ]
+    },
+    "lighthouse": {
+      "tool": "Lighthouse",
+      "version": "13.4.1",
+      "fetchTime": "2026-09-20T00:00:00.000Z",
+      "requestedUrl": "https://example.test/",
+      "finalUrl": "https://example.test/",
+      "userAgent": "Synthetic Lighthouse",
+      "categoryScores": [
+        {
+          "id": "performance",
+          "title": "Performance",
+          "score": 0
+        },
+        {
+          "id": "seo",
+          "title": "SEO",
+          "score": 1
+        }
+      ],
+      "observations": [
+        {
+          "source": "lighthouse",
+          "code": "document-title",
+          "title": "Document title",
+          "score": 1,
+          "scoreDisplayMode": "binary",
+          "displayValue": null,
+          "numericValue": null,
+          "numericUnit": null
+        },
+        {
+          "source": "lighthouse",
+          "code": "first-contentful-paint",
+          "title": "First Contentful Paint",
+          "score": 0.5,
+          "scoreDisplayMode": "numeric",
+          "displayValue": "1.2 s",
+          "numericValue": 1234,
+          "numericUnit": "millisecond"
+        }
+      ]
+    }
+  },
+  "observations": [
+    {
+      "source": "lighthouse",
+      "code": "document-title",
+      "title": "Document title",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "displayValue": null,
+      "numericValue": null,
+      "numericUnit": null
+    },
+    {
+      "source": "lighthouse",
+      "code": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.5,
+      "scoreDisplayMode": "numeric",
+      "displayValue": "1.2 s",
+      "numericValue": 1234,
+      "numericUnit": "millisecond"
+    },
+    {
+      "source": "siteone",
+      "code": "redirects",
+      "sourceStatus": "NOTICE",
+      "message": "Redirects - 1 redirect found.",
+      "facts": [
+        {
+          "id": "redirect-count",
+          "valueType": "number",
+          "value": 1,
+          "unit": "count"
+        }
+      ]
+    },
+    {
+      "source": "siteone",
+      "code": "static-assets-short-cache",
+      "sourceStatus": "NOTICE",
+      "message": "11 static resources have a short cache lifetime.",
+      "facts": [
+        {
+          "id": "affected-resource-count",
+          "valueType": "number",
+          "value": 11,
+          "unit": "count"
+        }
+      ]
+    }
+  ]
+}
