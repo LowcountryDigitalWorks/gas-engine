@@ -12,6 +12,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.10 is accepted and merged on `main` through PR #35.** It adds one pure/local sanitized Google Search Console-style search-analytics adapter plus a deterministic explicit-policy signal pack over exact compatible windows. The accepted release enforces bounded source metric integrity, conservative missingness/coverage, and the verified 384-row / 1,536-observation proof while adding no provider networking/OAuth/credentials, canonical schema/persistence change, scheduler, automatic recommendation/priority/causal judgment, runtime AI, cloud resource, customer evidence, or paid dependency. See the [Release 0.10 search-analytics guide](docs/search-analytics-signal-pack.md) and [ADR 0010](docs/decisions/0010-search-analytics-signal-pack.md).
 
+**Release 0.11 is an authorized draft candidate under Issue #37 and is not accepted or merged.** It adds only a pure/local application composition between one human/trusted-caller change annotation, one exact Release 0.10 search row/metric, and existing Release 0.8 measurement/outcome services. It prepares deterministic baseline/follow-up measurement inputs and readiness for later human assessment without new persistence, scheduling, provider networking, action authority, automatic outcome direction, causality, runtime AI, cloud resources, customer evidence, or paid dependencies. See the [Release 0.11 search-change guide](docs/search-change-outcome-cohorts.md) and [proposed ADR 0011](docs/decisions/0011-search-change-outcome-cohorts.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -87,6 +89,8 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Operator case-view decision — accepted ADR 0008](docs/decisions/0008-operator-case-view.md)
 - [Release 0.10 search-analytics signal pack — accepted](docs/search-analytics-signal-pack.md)
 - [Search-analytics signal-pack decision — accepted ADR 0010](docs/decisions/0010-search-analytics-signal-pack.md)
+- [Release 0.11 search change annotation & outcome cohorts — draft](docs/search-change-outcome-cohorts.md)
+- [Search change/outcome cohort decision — proposed ADR 0011](docs/decisions/0011-search-change-outcome-cohorts.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)

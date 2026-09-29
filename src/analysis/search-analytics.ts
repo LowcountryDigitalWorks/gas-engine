@@ -152,16 +152,16 @@ export interface SearchAnalyticsSignalReport {
   readonly signals: readonly SearchAnalyticsSignal[];
 }
 
-interface ValidatedRow {
+export interface ValidatedSearchAnalyticsRow {
   readonly sidecar: SearchAnalyticsAdaptedRow;
   readonly metrics: Readonly<Record<SearchAnalyticsMetricKey, number>>;
   readonly evidence: SearchAnalyticsSignalEvidenceRef;
 }
 
-interface ValidatedWindow {
+export interface ValidatedSearchAnalyticsWindow {
   readonly collection: Contract<'collection'>;
   readonly semantics: SearchAnalyticsSemantics;
-  readonly rows: readonly ValidatedRow[];
+  readonly rows: readonly ValidatedSearchAnalyticsRow[];
 }
 
 function fail(code: SearchAnalyticsSignalErrorCode, message: string): never {
@@ -198,7 +198,7 @@ function expectedCompleteness(semantics: SearchAnalyticsSemantics, rowCount: num
   };
 }
 
-function validateWindow(input: SearchAnalyticsAdaptationResult): ValidatedWindow {
+export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationResult): ValidatedSearchAnalyticsWindow {
   if (input.providerId !== SEARCH_ANALYTICS_PROVIDER_ID
       || input.rows.length > SEARCH_ANALYTICS_MAX_ROWS
       || input.batches.length < 1
@@ -273,7 +273,7 @@ function validateWindow(input: SearchAnalyticsAdaptationResult): ValidatedWindow
   }
 
   const seenRows = new Set<string>();
-  const validatedRows: ValidatedRow[] = input.rows.map((row) => {
+  const validatedRows: ValidatedSearchAnalyticsRow[] = input.rows.map((row) => {
     if (row.searchType !== 'web') fail('invalid_window', 'Search-analytics row search type is unsupported.');
     const expectedDimensions = searchAnalyticsDimensionIdentity(row.query, row.page, row.searchType);
     if (row.rowIdentity !== expectedDimensions.rowIdentity
@@ -344,7 +344,7 @@ function coverageCompatibility(value: SearchAnalyticsCoverage): unknown {
   };
 }
 
-function requireCompatible(baseline: ValidatedWindow, current: ValidatedWindow): void {
+export function requireSearchAnalyticsCompatibility(baseline: ValidatedSearchAnalyticsWindow, current: ValidatedSearchAnalyticsWindow): void {
   if (baseline.collection.id === current.collection.id) {
     fail('incompatible_windows', 'Baseline and current search-analytics collections must be distinct.');
   }
@@ -399,12 +399,12 @@ function signalId(material: unknown): string {
 
 function baseSignal(
   kind: SearchAnalyticsSignalKind,
-  row: ValidatedRow,
-  current: ValidatedWindow,
+  row: ValidatedSearchAnalyticsRow,
+  current: ValidatedSearchAnalyticsWindow,
   policy: SearchAnalyticsSignal['policy'],
   values: Readonly<Record<string, number>>,
-  baseline?: ValidatedWindow,
-  baselineRow?: ValidatedRow,
+  baseline?: ValidatedSearchAnalyticsWindow,
+  baselineRow?: ValidatedSearchAnalyticsRow,
 ): SearchAnalyticsSignal {
   const identityMaterial = {
     kind,
@@ -473,9 +473,9 @@ export function analyzeSearchAnalyticsSignals(
   policyInput: SearchAnalyticsSignalPolicies,
 ): SearchAnalyticsSignalReport {
   const policies = parsePolicies(policyInput);
-  const baseline = validateWindow(baselineInput);
-  const current = validateWindow(currentInput);
-  requireCompatible(baseline, current);
+  const baseline = validateSearchAnalyticsWindow(baselineInput);
+  const current = validateSearchAnalyticsWindow(currentInput);
+  requireSearchAnalyticsCompatibility(baseline, current);
 
   const baselineRows = new Map(baseline.rows.map((row) => [row.sidecar.rowIdentity, row] as const));
   const currentRows = new Map(current.rows.map((row) => [row.sidecar.rowIdentity, row] as const));
@@ -568,7 +568,7 @@ export function analyzeSearchAnalyticsSignals(
     }
   }
 
-  const overlapGroups = new Map<string, ValidatedRow[]>();
+  const overlapGroups = new Map<string, ValidatedSearchAnalyticsRow[]>();
   for (const row of current.rows) {
     if (row.metrics.impressions < policies.overlap.minimumImpressions) continue;
     const list = overlapGroups.get(row.sidecar.query) ?? [];
