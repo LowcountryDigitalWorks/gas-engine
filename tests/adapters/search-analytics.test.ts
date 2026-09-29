@@ -192,7 +192,7 @@ test('duplicate query/page cohorts fail closed instead of silently merging or dr
   expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(value), trustedConfig), 'duplicate_row');
 });
 
-test('exact 500-row bound maps to 2,000 observations; one-over fails closed without truncation', () => {
+test('exact 384-row bound maps to 1,536 observations; one-over fails closed without truncation', () => {
   const maximum = fixture();
   maximum.rows = shortRows(SEARCH_ANALYTICS_MAX_ROWS);
   const accepted = adaptSearchAnalyticsEvidence(bytes(maximum), trustedConfig);

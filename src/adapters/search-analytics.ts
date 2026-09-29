@@ -24,7 +24,7 @@ export const SEARCH_ANALYTICS_ADAPTER_ID = 'ldw-search-analytics-sanitized' as c
 export const SEARCH_ANALYTICS_MAPPING_VERSION = '1.0.0' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_ID = 'ldw.search-analytics-evidence' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION = 'v1.0' as const;
-export const SEARCH_ANALYTICS_MAX_ROWS = 500 as const;
+export const SEARCH_ANALYTICS_MAX_ROWS = 384 as const;
 export const MAX_SEARCH_ANALYTICS_INPUT_BYTES = MAX_HASH_INPUT_BYTES;
 
 export const SEARCH_ANALYTICS_METRIC_SPECS = Object.freeze({

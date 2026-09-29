@@ -19,7 +19,7 @@ Release 0.10 will:
 3. adapt each unique query/page row into one existing canonical source record plus four existing canonical numeric observations;
 4. preserve exact query/page strings in an application-local deterministic sidecar linked to canonical source/observation IDs rather than expanding the canonical wire schema;
 5. keep exact filter/search-type semantics in the existing collection method/configuration identity;
-6. cap source input at 500 rows / 2,000 observations and use existing byte-aware multipart validation with fail-closed overflow;
+6. cap source input at 384 rows / 1,536 observations after proving the proposed 500-row target exceeds the accepted byte-aware multipart capacity, and use existing multipart validation with fail-closed overflow;
 7. map complete+final evidence to canonical complete coverage and all preliminary/partial/unknown evidence conservatively to partial;
 8. compare only exact compatible baseline/current windows;
 9. derive only explicit-policy mechanical signals: window deltas, striking-distance candidates, decay candidates, CTR-opportunity candidates, and query→multiple-page overlap candidates;
@@ -40,7 +40,7 @@ Release 0.10 will:
 - Exact query/page text is carried by the adapter's application-local result rather than a new persisted canonical dimension field.
 - Release 0.10 supports one provider/search type only.
 - No appeared/disappeared classification is emitted; unmatched rows remain diagnostic counts because source coverage semantics are not strong enough to turn absence into a universal search event.
-- The 500-row proof is intentionally small relative to provider-scale exports.
+- The 384-row proof is intentionally small relative to provider-scale exports; it is the verified lower bound after the proposed 500-row target exceeded accepted per-part byte capacity.
 
 ## Rejected alternatives
 

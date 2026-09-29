@@ -408,7 +408,7 @@ function baseSignal(
 ): SearchAnalyticsSignal {
   const identityMaterial = {
     kind,
-    baselineCollectionId: baseline?.collection.id,
+    ...(baseline === undefined ? {} : { baselineCollectionId: baseline.collection.id }),
     currentCollectionId: current.collection.id,
     rowIdentity: row.sidecar.rowIdentity,
     policy,
