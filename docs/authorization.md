@@ -30,6 +30,15 @@ Release 0.8 outcomes are explicit human/trusted-caller declarations. G.A.S. must
 
 Releases through accepted Release 0.9 do **not** authorize a production identity provider, password/JWT/OAuth/session/API-key database, credential persistence, live provider/network access from G.A.S., HTTP listener, customer evidence, external execution, customer portal, or cloud deployment. Release 0.9 authorizes only its local static read-only operator preview. Repository-local CI remains least privilege, included capacity, no secrets, and no deployment permissions. This boundary does not authorize account, security-setting, or ruleset changes.
 
+
+## Evergreen internal R&D authority
+
+Owner-directed [GAS-ROADMAP-002 / Issue #31](https://github.com/LowcountryDigitalWorks/gas-engine/issues/31) authorizes competitor research, roadmap definition, and **separately bounded internal G.A.S. R&D releases** when they create real LDW operating value. This internal R&D authority is intentionally independent of near-term managed-service buyer validation under business-operations #280.
+
+Issue #31 does **not** itself authorize a software release merely because it appears on the roadmap. Each implementation still requires a current-main reconciliation, an exact Product-Orchestrator-frozen release contract, smallest useful proof, branch/PR, deterministic validation, security/privacy review, independent review, and Product Orchestrator acceptance.
+
+The evergreen internal R&D direction does not authorize customer SaaS, custom production auth, customer portals, generic crawlers/rank crawlers/backlink crawlers, cloud deployment, paid data warehouses, new provider credentials, customer/private evidence, runtime AI/BYOK, autonomous remediation/content publishing, or production mutation. Managed-service packaging/claims/pricing/demand remain under #280. Release 1.0 remains the separate cloud gate.
+
 ## Fixed proof limits
 
 - Internal managed-service tooling only; no customer SaaS, customer portal, customer deployment, real customer evidence, or client-site ingestion.
@@ -71,4 +80,4 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 ## Stop and return
 
-Return to Product ORCH2 if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking/correlation, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Release 1.0 and later work require separate live authorization; Release 0.9 does not grant it.
+Return to Product ORCH2 if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking/correlation, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Issue #31 supplies live authority only for competitor-informed roadmap work and separately frozen bounded internal R&D releases. Release 1.0 cloud deployment, external/customer software, provider-network expansion, paid tooling, and other material scope expansions remain separately gated; Release 0.9 and #31 do not grant those authorities automatically.
