@@ -13,6 +13,10 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.7 | Accepted: deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering. Uses tenant-scoped atomic collection snapshots, exact cohort identity, exact value/missing-state transitions, conservative completeness-aware absence semantics, application-local output, and no cross-provider correlation or prioritization. See [diff guide](analysis/diff.md). |
 | 0.8 | Accepted: evidence-linked human-authored recommendation review history plus explicit measurement/outcome ledger. Uses unchanged canonical 1.0 recommendation/measurement/outcome contracts, trusted existing `TenantContext`, immutable recommendation revisions, accepted migration 2 with three bounded local SQLite ledger tables, caller-driven measurements, and human-declared outcomes. No automatic recommendation/ranking/correlation/action/UI/network/AI. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md). |
 | 0.9 | Accepted: compact read-only local LDW operator case view + printable standalone HTML report preview over accepted Release 0.7/0.8 reads. Explicit trusted scope and selected collection/recommendation IDs; no new persistence, write controls, server, provider networking, runtime AI, action, framework, customer data, or cloud deployment. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md). |
+| 0.10 | Proposed next bounded proof under #31: Search Analytics Signal Pack over bounded sanitized search-performance evidence; deterministic window deltas, explicit-policy opportunity candidates, query→page overlap candidates, freshness/coverage semantics, and no provider networking or automatic recommendation priority. See [competitor capability matrix](research/competitor-capability-matrix.md). |
+| 0.11 | Proposed: Search Change Annotation & Outcome Cohorts; bind human/trusted change annotations to exact baseline/follow-up search-signal cohorts, preserve readiness/coverage, and reuse human-declared outcomes without causal inference or provider scheduling. |
+| 0.12 | Proposed: Page-Focus Candidate Analysis; represent query/page cohorts and divergent-focus candidates while requiring separate SERP validation before split/consolidate conclusions. No autonomous content generation/publishing. |
+| 0.13 | Proposed: Multi-Engine Index Diagnostics over separately ingested Google/Bing/Yandex/IndexNow-style evidence; distinguish broad-site issues, engine-specific divergence, and lag/coverage uncertainty without rank/citation score blending. |
 | 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
 
 ## Release 0.7 narrowing decision
@@ -26,6 +30,19 @@ Issue #15 narrows Release 0.8 to service-history infrastructure rather than a ge
 ## Release 0.9 narrowing decision
 
 Issue #18 narrows Release 0.9 to a provider-neutral read-only local case view rather than a commodity SEO/AEO dashboard or customer-reporting SaaS. The accepted release assembles only accepted mechanical evidence diff, current human-authored recommendations, one selected immutable recommendation history, canonical supporting evidence, associated measurements, and human-declared outcomes. It preserves coverage uncertainty and non-evaluative numeric delta semantics, uses no write path, and renders one escaped self-contained HTML/print preview without external resources or JavaScript.
+
+## GAS-ROADMAP-002 evergreen sequence refinement
+
+Owner direction in Issue #31 authorizes long-running internal G.A.S. R&D while keeping managed-service commercialization and external SaaS separately gated. The living competitor review is maintained in [docs/research/competitor-capability-matrix.md](research/competitor-capability-matrix.md).
+
+Current evidence keeps 0.10 Search Analytics Signal Pack first, but changes the original 0.11/0.12 hypothesis:
+
+- **0.11 moves experimentation/change annotation ahead of intent splitting.** It composes directly with accepted Release 0.8 recommendation/measurement/outcome history and can close more of the operating loop without new commodity sensing.
+- **Page-focus analysis becomes 0.12 and is deliberately narrower.** Query→page overlap is evidence, not proof of distinct intent. Split/consolidate conclusions require separately sourced SERP/result validation.
+- **Multi-engine diagnostics moves to 0.13.** The analysis is useful, but implementation should follow stable upstream sanitized contracts for Google/Bing/Yandex/IndexNow-style evidence rather than putting provider networking into G.A.S.
+- AI visibility, local rank grids, web-scale rank/SERP collection, backlink indexes, crawlers, and dashboard platforms remain replaceable sensors/commodity tooling unless a concrete LDW decision proves a gap.
+
+This sequence is not self-executing. Each functional release still requires exact current-main reconciliation, a bounded release contract, branch/PR, deterministic validation, security/privacy review, independent review, and Product Orchestrator acceptance.
 
 ## Gates and evaluation
 
