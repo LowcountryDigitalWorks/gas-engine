@@ -1,6 +1,6 @@
 # ADR 0011 — Application-local search change annotation and outcome-cohort composition
 
-- Status: Proposed for Release 0.11 candidate
+- Status: Accepted in Release 0.11 via PR #38
 - Date: 2026-09-29
 - Issue: #37
 
@@ -59,4 +59,4 @@ The composition does not issue `TenantContext`, create grants, access provider c
 
 ## Acceptance
 
-This ADR remains proposed until Product exact-head review, independent review, required validation, and merge. Development authority cannot mark Release 0.11 accepted.
+Accepted after Product exact-head review, one bounded deterministic follow-up-identity correction, independent exact-head re-review, required validation, and protected-main squash merge through PR #38. Accepted main after merge: `6e8f0ddadfc25650339ec6f083c87ff938d0a889`.
