@@ -1,6 +1,6 @@
 # ADR 0010 — Bounded search-analytics adapter and explicit-policy signal pack
 
-- Status: Proposed for Release 0.10 candidate
+- Status: Accepted in Release 0.10 via PR #35
 - Date: 2026-09-29
 - Issue: #33
 
@@ -71,4 +71,4 @@ No customer/private evidence, provider credentials, secrets, new dependencies, c
 
 ## Acceptance
 
-This ADR remains proposed until Product Orchestrator exact-head review, independent review, required CI/validation, and merge. Development authority cannot mark it accepted.
+Accepted after Product Orchestrator exact-head review, one bounded metric-integrity correction, independent exact-head re-review, required CI/validation, and protected-main squash merge through PR #35. Accepted main after merge: `418db894d69af9d81f3258f97f43d84c2476a630`.

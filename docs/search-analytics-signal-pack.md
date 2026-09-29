@@ -1,10 +1,10 @@
-# Release 0.10 — Search Analytics Signal Pack draft candidate
+# Release 0.10 — Search Analytics Signal Pack
 
-Release 0.10 is a bounded draft candidate under Issue #33. It is not accepted until Product Orchestrator exact-head review, independent review, required validation, and merge.
+Release 0.10 is accepted and merged on `main` through PR #35 after Product exact-head review, one bounded metric-integrity correction, independent exact-head re-review, required validation, and protected-main squash merge.
 
 ## Purpose
 
-The candidate proves a pure/local search-analytics boundary over a sanitized Google Search Console-style artifact:
+The accepted release proves a pure/local search-analytics boundary over a sanitized Google Search Console-style artifact:
 
 > SANITIZED UPSTREAM EVIDENCE → LOCAL ADAPTER → EXISTING CANONICAL OBSERVATIONS → EXACT COMPATIBILITY → EXPLICIT-POLICY SIGNALS
 
