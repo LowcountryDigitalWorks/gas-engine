@@ -28,6 +28,8 @@ The adapter accepts exactly:
 
 Unknown schema versions, providers, search types, extra fields, duplicate query/page rows, malformed timestamps/pages, and one-over-bound inputs fail closed.
 
+Returned minor-0 rows must also satisfy the frozen GSC metric relationships: impressions are positive, clicks do not exceed impressions, average position is at least 1, and source CTR matches `clicks / impressions` within an absolute tolerance of `1e-12`. The adapter never recomputes, overwrites, or repairs source CTR; inconsistent rows fail closed.
+
 The input byte digest is diagnostic only. Canonical adapted identity is derived from normalized semantic content so source-row order, filter order, and JSON whitespace do not change the canonical result.
 
 ## Trusted authority boundary
@@ -67,6 +69,8 @@ The existing canonical model has no free-form query/page metadata bag. Release 0
 - collection method configuration hash = exact normalized dimensions/filter semantics.
 
 The application-local adapter result also preserves the exact query/page strings and deterministic source/observation references. Analysis validates those references against canonical observations before deriving a signal. This sidecar is not a new wire contract or persistence table.
+
+Exact query/page strings are not recoverable from the persisted hashed canonical identities alone. After process restart, exact-string reconstruction requires retaining or re-reading and re-adapting the sanitized source artifact, or otherwise retaining the adaptation result. The deterministic hashes are identities, not an anonymization guarantee.
 
 Observed numeric zero remains observed zero. A missing/unreturned row creates no synthetic observation and is never manufactured as zero.
 

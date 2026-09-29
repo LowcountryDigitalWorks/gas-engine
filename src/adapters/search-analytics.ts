@@ -25,6 +25,7 @@ export const SEARCH_ANALYTICS_MAPPING_VERSION = '1.0.0' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_ID = 'ldw.search-analytics-evidence' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION = 'v1.0' as const;
 export const SEARCH_ANALYTICS_MAX_ROWS = 384 as const;
+export const SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE = 1e-12 as const;
 export const MAX_SEARCH_ANALYTICS_INPUT_BYTES = MAX_HASH_INPUT_BYTES;
 
 export const SEARCH_ANALYTICS_METRIC_SPECS = Object.freeze({
@@ -357,7 +358,18 @@ function validateSemantics(artifact: SearchAnalyticsArtifact, config: ParsedConf
     fail('invalid_source', 'Search-analytics effective window must be a positive whole-second canonical window within G.A.S. bounds.');
   }
 
-  for (const row of artifact.rows) validateHttpsPage(row.page);
+  for (const row of artifact.rows) {
+    validateHttpsPage(row.page);
+    if (row.impressions <= 0
+        || row.clicks > row.impressions
+        || row.averagePosition < 1) {
+      fail('invalid_source', 'Search-analytics row metrics are internally inconsistent.');
+    }
+    const expectedCtr = row.clicks / row.impressions;
+    if (Math.abs(row.ctr - expectedCtr) > SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE) {
+      fail('invalid_source', 'Search-analytics row CTR is inconsistent with clicks and impressions.');
+    }
+  }
   return durationMs / 1_000;
 }
 

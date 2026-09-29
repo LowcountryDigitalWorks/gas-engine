@@ -5,6 +5,7 @@ import {
   adaptSearchAnalyticsEvidence,
   MAX_SEARCH_ANALYTICS_INPUT_BYTES,
   SEARCH_ANALYTICS_ADAPTER_ID,
+  SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE,
   SEARCH_ANALYTICS_MAX_ROWS,
   SEARCH_ANALYTICS_SOURCE_SCHEMA_ID,
   SearchAnalyticsAdapterError,
@@ -58,9 +59,9 @@ function shortRows(count: number): MutableJson[] {
     query: `q${String(index).padStart(3, '0')}`,
     page: `https://example.test/p${index}`,
     clicks: index === 0 ? 0 : 1,
-    impressions: index === 0 ? 0 : 2,
+    impressions: 2,
     ctr: index === 0 ? 0 : 0.5,
-    averagePosition: index === 0 ? 0 : 10,
+    averagePosition: 10,
   }));
 }
 
@@ -88,6 +89,123 @@ test('adapts exact search-analytics v1/minor0 into deterministic canonical metri
   assert.deepEqual(clicks?.value, { state: 'observed', value: { type: 'number', value: 0 } });
   assert.deepEqual(impressions?.value, { state: 'observed', value: { type: 'number', value: 42 } });
   assert.deepEqual(ctr?.value, { state: 'observed', value: { type: 'number', value: 0 } });
+});
+
+test('minor0 metric relationships fail closed while valid zero and CTR tolerance remain deterministic', () => {
+  assert.equal(SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE, 1e-12);
+
+  const validZero = fixture();
+  validZero.rows = [{
+    query: 'synthetic valid zero',
+    page: 'https://example.test/valid-zero',
+    clicks: 0,
+    impressions: 100,
+    ctr: 0,
+    averagePosition: 10,
+  }];
+  const zeroResult = adaptSearchAnalyticsEvidence(bytes(validZero), trustedConfig);
+  const zeroObservations = allObservations(zeroResult);
+  const zeroRow = zeroResult.rows[0]!;
+  assert.deepEqual(
+    zeroObservations.find((item) => item.id === zeroRow.observationIds.clicks)?.value,
+    { state: 'observed', value: { type: 'number', value: 0 } },
+  );
+  assert.deepEqual(
+    zeroObservations.find((item) => item.id === zeroRow.observationIds.ctr)?.value,
+    { state: 'observed', value: { type: 'number', value: 0 } },
+  );
+
+  const clicksOverImpressions = fixture();
+  clicksOverImpressions.rows[0] = {
+    query: 'synthetic invalid clicks',
+    page: 'https://example.test/invalid-clicks',
+    clicks: 11,
+    impressions: 10,
+    ctr: 1,
+    averagePosition: 10,
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(clicksOverImpressions), trustedConfig),
+    'invalid_source',
+  );
+
+  const zeroImpressions = fixture();
+  zeroImpressions.rows[0] = {
+    query: 'synthetic invalid impressions',
+    page: 'https://example.test/invalid-impressions',
+    clicks: 0,
+    impressions: 0,
+    ctr: 0,
+    averagePosition: 10,
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(zeroImpressions), trustedConfig),
+    'invalid_source',
+  );
+
+  const invalidPosition = fixture();
+  invalidPosition.rows[0] = {
+    query: 'synthetic invalid position',
+    page: 'https://example.test/invalid-position',
+    clicks: 1,
+    impressions: 8,
+    ctr: 0.125,
+    averagePosition: 0.999,
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(invalidPosition), trustedConfig),
+    'invalid_source',
+  );
+
+  const inconsistentCtr = fixture();
+  inconsistentCtr.rows[0] = {
+    query: 'synthetic inconsistent ctr',
+    page: 'https://example.test/inconsistent-ctr',
+    clicks: 1,
+    impressions: 8,
+    ctr: 0.1,
+    averagePosition: 10,
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(inconsistentCtr), trustedConfig),
+    'invalid_source',
+  );
+
+  const exactCtr = fixture();
+  exactCtr.rows[0] = {
+    query: 'synthetic exact ctr',
+    page: 'https://example.test/exact-ctr',
+    clicks: 1,
+    impressions: 8,
+    ctr: 0.125,
+    averagePosition: 10,
+  };
+  assert.doesNotThrow(() => adaptSearchAnalyticsEvidence(bytes(exactCtr), trustedConfig));
+
+  const withinTolerance = fixture();
+  withinTolerance.rows[0] = {
+    query: 'synthetic within tolerance',
+    page: 'https://example.test/within-tolerance',
+    clicks: 1,
+    impressions: 8,
+    ctr: 0.125 + (SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE / 2),
+    averagePosition: 10,
+  };
+  assert.doesNotThrow(() => adaptSearchAnalyticsEvidence(bytes(withinTolerance), trustedConfig));
+
+  const outsideTolerance = fixture();
+  outsideTolerance.rows[0] = {
+    query: 'synthetic outside tolerance',
+    page: 'https://example.test/outside-tolerance',
+    clicks: 1,
+    impressions: 8,
+    ctr: 0.125 + (SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE * 2),
+    averagePosition: 10,
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(outsideTolerance), trustedConfig),
+    'invalid_source',
+  );
 });
 
 test('trusted configuration is authority; property and injected authority-shaped evidence cannot replace it', () => {

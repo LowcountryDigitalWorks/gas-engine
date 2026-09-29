@@ -16,14 +16,15 @@ Release 0.10 will:
 
 1. accept only sanitized `ldw.search-analytics-evidence.v1` minor 0, provider `google-search-console`, search type `web`;
 2. require trusted caller configuration for scope, provider connection, expected property, collection timing, and availability;
-3. adapt each unique query/page row into one existing canonical source record plus four existing canonical numeric observations;
-4. preserve exact query/page strings in an application-local deterministic sidecar linked to canonical source/observation IDs rather than expanding the canonical wire schema;
-5. keep exact filter/search-type semantics in the existing collection method/configuration identity;
-6. cap source input at 384 rows / 1,536 observations after proving the proposed 500-row target exceeds the accepted byte-aware multipart capacity, and use existing multipart validation with fail-closed overflow;
-7. map complete+final evidence to canonical complete coverage and all preliminary/partial/unknown evidence conservatively to partial;
-8. compare only exact compatible baseline/current windows;
-9. derive only explicit-policy mechanical signals: window deltas, striking-distance candidates, decay candidates, CTR-opportunity candidates, and query→multiple-page overlap candidates;
-10. keep derived signals application-local with complete provenance references and deterministic ordering.
+3. require returned rows to have positive impressions, clicks no greater than impressions, average position at least 1, and CTR matching `clicks / impressions` within a frozen absolute tolerance of `1e-12`, failing closed rather than repairing inconsistent source evidence;
+4. adapt each unique query/page row into one existing canonical source record plus four existing canonical numeric observations;
+5. preserve exact query/page strings in an application-local deterministic sidecar linked to canonical source/observation IDs rather than expanding the canonical wire schema;
+6. keep exact filter/search-type semantics in the existing collection method/configuration identity;
+7. cap source input at 384 rows / 1,536 observations after proving the proposed 500-row target exceeds the accepted byte-aware multipart capacity, and use existing multipart validation with fail-closed overflow;
+8. map complete+final evidence to canonical complete coverage and all preliminary/partial/unknown evidence conservatively to partial;
+9. compare only exact compatible baseline/current windows;
+10. derive only explicit-policy mechanical signals: window deltas, striking-distance candidates, decay candidates, CTR-opportunity candidates, and query→multiple-page overlap candidates;
+11. keep derived signals application-local with complete provenance references and deterministic ordering.
 
 ## Consequences
 
@@ -37,7 +38,7 @@ Release 0.10 will:
 
 ### Tradeoffs
 
-- Exact query/page text is carried by the adapter's application-local result rather than a new persisted canonical dimension field.
+- Exact query/page text is carried by the adapter's application-local result rather than a new persisted canonical dimension field. Persisted hashed identities are not reversible or an anonymization guarantee, so exact-string reconstruction after restart requires retaining/re-reading and re-adapting the sanitized source artifact or otherwise retaining the adaptation result.
 - Release 0.10 supports one provider/search type only.
 - No appeared/disappeared classification is emitted; unmatched rows remain diagnostic counts because source coverage semantics are not strong enough to turn absence into a universal search event.
 - The 384-row proof is intentionally small relative to provider-scale exports; it is the verified lower bound after the proposed 500-row target exceeded accepted per-part byte capacity.

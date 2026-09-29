@@ -106,7 +106,7 @@ function currentFixture(): MutableJson {
       query: 'synthetic shared',
       page: 'https://example.test/shared',
       clicks: 5,
-      impressions: 80,
+      impressions: 100,
       ctr: 0.05,
       averagePosition: 10,
     },
@@ -123,7 +123,7 @@ function currentFixture(): MutableJson {
       page: 'https://example.test/overlap-b',
       clicks: 4,
       impressions: 31,
-      ctr: 0.12,
+      ctr: 0.12903225806451613,
       averagePosition: 6,
     },
     {
@@ -168,7 +168,7 @@ test('matched rows produce descriptive four-metric window delta plus explicit-po
   assert.ok(delta);
   assert.deepEqual(delta.values, {
     clicksDelta: -5,
-    impressionsDelta: -20,
+    impressionsDelta: 0,
     ctrDelta: -0.05,
     averagePositionDelta: -2,
   });
@@ -214,8 +214,8 @@ test('explicit policy thresholds are inclusive at exact boundary values', () => 
   baselineValue.rows = [{
     query: 'synthetic boundary',
     page: 'https://example.test/boundary',
-    clicks: 20,
-    impressions: 50,
+    clicks: 10,
+    impressions: 100,
     ctr: 0.1,
     averagePosition: 12,
   }];
@@ -223,8 +223,8 @@ test('explicit policy thresholds are inclusive at exact boundary values', () => 
   currentValue.rows = [{
     query: 'synthetic boundary',
     page: 'https://example.test/boundary',
-    clicks: 10,
-    impressions: 50,
+    clicks: 5,
+    impressions: 100,
     ctr: 0.05,
     averagePosition: 8,
   }];
@@ -236,6 +236,7 @@ test('explicit policy thresholds are inclusive at exact boundary values', () => 
 
   const missValue = structuredClone(currentValue);
   missValue.rows[0].impressions = 49;
+  missValue.rows[0].ctr = 5 / 49;
   const miss = analyzeSearchAnalyticsSignals(adapt(baselineValue), adapt(missValue), policies);
   assert.equal(miss.signals.some((signal) => signal.kind === 'striking_distance_candidate'), false);
   assert.equal(miss.signals.some((signal) => signal.kind === 'ctr_opportunity_candidate'), false);
@@ -268,15 +269,15 @@ test('observed zero remains numeric zero and absent rows never become numeric ze
     query: 'synthetic zero',
     page: 'https://example.test/zero',
     clicks: 0,
-    impressions: 0,
+    impressions: 100,
     ctr: 0,
-    averagePosition: 0,
+    averagePosition: 10,
   }];
   const report = analyzeSearchAnalyticsSignals(adapt(baselineValue), adapt(currentValue), policies);
   const delta = report.signals.find((signal) => signal.kind === 'window_delta');
   assert.ok(delta);
   assert.equal(delta.values.clicksDelta, -10);
-  assert.equal(delta.values.impressionsDelta, -100);
+  assert.equal(delta.values.impressionsDelta, 0);
 
   const absentCurrent = currentFixture();
   absentCurrent.rows = [];
