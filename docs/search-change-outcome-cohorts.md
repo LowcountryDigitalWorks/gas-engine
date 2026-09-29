@@ -22,6 +22,8 @@ One invocation accepts one strict application-local annotation:
 
 The annotation is a human/trusted-caller statement only. It is not an action, execution receipt, provider observation, authority grant, or tenant context. It is not persisted by Release 0.11.
 
+`annotation.id` is the semantic identity of that human statement. If its material meaning changes, the caller should use a new annotation ID rather than treating edited prose as the same statement.
+
 ## Target and baseline
 
 One invocation selects exactly one already-adapted Release 0.10 baseline window, one exact row identity, and one metric: clicks, impressions, CTR, or average position.

@@ -205,6 +205,7 @@ function measurementId(material: {
   metric: SearchAnalyticsMetricKey;
   role: 'baseline' | 'follow_up';
   baselineCollectionId: string;
+  baselineMeasurementId?: string;
   followUpCollectionId?: string;
   dueWindow: { start: string; end: string };
   resultState: Contract<'measurement'>['result']['state'];
@@ -293,6 +294,7 @@ function pendingFollowUp(
       metric,
       role: 'follow_up',
       baselineCollectionId,
+      baselineMeasurementId,
       ...(followUpCollectionId === undefined ? {} : { followUpCollectionId }),
       dueWindow,
       resultState: state,
@@ -343,6 +345,7 @@ function measuredFollowUp(
       metric,
       role: 'follow_up',
       baselineCollectionId: baseline.collection.id,
+      baselineMeasurementId,
       followUpCollectionId: followUp.collection.id,
       dueWindow,
       resultState: 'measured',

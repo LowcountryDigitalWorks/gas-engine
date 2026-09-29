@@ -402,6 +402,42 @@ test('follow-up before the annotated change fails closed and IDs ignore irreleva
   assert.equal(left.followUp.measurement.id, right.followUp.measurement.id);
 });
 
+test('follow-up identity binds the exact baseline relationship when annotation recordedAt changes', () => {
+  const baseline = adapt(fixture());
+  const followUp = adapt(followUpFixture());
+
+  const first = composeSearchChangeOutcomeCohort(invocation(baseline, followUp, {
+    annotation: annotation({ recordedAt: '2026-09-16T09:00:00.000Z' }),
+  }));
+  const second = composeSearchChangeOutcomeCohort(invocation(baseline, followUp, {
+    annotation: annotation({ recordedAt: '2026-09-16T10:00:00.000Z' }),
+  }));
+
+  assert.notEqual(first.baseline.measurement.id, second.baseline.measurement.id);
+
+  assert.equal(first.followUp.measurement.relationship.role, 'follow_up');
+  assert.equal(second.followUp.measurement.relationship.role, 'follow_up');
+  if (first.followUp.measurement.relationship.role === 'follow_up'
+      && second.followUp.measurement.relationship.role === 'follow_up') {
+    assert.equal(
+      first.followUp.measurement.relationship.baselineMeasurementId,
+      first.baseline.measurement.id,
+    );
+    assert.equal(
+      second.followUp.measurement.relationship.baselineMeasurementId,
+      second.baseline.measurement.id,
+    );
+  }
+
+  assert.notEqual(first.followUp.measurement.id, second.followUp.measurement.id);
+  assert.notEqual(first.id, second.id);
+
+  assert.doesNotThrow(() => parseContract('measurement', first.baseline.measurement));
+  assert.doesNotThrow(() => parseContract('measurement', first.followUp.measurement));
+  assert.doesNotThrow(() => parseContract('measurement', second.baseline.measurement));
+  assert.doesNotThrow(() => parseContract('measurement', second.followUp.measurement));
+});
+
 test('prepared measurements persist through Release 0.8; recommendation scope, human outcome, and Alpha/Beta isolation remain authoritative', async (t) => {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
