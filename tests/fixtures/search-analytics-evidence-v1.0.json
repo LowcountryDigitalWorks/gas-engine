@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "ldw.search-analytics-evidence.v1",
+  "schemaMinorVersion": 0,
+  "provider": "google-search-console",
+  "property": "sc-domain:example.test",
+  "observedAt": "2026-09-16T08:00:00.000Z",
+  "exportedAt": "2026-09-16T08:05:00.000Z",
+  "requestedWindow": {
+    "start": "2026-09-08T00:00:00.000Z",
+    "end": "2026-09-15T00:00:00.000Z"
+  },
+  "effectiveWindow": {
+    "start": "2026-09-08T00:00:00.000Z",
+    "end": "2026-09-15T00:00:00.000Z"
+  },
+  "freshness": {
+    "dataState": "final",
+    "freshThrough": "2026-09-15T00:00:00.000Z"
+  },
+  "searchType": "web",
+  "dimensions": ["query", "page"],
+  "filterGroupType": "and",
+  "filters": [],
+  "coverage": {
+    "state": "complete",
+    "truncated": false,
+    "anonymized": false
+  },
+  "rows": [
+    {
+      "query": "synthetic alpha search",
+      "page": "https://example.test/alpha",
+      "clicks": 0,
+      "impressions": 42,
+      "ctr": 0,
+      "averagePosition": 9.5
+    },
+    {
+      "query": "synthetic beta search",
+      "page": "https://example.test/beta",
+      "clicks": 8,
+      "impressions": 120,
+      "ctr": 0.06666666666666667,
+      "averagePosition": 14.25
+    }
+  ]
+}
