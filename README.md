@@ -8,7 +8,7 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.8 is accepted and merged on `main` through PR #16.** It adds provider-neutral, evidence-linked human review history plus an explicit measurement/outcome ledger. Recommendations are human/trusted-caller authored only, priority remains `unassessed`, measurements resolve selected canonical observations, outcome direction is human-declared, and accepted recommendations create no action authority. Canonical recommendation/measurement/outcome contracts remain schemaVersion `1.0`; Release 0.8 adds no dependency and keeps the $0 incremental recurring-cost proof boundary. See the [Release 0.8 review-ledger guide](docs/review-ledger.md) and [ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md).
 
-**Release 0.9 is accepted and merged on `main` through PR #19.** It adds a compact read-only local operator case view and printable standalone HTML report preview over accepted Release 0.7/0.8 read surfaces. The accepted release adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, action/remediation, framework, customer evidence, or cloud deployment. See the [Release 0.9 operator case-view guide](docs/operator-case-view.md) and [ADR 0008](docs/decisions/0008-operator-case-view.md).
+**Release 0.9 is accepted and merged on `main` through PR #19.** It adds a compact read-only local operator case view and printable standalone HTML report preview over accepted Release 0.7/0.8 read surfaces. The accepted release adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, action/remediation, framework, customer evidence, or cloud deployment. See the [Release 0.9 operator case-view guide](docs/operator-case-view.md) and [ADR 0008](docs/decisions/0008-operator-case-view.md).\n\n**Release 0.10 is an authorized draft candidate under Issue #33 and is not accepted or merged.** It adds one pure/local sanitized Google Search Console-style search-analytics adapter plus a deterministic explicit-policy signal pack over exact compatible windows. It introduces no provider networking/OAuth/credentials, canonical schema/persistence change, scheduler, automatic recommendation/priority/causal judgment, runtime AI, cloud resource, customer evidence, or paid dependency. See the [Release 0.10 search-analytics guide](docs/search-analytics-signal-pack.md) and [proposed ADR 0010](docs/decisions/0010-search-analytics-signal-pack.md).
 
 The intended long-term operating lifecycle is:
 
@@ -82,7 +82,7 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Release 0.8 review ledger — accepted](docs/review-ledger.md)
 - [Human review and measurement/outcome ledger — ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md)
 - [Release 0.9 operator case view — accepted](docs/operator-case-view.md)
-- [Operator case-view decision — accepted ADR 0008](docs/decisions/0008-operator-case-view.md)
+- [Operator case-view decision — accepted ADR 0008](docs/decisions/0008-operator-case-view.md)\n- [Release 0.10 search-analytics signal pack — draft candidate](docs/search-analytics-signal-pack.md)\n- [Search-analytics signal-pack decision — proposed ADR 0010](docs/decisions/0010-search-analytics-signal-pack.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
