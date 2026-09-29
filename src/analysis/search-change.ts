@@ -272,6 +272,7 @@ function measuredBaseline(
 
 function pendingFollowUp(
   annotation: SearchChangeAnnotation,
+  baselineRow: ValidatedSearchAnalyticsRow,
   baselineObservation: Contract<'observation'>,
   baselineMeasurementId: string,
   baselineCollectionId: string,
@@ -310,7 +311,6 @@ function pendingFollowUp(
 
 function measuredFollowUp(
   annotation: SearchChangeAnnotation,
-  baselineRow: ValidatedSearchAnalyticsRow,
   baselineObservation: Contract<'observation'>,
   followUpRow: ValidatedSearchAnalyticsRow,
   followUpObservation: Contract<'observation'>,
