@@ -272,7 +272,6 @@ function measuredBaseline(
 
 function pendingFollowUp(
   annotation: SearchChangeAnnotation,
-  baselineRow: ValidatedSearchAnalyticsRow,
   baselineObservation: Contract<'observation'>,
   baselineMeasurementId: string,
   baselineCollectionId: string,
@@ -453,7 +452,6 @@ export function composeSearchChangeOutcomeCohort(input: unknown): SearchChangeOu
       followUpObservationId = followUpObservation.id;
       const composed = measuredFollowUp(
         request.annotation,
-        baselineRow,
         baselineObservation,
         followUpRow,
         followUpObservation,
