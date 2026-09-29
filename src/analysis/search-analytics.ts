@@ -15,7 +15,6 @@ import {
   type SearchAnalyticsAdaptationResult,
   type SearchAnalyticsAdaptedRow,
   type SearchAnalyticsCoverage,
-  type SearchAnalyticsFilter,
   type SearchAnalyticsFreshness,
   type SearchAnalyticsMetricKey,
   type SearchAnalyticsSemantics,
