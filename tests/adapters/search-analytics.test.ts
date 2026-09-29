@@ -198,7 +198,7 @@ test('exact 384-row bound maps to 1,536 observations; one-over fails closed with
   const accepted = adaptSearchAnalyticsEvidence(bytes(maximum), trustedConfig);
   assert.equal(accepted.rows.length, SEARCH_ANALYTICS_MAX_ROWS);
   assert.equal(allObservations(accepted).length, SEARCH_ANALYTICS_MAX_ROWS * 4);
-  assert.ok(accepted.batches.length <= 64);
+  assert.equal(accepted.batches.length, 64);
   assert.equal(accepted.batches.flatMap((batch) => batch.sources).length, SEARCH_ANALYTICS_MAX_ROWS);
 
   const oneOver = fixture();

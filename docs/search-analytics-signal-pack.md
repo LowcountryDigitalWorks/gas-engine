@@ -79,7 +79,7 @@ Accepted persistence bounds remain unchanged:
 - 32 observations per part;
 - 65,536 canonical JSON bytes per part.
 
-Four observations per search row cap count-based packing at eight rows per part. The verified 384-row source bound produces at most 1,536 observations, below the accepted 2,048-observation collection/snapshot ceiling. The originally proposed 500-row target does not fit the accepted 65,536-byte part bound: even short synthetic rows require seven or more rows in some parts, while byte-aware packing safely fits six rows per part. Release 0.10 therefore freezes the smaller 384-row limit (64 parts × six rows) and rejects row 385 before packing. Packing also checks the actual canonical byte bound before accepting each part. It never truncates or pages silently; any row/part that cannot fit fails closed.
+Four observations per search row cap count-based packing at eight rows per part. The verified 384-row source bound produces at most 1,536 observations, below the accepted 2,048-observation collection/snapshot ceiling. The originally proposed 500-row target does not fit the accepted 65,536-byte part bound: 500 rows would require some eight-row parts, while this canonical mapping's verified byte-aware packing fits six short synthetic rows per part. Release 0.10 therefore freezes the smaller 384-row limit (64 parts × six rows) and rejects row 385 before packing. Packing also checks the actual canonical byte bound before accepting each part. It never truncates or pages silently; any row/part that cannot fit fails closed.
 
 ## Coverage and missingness
 
