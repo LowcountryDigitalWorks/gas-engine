@@ -13,7 +13,27 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.7 | Accepted: deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering. Uses tenant-scoped atomic collection snapshots, exact cohort identity, exact value/missing-state transitions, conservative completeness-aware absence semantics, application-local output, and no cross-provider correlation or prioritization. See [diff guide](analysis/diff.md). |
 | 0.8 | Accepted: evidence-linked human-authored recommendation review history plus explicit measurement/outcome ledger. Uses unchanged canonical 1.0 recommendation/measurement/outcome contracts, trusted existing `TenantContext`, immutable recommendation revisions, accepted migration 2 with three bounded local SQLite ledger tables, caller-driven measurements, and human-declared outcomes. No automatic recommendation/ranking/correlation/action/UI/network/AI. See [review-ledger guide](review-ledger.md) and [ADR 0007](decisions/0007-human-review-measurement-ledger.md). |
 | 0.9 | Accepted: compact read-only local LDW operator case view + printable standalone HTML report preview over accepted Release 0.7/0.8 reads. Explicit trusted scope and selected collection/recommendation IDs; no new persistence, write controls, server, provider networking, runtime AI, action, framework, customer data, or cloud deployment. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md). |
+| 0.10 | **Next candidate:** GSC-semantics-first Search Analytics Signal Pack. Pure/local deterministic period deltas, striking-distance/decay/CTR/query-page concentration candidates, brand/non-brand dimensions, and explicit freshness/coverage semantics over synthetic/public-safe normalized search-performance input. No GSC networking or credentials in G.A.S. |
+| 0.11 | Candidate Page-Focus Evidence Pack. Query/page clusters and split/consolidate/focus-fragmentation candidates with explicit uncertainty; lexical clustering alone never proves distinct user intent and may require separate SERP evidence before a split recommendation. |
+| 0.12 | Candidate Search Change Annotation & Outcome Pack. Human/trusted change annotations, exact baseline/follow-up windows, same-source comparability, descriptive search-signal deltas and explicit not-yet-measurable/coverage states; no automatic causal conclusion. |
+| 0.13 | Candidate Multi-Engine Index Diagnostics after upstream read-only evidence paths exist. Preserve Google/Bing/Yandex semantics separately and classify broad-site vs engine-specific vs coverage-uncertain states; never blend rank universes into one score. |
 | 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
+
+
+## Evergreen internal R&D direction — GAS-ROADMAP-002
+
+Issue #31 records the owner's direction that useful **internal G.A.S. R&D may continue independently of near-term buyer validation**, while managed-service commercialization remains governed by business-operations #280 and external SaaS/customer software remains separately gated.
+
+The current competitor-informed sequence is:
+
+1. **0.10 Search Analytics Signal Pack** — GSC semantic profile first; deterministic analysis before model interpretation.
+2. **0.11 Page-Focus Evidence Pack** — page/query concentration and cluster evidence with explicit uncertainty; no autonomous content generation.
+3. **0.12 Search Change Annotation & Outcome Pack** — connect search signals to human/trusted change events and reproducible before/after windows without automatic causality.
+4. **0.13 Multi-Engine Index Diagnostics** — only after Automation & Agent Operations provides separately authorized read-only provider evidence; preserve each engine's semantics and reporting lag.
+
+See [GAS-ROADMAP-002 competitor capability matrix](research/competitor-capability-matrix.md) for BUILD / INTEGRATE / CONFIGURE / WATCH / SKIP decisions and current market/native references.
+
+These rows are roadmap candidates, not automatic implementation authority. Each release still requires a live-main reconciliation, exact bounded contract, branch/PR, deterministic tests, security/privacy review, independent review, and Product Orchestrator acceptance. Release 1.0 remains the separate cloud-deployment gate.
 
 ## Release 0.7 narrowing decision
 
