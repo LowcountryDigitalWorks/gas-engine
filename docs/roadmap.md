@@ -59,3 +59,26 @@ Release 1.0 requires a separate cloud deployment gate covering current account h
 Cross-provider/generic correlation, direction/severity/materiality/business-impact policy, automated prioritization, inference generation, action/execution logic, production/customer portal behavior, and Release 1.0+ remain separately gated. Release 0.8's bounded human-authored recommendation records and measurement/outcome ledger do not authorize any of those deferred capabilities. GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation remain deferred until separately justified and authorized. Accepted Release 0.6 does not authorize G.A.S. to poll ZeroRank, hold ZeroRank credentials, call Activepieces at runtime, add action/write authority, or deploy cloud resources. Accepted Release 0.4 also does not authorize a production identity provider, public listener/API, or cloud deployment. Deferred does not mean promised.
 
 Internal automation does not establish commercial demand. Audit-first/service-first validation continues independently; this roadmap offers no public pricing, SLA, or outcome guarantees. See [authorization](authorization.md) and [architecture](architecture.md).
+
+## Release 0.14 — current Product-authorized draft candidate
+
+Release 0.14 is the current large bounded development candidate under Issue #44. It is **not accepted** while PR #47 remains draft.
+
+The candidate combines:
+
+1. strict sanitized Bing AI Performance evidence adaptation with no provider networking;
+2. accepted Release 0.6 ZeroRank validation reuse and bounded visibility projection;
+3. explicit provider readiness/comparability;
+4. within-provider descriptive change;
+5. provider-specific citation/source concentration;
+6. narrow explicit-presence cross-source divergence;
+7. optional exact caller-mapped query/prompt cohort coverage divergence;
+8. optional accepted Release 0.10/0.11/0.12 descriptive context;
+9. deterministic site report;
+10. bounded static read-only operator HTML.
+
+The product boundary is deliberately narrower than a general AEO/GEO platform: no universal score, provider metric blending, automatic semantic query/prompt matching, causal attribution, priority/remediation, provider retrieval, runtime AI, new persistence, cloud deployment, or paid dependency.
+
+Incremental recurring-cost target remains $0. Existing Node/Zod/canonical contracts are sufficient for the candidate.
+
+Release 0.15 remains separate and unauthorized in this PR. Its current likely direction—Internal-Link / Authority Opportunity Intelligence—must be revalidated after Release 0.14 acceptance and must not cause an external backlink crawler to be built without new evidence/authorization.
