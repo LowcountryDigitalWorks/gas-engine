@@ -464,13 +464,14 @@ export function analyzeDiscoveryDiagnostics(input: unknown): DiscoverySiteReport
     if (urlId === undefined) fail('invalid_output', 'Discovery URL identity could not be reconstructed.');
 
     identityRows.sort((left, right) => asciiCompare(left.providerId, right.providerId));
+    const indexNowRow = indexRows.get(url);
     const id = `discovery.url-report:${hashCanonicalJson({
       algorithm: 'gas-discovery-url-report-v1',
       url,
       urlId,
       evidence: identityRows,
-      indexNow: indexRows.get(url)?.rowIdentity,
-      searchCollectionId: search?.collection.id,
+      ...(indexNowRow === undefined ? {} : { indexNow: indexNowRow.rowIdentity }),
+      ...(search === undefined ? {} : { searchCollectionId: search.collection.id }),
       evaluatedAt: request.evaluatedAt,
       policy: request.policy,
     })}`;
@@ -512,7 +513,7 @@ export function analyzeDiscoveryDiagnostics(input: unknown): DiscoverySiteReport
   const id = `discovery.site-report:${hashCanonicalJson({
     algorithm: 'gas-discovery-site-report-v1',
     collections: allProviderReadiness.map((entry) => ({ providerId: entry.providerId, collectionId: entry.collectionId })),
-    searchCollectionId: search?.collection.id,
+    ...(search === undefined ? {} : { searchCollectionId: search.collection.id }),
     evaluatedAt: request.evaluatedAt,
     policy: request.policy,
   })}`;

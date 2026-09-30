@@ -429,7 +429,7 @@ function googleCrawlState(value: GoogleRow['pageFetchState']): DiscoveryCrawlSta
     case 'ACCESS_FORBIDDEN':
     case 'BLOCKED_4XX': return 'blocked';
     case 'SERVER_ERROR': return 'server_error';
-    case 'REDIRECT_ERROR': return 'redirect';
+    case 'REDIRECT_ERROR':
     case 'INTERNAL_CRAWL_ERROR':
     case 'INVALID_URL': return 'other_error';
     case 'UNKNOWN': return 'unknown';
@@ -466,7 +466,7 @@ function normalizeGoogle(row: GoogleRow): NormalizedSearchRow {
     url: row.url,
     urlId: derivedIdentifier('discovery.url', { url: row.url }),
     rowIdentity: derivedIdentifier('discovery.row', { provider: 'google-search-console', url: row.url }),
-    searchPresence: row.verdict === 'PASS' ? 'present' : row.verdict === 'UNKNOWN' ? 'unknown' : 'absent',
+    searchPresence: row.verdict === 'PASS' ? 'present' : row.verdict === 'NEUTRAL' ? 'absent' : 'unknown',
     crawlState: googleCrawlState(row.pageFetchState),
     indexingPermission: googleIndexingPermission(row),
     canonicalState: canonical.state,
@@ -500,7 +500,9 @@ function normalizeBing(row: BingRow): NormalizedSearchRow {
 function normalizeYandex(row: YandexRow): NormalizedSearchRow {
   validateAbsoluteUrl(row.url, 'Yandex discovery URL');
   if (row.targetUrl !== undefined) validateAbsoluteUrl(row.targetUrl, 'Yandex target URL');
-  const canonical = canonicalState(row.url, row.targetUrl);
+  const canonical = row.targetKind === 'canonical'
+    ? canonicalState(row.url, row.targetUrl)
+    : { state: 'unknown' as const };
   return {
     kind: 'search_engine',
     providerId: 'yandex-webmaster',

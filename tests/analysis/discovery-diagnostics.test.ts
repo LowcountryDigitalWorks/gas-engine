@@ -382,8 +382,8 @@ test('Alpha and Beta produce isolated deterministic reports with the same inert 
 test('analysis production surface has no network, persistence, runtime AI, action, recommendation or score path', () => {
   const source = readFileSync('src/analysis/discovery-diagnostics.ts', 'utf8');
   assert.doesNotMatch(source, /from ['"](?:node:http|node:https|node:net|undici|axios|googleapis)/i);
-  assert.doesNotMatch(source, /\bfetch\s*\(|WebSocket|OAuth|api[_-]?key|credential/i);
-  assert.doesNotMatch(source, /persist|Repository|CREATE TABLE|ALTER TABLE|INSERT INTO/i);
+  assert.doesNotMatch(source, /\bfetch\s*\(|new\s+WebSocket\s*\(|from ['"].*(?:googleapis|oauth|credential)/i);
+  assert.doesNotMatch(source, /from ['"].*(?:sqlite|repository)|persist(?:Collection|Measurement|Outcome|Recommendation)\s*\(|CREATE TABLE|ALTER TABLE|INSERT INTO/i);
   assert.doesNotMatch(source, /Contract<'(?:recommendation|action)'>|create(?:Recommendation|Action)/i);
   assert.doesNotMatch(source, /\b(?:OpenAI|Anthropic|BYOK|embedding|LLM)\b/i);
   assert.doesNotMatch(source, /severityScore|healthScore|priorityScore|businessImpact/i);

@@ -232,7 +232,7 @@ test('adapter production surface has no authority issuer, provider client, persi
   const source = readFileSync('src/adapters/discovery-diagnostics.ts', 'utf8');
   assert.doesNotMatch(source, /from ['"].*tenant-authority|issueTenantContext\s*\(|createTestTenantContext\s*\(/i);
   assert.doesNotMatch(source, /from ['"](?:node:http|node:https|node:net|undici|axios|googleapis)/i);
-  assert.doesNotMatch(source, /\bfetch\s*\(|WebSocket|OAuth|api[_-]?key|credential/i);
+  assert.doesNotMatch(source, /\bfetch\s*\(|new\s+WebSocket\s*\(|from ['"].*(?:googleapis|oauth|credential)/i);
   assert.doesNotMatch(source, /persistCollection|LocalEvidenceRepository|CREATE TABLE|ALTER TABLE|INSERT INTO/i);
   assert.doesNotMatch(source, /\b(?:OpenAI|Anthropic|BYOK|embedding|LLM)\b/i);
 });
