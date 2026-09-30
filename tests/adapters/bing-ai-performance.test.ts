@@ -182,6 +182,25 @@ test('Alpha/Beta trusted scopes remain isolated',()=>{
   assert.equal(beta.batches.every((part)=>part.collection.scope.tenantId===betaScope.tenantId),true);
 });
 
+test('summary-less Bing adaptation remains valid and emits no canonical summary evidence',()=>{
+  const value=fixture();
+  delete value.summary;
+  const result=adapt(value);
+  assert.equal(result.summary,undefined);
+  assert.doesNotThrow(()=>validateBingAiWindow(result));
+
+  const rowSourceIds=new Set(result.rows.map((row)=>row.sourceId));
+  const canonicalSources=result.batches.flatMap((part)=>part.sources);
+  assert.equal(canonicalSources.length,result.rows.length);
+  assert.equal(canonicalSources.every((source)=>rowSourceIds.has(source.id)),true);
+
+  const metricIds=result.batches
+    .flatMap((part)=>part.observations)
+    .map((entry)=>entry.record.cohort.context.metric.id);
+  assert.equal(metricIds.includes('bing-ai-total-citations'),false);
+  assert.equal(metricIds.includes('bing-ai-average-cited-pages'),false);
+});
+
 test('canonical adapted window revalidation rejects sidecar identity tampering',()=>{
   const result=adapt();
   const tampered=structuredClone(result) as any;
