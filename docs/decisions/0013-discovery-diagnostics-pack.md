@@ -1,6 +1,6 @@
 # ADR 0013 — Provider-preserving discovery diagnostics with exact URL alignment
 
-- Status: Proposed for Release 0.13 candidate
+- Status: Accepted in Release 0.13 via PR #45
 - Date: 2026-09-29
 - Issue: #43
 
@@ -12,7 +12,7 @@ Google, Bing and Yandex expose different indexing/crawl concepts. IndexNow is a 
 
 ## Decision
 
-Release 0.13 will add one bounded Discovery Diagnostics Pack with:
+Release 0.13 adds one bounded Discovery Diagnostics Pack with:
 
 1. exact sanitized source schema `ldw.discovery-diagnostics-evidence.v1` minor 0;
 2. one provider + one trusted target per artifact;
@@ -147,4 +147,4 @@ Incremental recurring cost remains $0 under existing included development/CI cap
 
 ## Acceptance
 
-This ADR remains proposed until Product exact-head review, one independent exact-head review and Product merge. Development cannot mark Release 0.13 accepted.
+Accepted after Product whole-pack exact-head review, one bounded IndexNow semantic-integrity correction, final independent exact-head review, protected-main squash merge through PR #45, and post-merge Contracts verification. Accepted main after merge: `3da8515dc719d3c6f2654be32122bc1b0691b4cb`.
