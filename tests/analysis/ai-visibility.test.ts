@@ -336,7 +336,7 @@ test('filtered Bing zero evidence remains unknown for mapped cohort absence',()=
   assert.equal(report.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
 });
 
-test('Search Analytics optional context requires exact property as well as exact scope',()=>{
+test('Search Analytics optional context requires the same trusted site despite provider-specific property syntax',()=>{
   const value=searchFixture();
   value.property='sc-domain:other.example.test';
   const exported=Date.parse(value.exportedAt);
@@ -364,5 +364,13 @@ test('complete ZeroRank source URL evidence still cannot produce concentration w
   };
   const report=analyze({zeroRankCurrent:complete});
   assert.equal(report.concentrationFindings.some((row)=>row.kind==='zerorank_source_url_citation_concentration_candidate'),false);
+});
+
+test('URL-prefix Bing properties remain incompatible with whole-site ZeroRank presence comparison',()=>{
+  const value=bingFixture();
+  value.property='https://example.test/subpath';
+  const report=analyze({bingCurrent:adaptBing(value)});
+  assert.equal(report.readiness.every((entry)=>entry.reasons.includes('incompatible_scope')),true);
+  assert.equal(report.crossSourceFindings.length,0);
 });
 
