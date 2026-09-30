@@ -1,6 +1,6 @@
 # ADR 0012 — Explicit-cluster page-focus evidence with mandatory SERP validation
 
-- Status: Proposed for Release 0.12 candidate
+- Status: Accepted in Release 0.12 via PR #41
 - Date: 2026-09-29
 - Issue: #40
 
@@ -66,4 +66,4 @@ Release 0.12 issues no trusted context or grant, calls no provider, stores no cr
 
 ## Acceptance
 
-This ADR remains proposed until Product exact-head review, independent review, required validation, and merge. Development authority cannot mark Release 0.12 accepted.
+Accepted after Product exact-head review, independent exact-head review, required validation, and protected-main squash merge through PR #41. Accepted main after merge: `0bc9db280f6b40b9d34e6e6c0fbc38addf54fbba`.
