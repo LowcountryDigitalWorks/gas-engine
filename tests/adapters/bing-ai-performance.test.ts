@@ -96,8 +96,7 @@ test('strict source contract rejects unknown fields and future schema drift',()=
 
 test('exact trusted property mismatch fails closed',()=>{
   const value=fixture();
-  const trusted=config(value);
-  trusted.expectedProperty='sc-domain:other.example.test';
+  const trusted={...config(value),expectedProperty:'sc-domain:other.example.test'};
   assert.throws(()=>adaptBingAiPerformanceEvidence(bytes(value),trusted),expectCode('configuration_mismatch'));
 });
 
@@ -117,7 +116,7 @@ test('duplicate semantic identities fail closed per section',()=>{
 test('aggregate row bound fails closed rather than truncating',()=>{
   const value=fixture();
   value.timeSeries=Array.from({length:366},(_,index)=>({
-    date:`2025-${String(Math.floor(index/28)+1).padStart(2,'0')}-${String(index%28+1).padStart(2,'0')}`,
+    date:new Date(Date.UTC(2025,0,index+1)).toISOString().slice(0,10),
     citationCount:index,
   }));
   value.pages=Array.from({length:256},(_,index)=>({url:`https://example.test/p${index}`,citationCount:index}));
