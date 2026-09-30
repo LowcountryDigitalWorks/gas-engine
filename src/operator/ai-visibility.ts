@@ -83,6 +83,11 @@ export function renderAiVisibilityHtml(report: AiVisibilitySiteReport): string {
     entry.state,
     entry.reasons.join(', ') || '—',
   ]);
+  const comparabilityRows = report.comparability.map((entry) => [
+    entry.providerId,
+    entry.state,
+    entry.reasons.join(', ') || '—',
+  ]);
   const bingPages = report.bing.pages.map((row) => [row.url, row.citationCount, row.rowIdentity]);
   const bingQueries = report.bing.groundingQueries.map((row) => [
     row.phrase,
@@ -152,7 +157,8 @@ th,td{border:1px solid #ccd6d5;padding:.5rem;text-align:left;vertical-align:top;
 <strong>Evaluated at:</strong> ${escapeHtml(report.evaluatedAt)}<br>
 <strong>Policy:</strong> ${escapeHtml(report.policy.id)} @ ${escapeHtml(report.policy.version)}
 </div>
-${table('Provider readiness',['Provider','State','Reasons'],readinessRows,'No provider readiness.')}
+${table('Current provider readiness',['Provider','State','Reasons'],readinessRows,'No provider readiness.')}
+${table('Baseline/current comparability',['Provider','State','Reasons'],comparabilityRows,'No provider comparability.')}
 <div class="warning"><strong>Bing sampling:</strong> ${escapeHtml(report.semantics.bingSamplingWarning)}</div>
 <div class="warning"><strong>Grounding query:</strong> ${escapeHtml(report.semantics.groundingQueryWarning)}</div>
 <div class="warning"><strong>Metric boundary:</strong> ${escapeHtml(report.semantics.metricBoundaryWarning)}</div>
