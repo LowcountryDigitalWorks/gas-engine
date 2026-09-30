@@ -821,3 +821,75 @@ export function adaptBingAiPerformanceEvidence(
     batches,
   };
 }
+
+
+export interface ValidatedBingAiWindow {
+  readonly collection: Contract<'collection'>;
+  readonly semantics: BingAiSemantics;
+  readonly summary?: BingAiSummary;
+  readonly rows: readonly BingAiAdaptedRow[];
+}
+
+function sameCanonical(left: unknown, right: unknown): boolean {
+  return canonicalJson(left) === canonicalJson(right);
+}
+
+/**
+ * Revalidate an application-local Bing adaptation before Release 0.14 analysis.
+ * This proves bounded canonical/sidecar consistency; it does not establish provider authenticity.
+ */
+export function validateBingAiWindow(input: BingAiAdaptationResult): ValidatedBingAiWindow {
+  if (input.providerId !== BING_AI_PROVIDER_ID
+      || input.rows.length > BING_AI_MAX_TOTAL_ROWS
+      || input.batches.length < 1
+      || input.batches.length > INGESTION_PART_BOUNDS.parts) {
+    fail('invalid_output', 'Bing AI adapted window has invalid bounded metadata.');
+  }
+  const parsed = input.batches.map((batch) => {
+    try {
+      return parseCollectionBatch(batch);
+    } catch {
+      fail('invalid_output', 'Bing AI adapted batch is not valid canonical evidence.');
+    }
+  }).sort((left, right) => left.part - right.part);
+  const first = parsed[0]!;
+  for (let index = 0; index < parsed.length; index += 1) {
+    const batch = parsed[index]!;
+    if (batch.part !== index + 1
+        || batch.parts !== parsed.length
+        || batch.idempotencyKey !== input.idempotencyKey
+        || !sameCanonical(batch.collection, first.collection)) {
+      fail('invalid_output', 'Bing AI adapted batches are incomplete or inconsistent.');
+    }
+  }
+  const collection = first.collection;
+  if (collection.id !== input.collectionId
+      || collection.providerId !== BING_AI_PROVIDER_ID
+      || !sameCanonical(collection.adapter, { id: BING_AI_ADAPTER_ID, version: BING_AI_MAPPING_VERSION })
+      || !sameCanonical(collection.sourceSchema, { id: BING_AI_SOURCE_SCHEMA_ID, version: BING_AI_SOURCE_SCHEMA_VERSION })
+      || !sameCanonical(collection.sourceTime, input.semantics.period)
+      || input.semantics.trustedProperty !== input.semantics.artifactProperty
+      || input.semantics.sampledSummary !== true) {
+    fail('invalid_output', 'Bing AI canonical collection does not match adapted semantics.');
+  }
+  const canonicalRows = [...input.rows].sort((left, right) => asciiCompare(left.rowIdentity, right.rowIdentity));
+  if (!sameCanonical(canonicalRows, input.rows)) {
+    fail('invalid_output', 'Bing AI sidecar row ordering is not canonical.');
+  }
+  const seen = new Set<string>();
+  for (const row of input.rows) {
+    if (seen.has(row.rowIdentity) || row.sourceRecordId !== row.rowIdentity || row.sourceId.length === 0) {
+      fail('invalid_output', 'Bing AI sidecar identity is invalid or duplicated.');
+    }
+    seen.add(row.rowIdentity);
+  }
+  const sourceCount = parsed.reduce((sum, batch) => sum + batch.sources.length, 0);
+  const expectedSources = input.rows.length + (input.summary === undefined ? 0 : 1);
+  if (sourceCount !== expectedSources) fail('invalid_output', 'Bing AI adapted source cardinality is inconsistent.');
+  return {
+    collection,
+    semantics: structuredClone(input.semantics),
+    ...(input.summary === undefined ? {} : { summary: structuredClone(input.summary) }),
+    rows: structuredClone(input.rows),
+  };
+}
