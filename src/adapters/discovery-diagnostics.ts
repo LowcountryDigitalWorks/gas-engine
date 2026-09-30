@@ -604,19 +604,24 @@ function discoveryMethod(provider: DiscoveryProviderId, trustedTarget: string): 
 }
 
 function sourceDigest(
-  artifact: DiscoveryArtifact,
+  provider: DiscoveryProviderId,
+  site: string,
+  observedAt: string,
+  exportedAt: string,
+  freshness: DiscoveryFreshness,
+  coverage: DiscoveryCoverage,
   normalized: NormalizedRow,
 ): string {
   try {
     return hashCanonicalJson({
-      schemaVersion: artifact.schemaVersion,
-      schemaMinorVersion: artifact.schemaMinorVersion,
-      provider: artifact.provider,
-      site: artifact.site,
-      observedAt: artifact.observedAt,
-      exportedAt: artifact.exportedAt,
-      freshness: artifact.freshness,
-      coverage: artifact.coverage,
+      schemaVersion: DISCOVERY_INPUT_SCHEMA_VERSION,
+      schemaMinorVersion: DISCOVERY_INPUT_SCHEMA_MINOR_VERSION,
+      provider,
+      site,
+      observedAt,
+      exportedAt,
+      freshness,
+      coverage,
       normalized,
     });
   } catch {
@@ -760,7 +765,7 @@ function makePreparedRows(
   runDigest: string,
 ): PreparedRow[] {
   return rows.map((row) => {
-    const digest = sourceDigest(artifact, row);
+    const digest = sourceDigest(artifact.provider, artifact.site, artifact.observedAt, artifact.exportedAt, artifact.freshness, artifact.coverage, row);
     const sourceRecordId = row.rowIdentity;
     const identity: Contract<'sourceRecord'>['identity'] = {
       scope: config.scope,
@@ -934,7 +939,7 @@ export function adaptDiscoveryDiagnosticsEvidence(
     receivedAt: config.receivedAt,
     method,
   });
-  const rowDigests = rows.map((row) => sourceDigest(artifact, row));
+  const rowDigests = rows.map((row) => sourceDigest(artifact.provider, artifact.site, artifact.observedAt, artifact.exportedAt, artifact.freshness, artifact.coverage, row));
   const runDigest = sha256Bytes(Buffer.from([
     'gas-discovery-diagnostics-collection-v1',
     seedDigest,
@@ -979,4 +984,216 @@ export function adaptDiscoveryDiagnosticsEvidence(
     rows: prepared.map((item) => item.row),
     batches,
   };
+}
+
+
+export interface ValidatedDiscoveryWindow {
+  readonly collection: Contract<'collection'>;
+  readonly semantics: DiscoverySemantics;
+  readonly rows: readonly DiscoveryAdaptedRow[];
+}
+
+function same(left: unknown, right: unknown): boolean {
+  return canonicalJson(left) === canonicalJson(right);
+}
+
+function semanticRow(row: DiscoveryAdaptedRow): NormalizedRow {
+  if (row.kind === 'search_engine') {
+    return {
+      kind: row.kind,
+      providerId: row.providerId,
+      url: row.url,
+      urlId: row.urlId,
+      rowIdentity: row.rowIdentity,
+      searchPresence: row.searchPresence,
+      crawlState: row.crawlState,
+      indexingPermission: row.indexingPermission,
+      canonicalState: row.canonicalState,
+      ...(row.canonicalTarget === undefined ? {} : { canonicalTarget: row.canonicalTarget }),
+      ...(row.httpStatus === undefined ? {} : { httpStatus: row.httpStatus }),
+      ...(row.lastCrawlAt === undefined ? {} : { lastCrawlAt: row.lastCrawlAt }),
+      providerState: structuredClone(row.providerState),
+    };
+  }
+  return {
+    kind: row.kind,
+    providerId: row.providerId,
+    url: row.url,
+    urlId: row.urlId,
+    rowIdentity: row.rowIdentity,
+    submittedAt: row.submittedAt,
+    submissionResult: row.submissionResult,
+    ...(row.resultCode === undefined ? {} : { resultCode: row.resultCode }),
+    providerState: structuredClone(row.providerState),
+  };
+}
+
+function observedText(
+  observations: Map<string, { sourceId: string; record: Contract<'observation'> }>,
+  id: string,
+  sourceId: string,
+  metricId: string,
+  expected: string,
+  urlId: string,
+): void {
+  const resolved = observations.get(id);
+  if (resolved === undefined
+      || resolved.sourceId !== sourceId
+      || resolved.record.cohort.context.subject.reference !== urlId
+      || resolved.record.cohort.context.metric.id !== metricId
+      || resolved.record.value.state !== 'observed'
+      || resolved.record.value.value.type !== 'text'
+      || resolved.record.value.value.value !== expected) {
+    fail('invalid_output', 'Discovery adapted text observation does not match its sidecar row.');
+  }
+}
+
+function observedNumber(
+  observations: Map<string, { sourceId: string; record: Contract<'observation'> }>,
+  id: string | undefined,
+  sourceId: string,
+  metricId: string,
+  expected: number | undefined,
+  urlId: string,
+): void {
+  if (expected === undefined) {
+    if (id !== undefined) fail('invalid_output', 'Discovery adapted numeric observation exists without a sidecar value.');
+    return;
+  }
+  if (id === undefined) fail('invalid_output', 'Discovery adapted numeric observation is missing.');
+  const resolved = observations.get(id);
+  if (resolved === undefined
+      || resolved.sourceId !== sourceId
+      || resolved.record.cohort.context.subject.reference !== urlId
+      || resolved.record.cohort.context.metric.id !== metricId
+      || resolved.record.value.state !== 'observed'
+      || resolved.record.value.value.type !== 'number'
+      || resolved.record.value.value.value !== expected) {
+    fail('invalid_output', 'Discovery adapted numeric observation does not match its sidecar row.');
+  }
+}
+
+/**
+ * Revalidate an application-local adaptation result before analysis. This proves
+ * internal canonical/sidecar consistency; it is not provider authenticity or tenant authority.
+ */
+export function validateDiscoveryWindow(input: DiscoveryAdaptationResult): ValidatedDiscoveryWindow {
+  if (!DISCOVERY_PROVIDERS.includes(input.providerId)
+      || input.rows.length > DISCOVERY_MAX_ROWS
+      || input.batches.length < 1
+      || input.batches.length > INGESTION_PART_BOUNDS.parts) {
+    fail('invalid_output', 'Discovery adapted window has invalid bounded metadata.');
+  }
+
+  const parsed = input.batches.map((batch) => {
+    try {
+      return parseCollectionBatch(batch);
+    } catch {
+      fail('invalid_output', 'Discovery adapted batch is not valid canonical evidence.');
+    }
+  }).sort((left, right) => left.part - right.part);
+
+  const first = parsed[0]!;
+  for (let index = 0; index < parsed.length; index += 1) {
+    const batch = parsed[index]!;
+    if (batch.part !== index + 1
+        || batch.parts !== parsed.length
+        || batch.idempotencyKey !== input.idempotencyKey
+        || !same(batch.collection, first.collection)) {
+      fail('invalid_output', 'Discovery adapted batches are incomplete or inconsistent.');
+    }
+  }
+
+  const collection = first.collection;
+  const expectedMethod = discoveryMethod(input.providerId, input.semantics.trustedTarget);
+  const expectedCompleteness = input.semantics.coverage.state === 'complete'
+    && input.semantics.freshness.dataState === 'final'
+    ? { state: 'complete', expectedCount: input.rows.length, receivedCount: input.rows.length }
+    : {
+        state: 'partial',
+        receivedCount: input.rows.length,
+        reason: 'Discovery evidence is preliminary, partial, or coverage-unknown; missing URL rows are not evidence of absence.',
+      };
+
+  if (input.collectionId !== collection.id
+      || input.semantics.artifactSite !== input.semantics.trustedTarget
+      || collection.providerId !== input.providerId
+      || !same(collection.adapter, { id: DISCOVERY_ADAPTER_ID, version: DISCOVERY_MAPPING_VERSION })
+      || !same(collection.sourceSchema, { id: DISCOVERY_SOURCE_SCHEMA_ID, version: DISCOVERY_SOURCE_SCHEMA_VERSION })
+      || !same(collection.method, expectedMethod)
+      || !same(collection.sourceTime, { start: input.semantics.observedAt, end: input.semantics.observedAt })
+      || !same(collection.completeness, expectedCompleteness)) {
+    fail('invalid_output', 'Discovery canonical collection does not match adapted semantics.');
+  }
+
+  const sources = new Map<string, Contract<'sourceRecord'>>();
+  const observations = new Map<string, { sourceId: string; record: Contract<'observation'> }>();
+  for (const batch of parsed) {
+    for (const source of batch.sources) {
+      if (sources.has(source.id)) fail('invalid_output', 'Discovery adapted source IDs must be unique.');
+      sources.set(source.id, source.record);
+    }
+    for (const observation of batch.observations) {
+      if (observations.has(observation.record.id)) fail('invalid_output', 'Discovery adapted observation IDs must be unique.');
+      observations.set(observation.record.id, observation);
+    }
+  }
+  if (sources.size !== input.rows.length) {
+    fail('invalid_output', 'Discovery adapted source cardinality is inconsistent.');
+  }
+
+  const sortedRows = [...input.rows].sort((left, right) => asciiCompare(left.url, right.url));
+  if (!same(sortedRows, input.rows)) fail('invalid_output', 'Discovery adapted row ordering is not canonical.');
+
+  const seenUrls = new Set<string>();
+  for (const row of input.rows) {
+    validateAbsoluteUrl(row.url, 'Discovery adapted URL');
+    const expectedUrlId = derivedIdentifier('discovery.url', { url: row.url });
+    const expectedRowIdentity = derivedIdentifier('discovery.row', { provider: input.providerId, url: row.url });
+    if (row.providerId !== input.providerId
+        || row.urlId !== expectedUrlId
+        || row.rowIdentity !== expectedRowIdentity
+        || row.sourceRecordId !== expectedRowIdentity
+        || seenUrls.has(row.url)) {
+      fail('invalid_output', 'Discovery adapted row identity is invalid or duplicated.');
+    }
+    seenUrls.add(row.url);
+
+    const source = sources.get(row.sourceId);
+    const semantic = semanticRow(row);
+    const digest = sourceDigest(
+      input.providerId,
+      input.semantics.artifactSite,
+      input.semantics.observedAt,
+      input.semantics.exportedAt,
+      input.semantics.freshness,
+      input.semantics.coverage,
+      semantic,
+    );
+    if (source === undefined
+        || source.identity.sourceRecordId !== row.sourceRecordId
+        || source.identity.providerId !== input.providerId
+        || source.integrity.state !== 'hashed'
+        || source.integrity.digest !== digest
+        || !same(source.availability, input.semantics.availability)) {
+      fail('invalid_output', 'Discovery adapted source integrity does not match its sidecar row.');
+    }
+
+    if (row.kind === 'search_engine') {
+      observedText(observations, row.observationIds.searchPresence, row.sourceId, SEARCH_METRICS.searchPresence.id, row.searchPresence, row.urlId);
+      observedText(observations, row.observationIds.crawlState, row.sourceId, SEARCH_METRICS.crawlState.id, row.crawlState, row.urlId);
+      observedText(observations, row.observationIds.indexingPermission, row.sourceId, SEARCH_METRICS.indexingPermission.id, row.indexingPermission, row.urlId);
+      observedText(observations, row.observationIds.canonicalState, row.sourceId, SEARCH_METRICS.canonicalState.id, row.canonicalState, row.urlId);
+      observedNumber(observations, row.observationIds.httpStatus, row.sourceId, SEARCH_METRICS.httpStatus.id, row.httpStatus, row.urlId);
+    } else {
+      observedText(observations, row.observationIds.submissionState, row.sourceId, INDEXNOW_METRICS.submissionState.id, row.submissionResult, row.urlId);
+      observedNumber(observations, row.observationIds.httpStatus, row.sourceId, INDEXNOW_METRICS.httpStatus.id, row.resultCode, row.urlId);
+    }
+  }
+
+  const referenced = new Set(input.rows.flatMap((row) => Object.values(row.observationIds).filter((value): value is string => value !== undefined)));
+  if (referenced.size !== observations.size) {
+    fail('invalid_output', 'Discovery adapted observation cardinality is inconsistent.');
+  }
+  return { collection, semantics: input.semantics, rows: input.rows };
 }

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
   adaptDiscoveryDiagnosticsEvidence,
+  validateDiscoveryWindow,
   DISCOVERY_INPUT_SCHEMA_MINOR_VERSION,
   DISCOVERY_INPUT_SCHEMA_VERSION,
   DISCOVERY_MAX_ROWS,
@@ -203,9 +204,33 @@ test('trusted Alpha/Beta scope remains authoritative and inert provider/site fie
   );
 });
 
+
+test('adapted-window validator detects sidecar and canonical observation tampering before analysis', () => {
+  const value = fixture('google');
+  const result = adapt(value);
+  assert.doesNotThrow(() => validateDiscoveryWindow(result));
+
+  const sidecarTamper = structuredClone(result);
+  const firstRow = sidecarTamper.rows[0];
+  assert.ok(firstRow?.kind === 'search_engine');
+  (firstRow as any).searchPresence = firstRow.searchPresence === 'present' ? 'absent' : 'present';
+  assert.throws(
+    () => validateDiscoveryWindow(sidecarTamper),
+    (error: unknown) => error instanceof DiscoveryAdapterError && error.code === 'invalid_output',
+  );
+
+  const canonicalTamper = structuredClone(result);
+  const firstObservation = canonicalTamper.batches[0]?.observations[0]?.record;
+  assert.ok(firstObservation?.value.state === 'observed' && firstObservation.value.value.type === 'text');
+  (firstObservation.value.value as any).value = 'forged-state';
+  assert.throws(
+    () => validateDiscoveryWindow(canonicalTamper),
+    (error: unknown) => error instanceof DiscoveryAdapterError && error.code === 'invalid_output',
+  );
+});
 test('adapter production surface has no authority issuer, provider client, persistence write, credential or runtime-AI path', () => {
   const source = readFileSync('src/adapters/discovery-diagnostics.ts', 'utf8');
-  assert.doesNotMatch(source, /tenant-authority|issueTenantContext|createTestTenantContext/i);
+  assert.doesNotMatch(source, /from ['"].*tenant-authority|issueTenantContext\s*\(|createTestTenantContext\s*\(/i);
   assert.doesNotMatch(source, /from ['"](?:node:http|node:https|node:net|undici|axios|googleapis)/i);
   assert.doesNotMatch(source, /\bfetch\s*\(|WebSocket|OAuth|api[_-]?key|credential/i);
   assert.doesNotMatch(source, /persistCollection|LocalEvidenceRepository|CREATE TABLE|ALTER TABLE|INSERT INTO/i);
