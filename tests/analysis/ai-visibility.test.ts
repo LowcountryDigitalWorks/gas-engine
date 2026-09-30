@@ -96,6 +96,13 @@ test('provider readiness preserves Bing sampling disclosure while allowing bound
   assert.equal(report.bing.sampledAggregated,true);
   assert.match(report.semantics.bingSamplingWarning,/sampled\/aggregated/i);
   assert.match(report.semantics.metricBoundaryWarning,/not ranking/i);
+  assert.deepEqual(
+    report.comparability.map((entry)=>[entry.providerId,entry.state,entry.reasons]),
+    [
+      ['bing-webmaster-ai-performance','not_comparable',['insufficient_comparable_windows']],
+      ['zerorank','not_comparable',['insufficient_comparable_windows']]
+    ]
+  );
 });
 
 test('incompatible trusted targets are limited and block cross-source divergence',()=>{
@@ -140,6 +147,9 @@ test('Bing within-provider baseline/current emits increase, decrease, unchanged 
   incompatibleBaseline.period={start:'2026-09-16T00:00:00.000Z',end:'2026-09-24T00:00:00.000Z'};
   const notComparable=analyze({bingBaseline:adaptBing(incompatibleBaseline)});
   assert.equal(notComparable.changes.filter((row)=>row.providerId==='bing-webmaster-ai-performance').every((row)=>row.state==='not_comparable'),true);
+  const bingComparability=notComparable.comparability.find((entry)=>entry.providerId==='bing-webmaster-ai-performance');
+  assert.equal(bingComparability?.state,'not_comparable');
+  assert.equal(bingComparability?.reasons.includes('incompatible_periods'),true);
 });
 
 test('ZeroRank changes remain provider-specific and never become Bing citation movement',()=>{
@@ -282,3 +292,77 @@ test('validated Release 0.6 adaptation still produces identical output around pr
   const after=adaptZeroRankSanitizedEvidence(bytes(value),config);
   assert.deepEqual(after,before);
 });
+
+test('stale or unavailable provider evidence cannot create a cross-source divergence candidate',()=>{
+  const current=projectZr();
+  const explicitAbsent:ZeroRankVisibilityProjection={
+    ...current,
+    observedAt:'2026-09-01T00:00:00.000Z',
+    endpointCompleteness:{...current.endpointCompleteness,rankings:'complete',sourceUrls:'complete'},
+    rankings:current.rankings.map((row)=>({...row,mentions:0,visibilityPercentage:0})),
+    sourceUrls:current.sourceUrls.map((row)=>({...row,totalCitations:0}))
+  };
+  const stale=analyze({zeroRankCurrent:explicitAbsent});
+  assert.equal(stale.readiness.find((entry)=>entry.providerId==='zerorank')?.reasons.includes('stale'),true);
+  assert.equal(stale.crossSourceFindings.length,0);
+
+  const unavailable:ZeroRankVisibilityProjection={
+    ...explicitAbsent,
+    observedAt:'2026-09-30T12:00:00.000Z',
+    availability:{state:'unavailable',reason:'Synthetic provider unavailable'}
+  };
+  const blocked=analyze({zeroRankCurrent:unavailable});
+  assert.equal(blocked.crossSourceFindings.length,0);
+});
+
+test('filtered Bing zero evidence remains unknown for mapped cohort absence',()=>{
+  const value=bingFixture();
+  value.state.coverage={state:'filtered',filters:['page=https://example.test/alpha'],reason:'Synthetic page filter'};
+  value.groundingQueries[0].citationCount=0;
+  const bingCurrent=adaptBing(value);
+  const query=bingCurrent.rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
+  assert.ok(query?.kind==='grounding_query');
+  const zr=projectZr();
+  const positive:ZeroRankVisibilityProjection={
+    ...zr,
+    endpointCompleteness:{...zr.endpointCompleteness,chats:'complete'},
+    chats:zr.chats.map((row)=>row.promptId==='10'?{...row,citationCount:2}:row)
+  };
+  const report=analyze({
+    bingCurrent,
+    zeroRankCurrent:positive,
+    cohortMappings:[{bingGroundingQueryIdentity:query.rowIdentity,zeroRankPromptId:'10'}]
+  });
+  assert.equal(report.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
+});
+
+test('Search Analytics optional context requires exact property as well as exact scope',()=>{
+  const value=searchFixture();
+  value.property='sc-domain:other.example.test';
+  const exported=Date.parse(value.exportedAt);
+  const config:SearchAnalyticsAdapterConfig={
+    scope:structuredClone(alphaScope),
+    expectedProperty:value.property,
+    providerConnectionId:'synthetic-gsc-other-property',
+    collectedAt:new Date(exported+60_000).toISOString(),
+    receivedAt:new Date(exported+120_000).toISOString(),
+    availability:{state:'available',reference:'synthetic-search-other-property'}
+  };
+  const search=adaptSearchAnalyticsEvidence(bytes(value),config);
+  assert.throws(
+    ()=>analyze({searchAnalytics:search}),
+    (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='invalid_context'
+  );
+});
+
+test('complete ZeroRank source URL evidence still cannot produce concentration when stale',()=>{
+  const zr=projectZr();
+  const complete:ZeroRankVisibilityProjection={
+    ...zr,
+    observedAt:'2026-09-01T00:00:00.000Z',
+    endpointCompleteness:{...zr.endpointCompleteness,sourceUrls:'complete'}
+  };
+  const report=analyze({zeroRankCurrent:complete});
+  assert.equal(report.concentrationFindings.some((row)=>row.kind==='zerorank_source_url_citation_concentration_candidate'),false);
+});
+
