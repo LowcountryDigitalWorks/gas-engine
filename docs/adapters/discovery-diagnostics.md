@@ -1,6 +1,6 @@
 # Release 0.13 sanitized discovery-diagnostics adapter
 
-Release 0.13 adds one pure/local adapter for the exact sanitized source contract:
+Accepted Release 0.13, merged on `main` through PR #45, adds one pure/local adapter for the exact sanitized source contract:
 
 `ldw.discovery-diagnostics-evidence.v1`
 
