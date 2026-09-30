@@ -633,28 +633,47 @@ function zeroRankPresence(projection: ZeroRankVisibilityProjection): 'present' |
     : 'unknown';
 }
 
+function providerPropertyHostname(property: string): string | undefined {
+  if (property.startsWith('sc-domain:')) {
+    const raw = property.slice('sc-domain:'.length).toLowerCase();
+    try {
+      const parsed = new URL(`https://${raw}/`);
+      return parsed.hostname.toLowerCase() === raw && parsed.port === '' ? raw : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  try {
+    const parsed = new URL(property);
+    if (parsed.protocol !== 'https:' || parsed.username !== '' || parsed.password !== '') return undefined;
+    return parsed.hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+function bingPropertyIsWholeSite(property: string): boolean {
+  if (property.startsWith('sc-domain:')) return providerPropertyHostname(property) !== undefined;
+  try {
+    const parsed = new URL(property);
+    return parsed.protocol === 'https:'
+      && parsed.username === ''
+      && parsed.password === ''
+      && parsed.search === ''
+      && parsed.hash === ''
+      && parsed.pathname === '/';
+  } catch {
+    return false;
+  }
+}
+
 function trustedTargetsCompatible(
   bing: ValidatedBingAiWindow,
   zeroRank: ZeroRankVisibilityProjection,
 ): boolean {
-  const property = bing.semantics.trustedProperty;
-  let propertyHostname: string;
-  if (property.startsWith('sc-domain:')) {
-    propertyHostname = property.slice('sc-domain:'.length).toLowerCase();
-  } else {
-    try {
-      const propertyUrl = new URL(property);
-      if (propertyUrl.protocol !== 'https:'
-          || propertyUrl.username !== ''
-          || propertyUrl.password !== ''
-          || propertyUrl.search !== ''
-          || propertyUrl.hash !== ''
-          || propertyUrl.pathname !== '/') return false;
-      propertyHostname = propertyUrl.hostname.toLowerCase();
-    } catch {
-      return false;
-    }
-  }
+  if (!bingPropertyIsWholeSite(bing.semantics.trustedProperty)) return false;
+  const propertyHostname = providerPropertyHostname(bing.semantics.trustedProperty);
+  if (propertyHostname === undefined) return false;
   try {
     return new URL(zeroRank.trustedTargetOrigin).hostname.toLowerCase() === propertyHostname;
   } catch {
@@ -741,12 +760,18 @@ function crossSourceFindings(
 function traditionalSearchContext(
   input: SearchAnalyticsAdaptationResult | undefined,
   scope: Scope,
+  currentBingProperty: string,
   pages: readonly BingAiPageRow[],
 ): AiVisibilityTraditionalSearchContext[] {
   if (input === undefined) return [];
   const validated = validateSearchAnalyticsWindow(input);
   if (!same(validated.collection.scope, scope)) {
     fail('invalid_context', 'Search Analytics context trusted scope does not match AI-visibility evidence.');
+  }
+  const bingHostname = providerPropertyHostname(currentBingProperty);
+  const searchHostname = providerPropertyHostname(validated.semantics.property);
+  if (bingHostname === undefined || searchHostname === undefined || bingHostname !== searchHostname) {
+    fail('invalid_context', 'Search Analytics context trusted property does not represent the same site as Bing evidence.');
   }
   const byPage = new Map<string, typeof validated.rows>();
   for (const page of pages) byPage.set(page.url, validated.rows.filter((row) => row.sidecar.page === page.url));
@@ -849,7 +874,7 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
   const pages = bing.rows.filter((row): row is BingAiPageRow => row.kind === 'page');
   const queries = bing.rows.filter((row): row is BingAiGroundingQueryRow => row.kind === 'grounding_query');
   const pageSet = new Set(pages.map((page) => page.url));
-  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), pages);
+  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), bing.semantics.trustedProperty, pages);
   const changeContext = changeOutcomeContext(request.searchChange, scopeOf(bing), pageSet);
   const focusContext = pageFocusContext(request.pageFocus, scopeOf(bing), pageSet);
 
