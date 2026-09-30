@@ -395,6 +395,14 @@ function normalizeRows(artifact: Artifact): NormalizedRow[] {
   return rows;
 }
 
+function normalizedSummary(summary: Artifact['summary']): BingAiSummary | undefined {
+  if (summary === undefined) return undefined;
+  return {
+    ...(summary.totalCitations === undefined ? {} : { totalCitations: summary.totalCitations }),
+    ...(summary.averageCitedPages === undefined ? {} : { averageCitedPages: summary.averageCitedPages }),
+  };
+}
+
 function canonicalCompleteness(artifact: Artifact, rowCount: number): Contract<'collection'>['completeness'] {
   if (artifact.state.dataState === 'final' && artifact.state.coverage.state === 'complete_export_view') {
     return { state: 'complete', expectedCount: rowCount, receivedCount: rowCount };
@@ -765,6 +773,7 @@ export function adaptBingAiPerformanceEvidence(
   const rows = normalizeRows(artifact);
   const m = method(config);
   const completeness = canonicalCompleteness(artifact, rows.length + (artifact.summary === undefined ? 0 : 1));
+  const summary = normalizedSummary(artifact.summary);
   const collectionDigest = hashCanonicalJson({
     algorithm: 'gas-bing-ai-performance-collection-v1',
     scope: config.scope,
@@ -773,7 +782,7 @@ export function adaptBingAiPerformanceEvidence(
     exportedAt: artifact.exportedAt,
     period: artifact.period,
     state: artifact.state,
-    summary: artifact.summary,
+    summary,
     rows,
     collectedAt: config.collectedAt,
     receivedAt: config.receivedAt,
@@ -816,7 +825,7 @@ export function adaptBingAiPerformanceEvidence(
       preview: structuredClone(artifact.state.preview),
       availability: structuredClone(config.availability),
     },
-    ...(artifact.summary === undefined ? {} : { summary: structuredClone(artifact.summary) }),
+    ...(summary === undefined ? {} : { summary }),
     rows: prepared.map((item) => item.row),
     batches,
   };
