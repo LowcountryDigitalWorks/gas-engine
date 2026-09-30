@@ -587,12 +587,27 @@ function zeroRankPresence(projection: ZeroRankVisibilityProjection): 'present' |
     : 'unknown';
 }
 
+function trustedTargetsCompatible(
+  bing: ValidatedBingAiWindow,
+  zeroRank: ZeroRankVisibilityProjection,
+): boolean {
+  const property = bing.semantics.trustedProperty;
+  if (!property.startsWith('sc-domain:')) return false;
+  const domain = property.slice('sc-domain:'.length).toLowerCase();
+  try {
+    return new URL(zeroRank.trustedTargetOrigin).hostname.toLowerCase() === domain;
+  } catch {
+    return false;
+  }
+}
+
 function crossSourceFindings(
   bing: ValidatedBingAiWindow,
   zeroRank: ZeroRankVisibilityProjection,
   mappings: readonly z.infer<typeof cohortMappingSchema>[],
 ): AiVisibilityCrossSourceFinding[] {
   const findings: AiVisibilityCrossSourceFinding[] = [];
+  if (!trustedTargetsCompatible(bing, zeroRank)) return findings;
   const bingState = bingPresence(bing);
   const zeroRankState = zeroRankPresence(zeroRank);
   if (bingState !== 'unknown' && zeroRankState !== 'unknown' && bingState !== zeroRankState) {
@@ -610,7 +625,7 @@ function crossSourceFindings(
     (row) => row.rowIdentity,
   );
   const prompts = keyed(zeroRank.prompts, (row) => row.id);
-  const chatsByPrompt = new Map<string, readonly ZeroRankVisibilityProjection['chats'][number][]>();
+  const chatsByPrompt = new Map<string, ZeroRankVisibilityProjection['chats']>();
   for (const prompt of zeroRank.prompts) {
     chatsByPrompt.set(prompt.id, zeroRank.chats.filter((chat) => chat.promptId === prompt.id));
   }
@@ -716,10 +731,22 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
   const zeroRankBaseline = request.zeroRankBaseline === undefined ? undefined : validateZeroRankProjection(request.zeroRankBaseline);
 
   if (!same(scopeOf(bing), zeroRank.scope)) fail('configuration_mismatch', 'Bing and ZeroRank trusted scopes do not match.');
-  const readiness = [
-    bingReadiness(bing, request.evaluatedAt, request.policy),
-    zeroRankReadiness(zeroRank, request.evaluatedAt, request.policy),
-  ] as const;
+  const bingProviderReadiness = bingReadiness(bing, request.evaluatedAt, request.policy);
+  const zeroRankProviderReadiness = zeroRankReadiness(zeroRank, request.evaluatedAt, request.policy);
+  const readiness = !trustedTargetsCompatible(bing, zeroRank)
+    ? [
+        {
+          ...bingProviderReadiness,
+          state: bingProviderReadiness.state === 'not_ready' ? 'not_ready' as const : 'limited' as const,
+          reasons: [...bingProviderReadiness.reasons, 'incompatible_scope' as const],
+        },
+        {
+          ...zeroRankProviderReadiness,
+          state: zeroRankProviderReadiness.state === 'not_ready' ? 'not_ready' as const : 'limited' as const,
+          reasons: [...zeroRankProviderReadiness.reasons, 'incompatible_scope' as const],
+        },
+      ] as const
+    : [bingProviderReadiness, zeroRankProviderReadiness] as const;
 
   const changes = [
     ...bingChanges(bingBaseline, bing),
