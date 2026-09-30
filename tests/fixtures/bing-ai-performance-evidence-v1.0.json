@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "ldw.bing-ai-performance-evidence.v1",
+  "schemaMinorVersion": 0,
+  "property": "sc-domain:example.test",
+  "exportedAt": "2026-09-30T12:10:00.000Z",
+  "period": {
+    "start": "2026-09-23T00:00:00.000Z",
+    "end": "2026-09-30T00:00:00.000Z"
+  },
+  "state": {
+    "dataState": "final",
+    "coverage": { "state": "complete_export_view" },
+    "sampledSummary": true,
+    "preview": {
+      "intents": true,
+      "topics": true,
+      "citationShare": true,
+      "compare": true
+    }
+  },
+  "summary": {
+    "totalCitations": 18,
+    "averageCitedPages": 2.5
+  },
+  "timeSeries": [
+    { "date": "2026-09-28", "citationCount": 7, "citedPageCount": 2 },
+    { "date": "2026-09-29", "citationCount": 11, "citedPageCount": 3 }
+  ],
+  "pages": [
+    { "url": "https://example.test/alpha", "citationCount": 12 },
+    { "url": "https://example.test/beta", "citationCount": 4 },
+    { "url": "https://example.test/gamma", "citationCount": 2 }
+  ],
+  "groundingQueries": [
+    {
+      "phrase": "synthetic grouped phrase alpha",
+      "citationCount": 10,
+      "intent": "Synthetic provider intent",
+      "topic": "Synthetic provider topic",
+      "citationSharePct": 55.5
+    },
+    {
+      "phrase": "synthetic grouped phrase beta",
+      "citationCount": 3,
+      "citationSharePct": 16.5
+    }
+  ],
+  "queryPageMappings": [
+    {
+      "phrase": "synthetic grouped phrase alpha",
+      "url": "https://example.test/alpha",
+      "citationCount": 8
+    },
+    {
+      "phrase": "synthetic grouped phrase beta",
+      "url": "https://example.test/beta",
+      "citationCount": 2
+    }
+  ]
+}
