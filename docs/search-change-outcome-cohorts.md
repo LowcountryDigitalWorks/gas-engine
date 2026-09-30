@@ -119,4 +119,4 @@ The public repository uses synthetic evidence only. Incremental recurring cost r
 
 ## Validation
 
-The candidate uses the existing Node 24 locked validation and must keep all Releases 0.1–0.10 regressions green. No generated wire schema changes are expected because Release 0.11 reuses canonical measurement/outcome contracts unchanged.
+The accepted release uses the existing Node 24 locked validation and must keep all Releases 0.1–0.10 regressions green. No generated wire schema changes are expected because Release 0.11 reuses canonical measurement/outcome contracts unchanged.
