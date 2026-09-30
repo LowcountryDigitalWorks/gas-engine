@@ -839,8 +839,139 @@ export interface ValidatedBingAiWindow {
   readonly rows: readonly BingAiAdaptedRow[];
 }
 
-function sameCanonical(left: unknown, right: unknown): boolean {
-  return canonicalJson(left) === canonicalJson(right);
+function reconstructArtifactFromWindow(input: BingAiAdaptationResult): Artifact {
+  const timeSeries: unknown[] = [];
+  const pages: unknown[] = [];
+  const groundingQueries: unknown[] = [];
+  const queryPageMappings: unknown[] = [];
+
+  for (const row of input.rows) {
+    switch (row.kind) {
+      case 'time_series':
+        timeSeries.push({
+          date: row.date,
+          citationCount: row.citationCount,
+          ...(row.citedPageCount === undefined ? {} : { citedPageCount: row.citedPageCount }),
+        });
+        break;
+      case 'page':
+        pages.push({ url: row.url, citationCount: row.citationCount });
+        break;
+      case 'grounding_query':
+        groundingQueries.push({
+          phrase: row.phrase,
+          citationCount: row.citationCount,
+          ...(row.intent === undefined ? {} : { intent: row.intent }),
+          ...(row.topic === undefined ? {} : { topic: row.topic }),
+          ...(row.citationSharePct === undefined ? {} : { citationSharePct: row.citationSharePct }),
+        });
+        break;
+      case 'query_page_mapping':
+        queryPageMappings.push({
+          phrase: row.phrase,
+          url: row.url,
+          ...(row.citationCount === undefined ? {} : { citationCount: row.citationCount }),
+        });
+        break;
+      default:
+        fail('invalid_output', 'Bing AI sidecar contains an unsupported row kind.');
+    }
+  }
+
+  const candidate = {
+    schemaVersion: BING_AI_INPUT_SCHEMA_VERSION,
+    schemaMinorVersion: BING_AI_INPUT_SCHEMA_MINOR_VERSION,
+    property: input.semantics.artifactProperty,
+    exportedAt: input.semantics.exportedAt,
+    period: structuredClone(input.semantics.period),
+    state: {
+      dataState: input.semantics.dataState,
+      coverage: structuredClone(input.semantics.coverage),
+      sampledSummary: input.semantics.sampledSummary,
+      preview: structuredClone(input.semantics.preview),
+    },
+    ...(input.summary === undefined ? {} : { summary: structuredClone(input.summary) }),
+    timeSeries,
+    pages,
+    groundingQueries,
+    ...(queryPageMappings.length === 0 ? {} : { queryPageMappings }),
+  };
+  const parsed = artifactSchema.safeParse(candidate);
+  if (!parsed.success) {
+    fail('invalid_output', 'Bing AI sidecar semantics cannot reconstruct a valid source artifact.');
+  }
+  return parsed.data;
+}
+
+function rebuildExpectedWindow(
+  input: BingAiAdaptationResult,
+  canonicalCollection: Contract<'collection'>,
+): Readonly<{
+  collection: Contract<'collection'>;
+  idempotencyKey: string;
+  summary?: BingAiSummary;
+  rows: readonly BingAiAdaptedRow[];
+  batches: readonly CollectionBatch[];
+}> {
+  const artifact = reconstructArtifactFromWindow(input);
+  const config = parseConfig({
+    scope: structuredClone(canonicalCollection.scope),
+    expectedProperty: input.semantics.trustedProperty,
+    providerConnectionId: canonicalCollection.providerConnectionId,
+    collectedAt: canonicalCollection.collectedAt,
+    receivedAt: canonicalCollection.receivedAt,
+    availability: structuredClone(input.semantics.availability),
+  });
+  validateSemantics(artifact, config);
+
+  const normalizedRows = normalizeRows(artifact);
+  const summary = normalizedSummary(artifact.summary);
+  const collectionDigest = hashCanonicalJson({
+    algorithm: 'gas-bing-ai-performance-collection-v1',
+    scope: config.scope,
+    providerConnectionId: config.providerConnectionId,
+    trustedProperty: config.expectedProperty,
+    exportedAt: artifact.exportedAt,
+    period: artifact.period,
+    state: artifact.state,
+    summary,
+    rows: normalizedRows,
+    collectedAt: config.collectedAt,
+    receivedAt: config.receivedAt,
+  });
+  const collectionId = `bing-ai.collection:${collectionDigest}`;
+  const idempotencyKey = `bing-ai.idempotency:${collectionDigest}`;
+  const collection = parseContract('collection', {
+    schemaVersion: '1.0',
+    kind: 'collection',
+    id: collectionId,
+    scope: config.scope,
+    providerId: BING_AI_PROVIDER_ID,
+    providerConnectionId: config.providerConnectionId,
+    adapter: { id: BING_AI_ADAPTER_ID, version: BING_AI_MAPPING_VERSION },
+    sourceSchema: { id: BING_AI_SOURCE_SCHEMA_ID, version: BING_AI_SOURCE_SCHEMA_VERSION },
+    method: method(config),
+    sourceTime: artifact.period,
+    startedAt: artifact.period.start,
+    endedAt: artifact.period.end,
+    collectedAt: config.collectedAt,
+    receivedAt: config.receivedAt,
+    completeness: canonicalCompleteness(
+      artifact,
+      normalizedRows.length + (artifact.summary === undefined ? 0 : 1),
+    ),
+  });
+  const prepared = prepareRows(artifact, config, normalizedRows, collection);
+  const summaryPrepared = summaryObservations(artifact, config, collection);
+  const batches = packRows([...summaryPrepared, ...prepared], idempotencyKey, collection);
+
+  return {
+    collection,
+    idempotencyKey,
+    ...(summary === undefined ? {} : { summary }),
+    rows: prepared.map((item) => item.row),
+    batches,
+  };
 }
 
 /**
@@ -848,12 +979,17 @@ function sameCanonical(left: unknown, right: unknown): boolean {
  * This proves bounded canonical/sidecar consistency; it does not establish provider authenticity.
  */
 export function validateBingAiWindow(input: BingAiAdaptationResult): ValidatedBingAiWindow {
-  if (input.providerId !== BING_AI_PROVIDER_ID
+  if (input === null
+      || typeof input !== 'object'
+      || input.providerId !== BING_AI_PROVIDER_ID
+      || !Array.isArray(input.rows)
       || input.rows.length > BING_AI_MAX_TOTAL_ROWS
+      || !Array.isArray(input.batches)
       || input.batches.length < 1
       || input.batches.length > INGESTION_PART_BOUNDS.parts) {
     fail('invalid_output', 'Bing AI adapted window has invalid bounded metadata.');
   }
+
   const parsed = input.batches.map((batch) => {
     try {
       return parseCollectionBatch(batch);
@@ -867,38 +1003,32 @@ export function validateBingAiWindow(input: BingAiAdaptationResult): ValidatedBi
     if (batch.part !== index + 1
         || batch.parts !== parsed.length
         || batch.idempotencyKey !== input.idempotencyKey
-        || !sameCanonical(batch.collection, first.collection)) {
+        || canonicalJson(batch.collection) !== canonicalJson(first.collection)) {
       fail('invalid_output', 'Bing AI adapted batches are incomplete or inconsistent.');
     }
   }
-  const collection = first.collection;
-  if (collection.id !== input.collectionId
-      || collection.providerId !== BING_AI_PROVIDER_ID
-      || !sameCanonical(collection.adapter, { id: BING_AI_ADAPTER_ID, version: BING_AI_MAPPING_VERSION })
-      || !sameCanonical(collection.sourceSchema, { id: BING_AI_SOURCE_SCHEMA_ID, version: BING_AI_SOURCE_SCHEMA_VERSION })
-      || !sameCanonical(collection.sourceTime, input.semantics.period)
-      || input.semantics.trustedProperty !== input.semantics.artifactProperty
-      || input.semantics.sampledSummary !== true) {
-    fail('invalid_output', 'Bing AI canonical collection does not match adapted semantics.');
+
+  let expected: ReturnType<typeof rebuildExpectedWindow>;
+  try {
+    expected = rebuildExpectedWindow(input, first.collection);
+  } catch (error) {
+    if (error instanceof BingAiAdapterError) throw error;
+    fail('invalid_output', 'Bing AI adapted window cannot be deterministically reconstructed.');
   }
-  const canonicalRows = [...input.rows].sort((left, right) => asciiCompare(left.rowIdentity, right.rowIdentity));
-  if (!sameCanonical(canonicalRows, input.rows)) {
-    fail('invalid_output', 'Bing AI sidecar row ordering is not canonical.');
+
+  if (input.collectionId !== expected.collection.id
+      || input.idempotencyKey !== expected.idempotencyKey
+      || canonicalJson(input.summary) !== canonicalJson(expected.summary)
+      || canonicalJson(input.rows) !== canonicalJson(expected.rows)
+      || canonicalJson(parsed) !== canonicalJson(expected.batches)) {
+    fail('invalid_output', 'Bing AI sidecar and canonical evidence disagree.');
   }
-  const seen = new Set<string>();
-  for (const row of input.rows) {
-    if (seen.has(row.rowIdentity) || row.sourceRecordId !== row.rowIdentity || row.sourceId.length === 0) {
-      fail('invalid_output', 'Bing AI sidecar identity is invalid or duplicated.');
-    }
-    seen.add(row.rowIdentity);
-  }
-  const sourceCount = parsed.reduce((sum, batch) => sum + batch.sources.length, 0);
-  const expectedSources = input.rows.length + (input.summary === undefined ? 0 : 1);
-  if (sourceCount !== expectedSources) fail('invalid_output', 'Bing AI adapted source cardinality is inconsistent.');
+
   return {
-    collection,
+    collection: structuredClone(expected.collection),
     semantics: structuredClone(input.semantics),
-    ...(input.summary === undefined ? {} : { summary: structuredClone(input.summary) }),
-    rows: structuredClone(input.rows),
+    ...(expected.summary === undefined ? {} : { summary: structuredClone(expected.summary) }),
+    rows: structuredClone(expected.rows),
   };
 }
+
