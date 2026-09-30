@@ -1,0 +1,236 @@
+{
+  "google": {
+    "schemaVersion": "ldw.discovery-diagnostics-evidence.v1",
+    "schemaMinorVersion": 0,
+    "provider": "google-search-console",
+    "site": "sc-domain:example.test",
+    "observedAt": "2026-09-29T12:00:00.000Z",
+    "exportedAt": "2026-09-29T12:05:00.000Z",
+    "freshness": { "dataState": "final", "freshThrough": "2026-09-29T12:00:00.000Z" },
+    "coverage": { "state": "complete", "truncated": false },
+    "rows": [
+      {
+        "url": "https://example.test/diverge",
+        "verdict": "PASS",
+        "coverageState": "Indexed",
+        "robotsTxtState": "ALLOWED",
+        "indexingState": "ALLOWED",
+        "pageFetchState": "SUCCESSFUL",
+        "lastCrawlAt": "2026-09-29T11:40:00.000Z",
+        "googleCanonical": "https://example.test/diverge",
+        "userCanonical": "https://example.test/diverge"
+      },
+      {
+        "url": "https://example.test/broad",
+        "verdict": "NEUTRAL",
+        "coverageState": "Excluded by noindex",
+        "robotsTxtState": "ALLOWED",
+        "indexingState": "BLOCKED_BY_META_TAG",
+        "pageFetchState": "BLOCKED_ROBOTS_TXT",
+        "lastCrawlAt": "2026-09-29T11:30:00.000Z",
+        "googleCanonical": "https://example.test/canonical-a",
+        "userCanonical": "https://example.test/broad"
+      },
+      {
+        "url": "https://example.test/clean",
+        "verdict": "PASS",
+        "coverageState": "Indexed",
+        "robotsTxtState": "ALLOWED",
+        "indexingState": "ALLOWED",
+        "pageFetchState": "SUCCESSFUL",
+        "lastCrawlAt": "2026-09-29T11:45:00.000Z",
+        "googleCanonical": "https://example.test/clean",
+        "userCanonical": "https://example.test/clean"
+      },
+      {
+        "url": "https://example.test/canonical",
+        "verdict": "PASS",
+        "coverageState": "Indexed",
+        "robotsTxtState": "ALLOWED",
+        "indexingState": "ALLOWED",
+        "pageFetchState": "SUCCESSFUL",
+        "lastCrawlAt": "2026-09-29T11:50:00.000Z",
+        "googleCanonical": "https://example.test/canonical",
+        "userCanonical": "https://example.test/canonical"
+      },
+      {
+        "url": "https://example.test/permission",
+        "verdict": "PASS",
+        "coverageState": "Indexed",
+        "robotsTxtState": "ALLOWED",
+        "indexingState": "ALLOWED",
+        "pageFetchState": "SUCCESSFUL",
+        "lastCrawlAt": "2026-09-29T11:55:00.000Z",
+        "googleCanonical": "https://example.test/permission"
+      }
+    ]
+  },
+  "bing": {
+    "schemaVersion": "ldw.discovery-diagnostics-evidence.v1",
+    "schemaMinorVersion": 0,
+    "provider": "bing-webmaster-tools",
+    "site": "sc-domain:example.test",
+    "observedAt": "2026-09-29T12:01:00.000Z",
+    "exportedAt": "2026-09-29T12:06:00.000Z",
+    "freshness": { "dataState": "final", "freshThrough": "2026-09-29T12:01:00.000Z" },
+    "coverage": { "state": "complete", "truncated": false },
+    "rows": [
+      {
+        "url": "https://example.test/clean",
+        "indexStatus": "indexed",
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "canonicalUrl": "https://example.test/clean",
+        "httpStatus": 200,
+        "discoveredAt": "2026-09-20T00:00:00.000Z",
+        "lastCrawlAt": "2026-09-29T11:46:00.000Z",
+        "statusCode": "INDEXED"
+      },
+      {
+        "url": "https://example.test/diverge",
+        "indexStatus": "not_indexed",
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "canonicalUrl": "https://example.test/diverge",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:41:00.000Z",
+        "statusCode": "NOT_INDEXED",
+        "reason": "Synthetic exclusion state."
+      },
+      {
+        "url": "https://example.test/broad",
+        "indexStatus": "not_indexed",
+        "crawlState": "server_error",
+        "indexingPermission": "allowed",
+        "canonicalUrl": "https://example.test/canonical-b",
+        "httpStatus": 503,
+        "lastCrawlAt": "2026-09-29T11:31:00.000Z",
+        "statusCode": "SERVER_ERROR"
+      },
+      {
+        "url": "https://example.test/canonical",
+        "indexStatus": "indexed",
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "canonicalUrl": "https://example.test/canonical-target",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:51:00.000Z",
+        "statusCode": "INDEXED"
+      },
+      {
+        "url": "https://example.test/permission",
+        "indexStatus": "indexed",
+        "crawlState": "success",
+        "indexingPermission": "blocked",
+        "canonicalUrl": "https://example.test/permission",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:56:00.000Z",
+        "statusCode": "INDEXED"
+      }
+    ]
+  },
+  "yandex": {
+    "schemaVersion": "ldw.discovery-diagnostics-evidence.v1",
+    "schemaMinorVersion": 0,
+    "provider": "yandex-webmaster",
+    "site": "sc-domain:example.test",
+    "observedAt": "2026-09-29T12:02:00.000Z",
+    "exportedAt": "2026-09-29T12:07:00.000Z",
+    "freshness": { "dataState": "final", "freshThrough": "2026-09-29T12:02:00.000Z" },
+    "coverage": { "state": "complete", "truncated": false },
+    "rows": [
+      {
+        "url": "https://example.test/broad",
+        "searchable": false,
+        "crawlState": "blocked",
+        "indexingPermission": "blocked",
+        "targetUrl": "https://example.test/broad",
+        "targetKind": "canonical",
+        "httpStatus": 403,
+        "lastCrawlAt": "2026-09-29T11:32:00.000Z",
+        "exclusionReason": "Synthetic blocked state.",
+        "sourceStatus": "EXCLUDED"
+      },
+      {
+        "url": "https://example.test/diverge",
+        "searchable": true,
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "targetUrl": "https://example.test/diverge",
+        "targetKind": "canonical",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:42:00.000Z",
+        "sourceStatus": "IN_SEARCH"
+      },
+      {
+        "url": "https://example.test/clean",
+        "searchable": true,
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "targetUrl": "https://example.test/clean",
+        "targetKind": "canonical",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:47:00.000Z",
+        "sourceStatus": "IN_SEARCH"
+      },
+      {
+        "url": "https://example.test/canonical",
+        "searchable": true,
+        "crawlState": "success",
+        "indexingPermission": "allowed",
+        "targetUrl": "https://example.test/canonical",
+        "targetKind": "canonical",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:52:00.000Z",
+        "sourceStatus": "IN_SEARCH"
+      },
+      {
+        "url": "https://example.test/permission",
+        "searchable": true,
+        "crawlState": "success",
+        "indexingPermission": "unknown",
+        "targetUrl": "https://example.test/permission",
+        "targetKind": "canonical",
+        "httpStatus": 200,
+        "lastCrawlAt": "2026-09-29T11:57:00.000Z",
+        "sourceStatus": "IN_SEARCH"
+      }
+    ]
+  },
+  "indexnow": {
+    "schemaVersion": "ldw.discovery-diagnostics-evidence.v1",
+    "schemaMinorVersion": 0,
+    "provider": "indexnow",
+    "site": "sc-domain:example.test",
+    "observedAt": "2026-09-29T12:06:00.000Z",
+    "exportedAt": "2026-09-29T12:08:00.000Z",
+    "freshness": { "dataState": "final", "freshThrough": "2026-09-29T12:06:00.000Z" },
+    "coverage": { "state": "complete", "truncated": false },
+    "rows": [
+      {
+        "url": "https://example.test/broad",
+        "submittedAt": "2026-09-29T11:00:00.000Z",
+        "submissionResult": "accepted",
+        "resultCode": 200
+      },
+      {
+        "url": "https://example.test/diverge",
+        "submittedAt": "2026-09-29T11:00:00.000Z",
+        "submissionResult": "accepted",
+        "resultCode": 200
+      },
+      {
+        "url": "https://example.test/clean",
+        "submittedAt": "2026-09-29T11:00:00.000Z",
+        "submissionResult": "rejected",
+        "resultCode": 400
+      },
+      {
+        "url": "https://example.test/canonical",
+        "submittedAt": "2026-09-29T12:03:00.000Z",
+        "submissionResult": "accepted",
+        "resultCode": 202
+      }
+    ]
+  }
+}
