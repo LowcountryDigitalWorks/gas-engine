@@ -1019,9 +1019,13 @@ export function validateBingAiWindow(input: BingAiAdaptationResult): ValidatedBi
     fail('invalid_output', 'Bing AI adapted window cannot be deterministically reconstructed.');
   }
 
+  const summariesMatch = input.summary === undefined || expected.summary === undefined
+    ? input.summary === undefined && expected.summary === undefined
+    : canonicalJson(input.summary) === canonicalJson(expected.summary);
+
   if (input.collectionId !== expected.collection.id
       || input.idempotencyKey !== expected.idempotencyKey
-      || canonicalJson(input.summary) !== canonicalJson(expected.summary)
+      || !summariesMatch
       || canonicalJson(input.rows) !== canonicalJson(expected.rows)
       || canonicalJson(parsed) !== canonicalJson(expected.batches)) {
     fail('invalid_output', 'Bing AI sidecar and canonical evidence disagree.');
