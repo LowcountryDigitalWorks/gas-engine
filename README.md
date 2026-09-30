@@ -16,6 +16,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.12 is accepted and merged on `main` through PR #41.** It adds only pure/local one-page aggregation over accepted Release 0.10 search evidence with strict caller-supplied query-cluster assignments and explicit threshold policy. It may emit a neutral page-focus divergence candidate only from final/complete/nontruncated/nonanonymized evidence and always requires separate SERP/result validation before any intent or content-architecture conclusion. It adds no cluster inference, provider networking, persistence, recommendation/action, runtime AI, cloud resource, customer evidence, or paid dependency. See the [Release 0.12 page-focus guide](docs/page-focus-candidate-analysis.md) and [ADR 0012](docs/decisions/0012-page-focus-candidate-analysis.md).
 
+**Release 0.13 is an authorized draft candidate under Issue #43 and is not accepted or merged.** It adds one pure/local Discovery Diagnostics Pack over sanitized Google/Bing/Yandex/IndexNow-style evidence: provider-preserving adaptation into existing canonical observations, exact-URL cross-engine readiness/findings, descriptive IndexNow submission context, optional accepted Release 0.10 Search Analytics context, deterministic site rollups, and a compact static operator preview. It adds no provider networking/credentials, canonical schema or persistence change, generic crawler, automatic remediation/recommendation, runtime AI, cloud resource, customer evidence, paid service, or new dependency. See the [Release 0.13 adapter guide](docs/adapters/discovery-diagnostics.md), [Discovery Diagnostics guide](docs/discovery-diagnostics.md), and [proposed ADR 0013](docs/decisions/0013-discovery-diagnostics-pack.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -51,7 +53,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation and the synthetic local operator preview generator. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, and the Release 0.13 synthetic discovery-diagnostics preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -95,6 +97,9 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Search change/outcome cohort decision — accepted ADR 0011](docs/decisions/0011-search-change-outcome-cohorts.md)
 - [Release 0.12 page-focus candidate analysis — accepted](docs/page-focus-candidate-analysis.md)
 - [Page-focus explicit-cluster / SERP-validation decision — accepted ADR 0012](docs/decisions/0012-page-focus-candidate-analysis.md)
+- [Release 0.13 sanitized discovery-diagnostics adapter — draft](docs/adapters/discovery-diagnostics.md)
+- [Release 0.13 Discovery Diagnostics Pack — draft](docs/discovery-diagnostics.md)
+- [Discovery Diagnostics decision — proposed ADR 0013](docs/decisions/0013-discovery-diagnostics-pack.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
