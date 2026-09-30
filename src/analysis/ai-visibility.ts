@@ -638,10 +638,25 @@ function trustedTargetsCompatible(
   zeroRank: ZeroRankVisibilityProjection,
 ): boolean {
   const property = bing.semantics.trustedProperty;
-  if (!property.startsWith('sc-domain:')) return false;
-  const domain = property.slice('sc-domain:'.length).toLowerCase();
+  let propertyHostname: string;
+  if (property.startsWith('sc-domain:')) {
+    propertyHostname = property.slice('sc-domain:'.length).toLowerCase();
+  } else {
+    try {
+      const propertyUrl = new URL(property);
+      if (propertyUrl.protocol !== 'https:'
+          || propertyUrl.username !== ''
+          || propertyUrl.password !== ''
+          || propertyUrl.search !== ''
+          || propertyUrl.hash !== ''
+          || propertyUrl.pathname !== '/') return false;
+      propertyHostname = propertyUrl.hostname.toLowerCase();
+    } catch {
+      return false;
+    }
+  }
   try {
-    return new URL(zeroRank.trustedTargetOrigin).hostname.toLowerCase() === domain;
+    return new URL(zeroRank.trustedTargetOrigin).hostname.toLowerCase() === propertyHostname;
   } catch {
     return false;
   }
@@ -726,13 +741,12 @@ function crossSourceFindings(
 function traditionalSearchContext(
   input: SearchAnalyticsAdaptationResult | undefined,
   scope: Scope,
-  expectedProperty: string,
   pages: readonly BingAiPageRow[],
 ): AiVisibilityTraditionalSearchContext[] {
   if (input === undefined) return [];
   const validated = validateSearchAnalyticsWindow(input);
-  if (!same(validated.collection.scope, scope) || validated.semantics.property !== expectedProperty) {
-    fail('invalid_context', 'Search Analytics context scope/property does not match AI-visibility evidence.');
+  if (!same(validated.collection.scope, scope)) {
+    fail('invalid_context', 'Search Analytics context trusted scope does not match AI-visibility evidence.');
   }
   const byPage = new Map<string, typeof validated.rows>();
   for (const page of pages) byPage.set(page.url, validated.rows.filter((row) => row.sidecar.page === page.url));
@@ -835,7 +849,7 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
   const pages = bing.rows.filter((row): row is BingAiPageRow => row.kind === 'page');
   const queries = bing.rows.filter((row): row is BingAiGroundingQueryRow => row.kind === 'grounding_query');
   const pageSet = new Set(pages.map((page) => page.url));
-  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), bing.semantics.trustedProperty, pages);
+  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), pages);
   const changeContext = changeOutcomeContext(request.searchChange, scopeOf(bing), pageSet);
   const focusContext = pageFocusContext(request.pageFocus, scopeOf(bing), pageSet);
 
