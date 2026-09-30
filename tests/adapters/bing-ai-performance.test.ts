@@ -182,3 +182,62 @@ test('canonical adapted window revalidation rejects sidecar identity tampering',
   tampered.rows[0].rowIdentity='bing-ai.row:forged';
   assert.throws(()=>validateBingAiWindow(tampered),expectCode('invalid_output'));
 });
+
+test('sampled provider totals are preserved without false reconciliation across summary and page views',()=>{
+  const value=fixture();
+  value.summary.totalCitations=999;
+  const result=adapt(value);
+  assert.equal(result.summary?.totalCitations,999);
+  assert.equal(result.rows.filter((row)=>row.kind==='page').reduce((sum,row)=>sum+row.citationCount,0),18);
+});
+
+test('exact URL and grounding-query identities preserve distinctions rather than normalizing them',()=>{
+  const value=fixture();
+  value.pages=[
+    {url:'https://example.test/path',citationCount:1},
+    {url:'https://example.test/path/',citationCount:2},
+    {url:'https://example.test/path?x=1',citationCount:3}
+  ];
+  value.groundingQueries=[
+    {phrase:'Synthetic Phrase',citationCount:1},
+    {phrase:'synthetic phrase',citationCount:2},
+    {phrase:'synthetic phrase ',citationCount:3}
+  ];
+  value.queryPageMappings=[];
+  const result=adapt(value);
+  const pages=result.rows.filter((row)=>row.kind==='page');
+  const queries=result.rows.filter((row)=>row.kind==='grounding_query');
+  assert.equal(pages.length,3);
+  assert.equal(new Set(pages.map((row)=>row.url)).size,3);
+  assert.equal(queries.length,3);
+  assert.equal(new Set(queries.map((row)=>row.phrase)).size,3);
+});
+
+test('bounded integer and percentage math rejects out-of-contract values',()=>{
+  const tooLarge=fixture();
+  tooLarge.pages[0].citationCount=1_000_000_001;
+  assert.throws(()=>adapt(tooLarge),expectCode('invalid_source'));
+
+  const badShare=fixture();
+  badShare.groundingQueries[0].citationSharePct=100.000001;
+  assert.throws(()=>adapt(badShare),expectCode('invalid_source'));
+
+  const maxShare=fixture();
+  maxShare.groundingQueries[0].citationSharePct=100;
+  assert.equal(adapt(maxShare).rows.some((row)=>row.kind==='grounding_query'&&row.citationSharePct===100),true);
+});
+
+test('Release 0.14 production sources contain no provider client, network, runtime AI, tenant issuer, persistence write, or action path',()=>{
+  for(const sourcePath of [
+    'src/adapters/bing-ai-performance.ts',
+    'src/analysis/ai-visibility.ts',
+    'src/operator/ai-visibility.ts'
+  ]){
+    const source=readFileSync(sourcePath,'utf8');
+    assert.doesNotMatch(source,/\bfetch\s*\(|createServer|\.listen\s*\(|WebSocket|node:https|node:http|node:net/);
+    assert.doesNotMatch(source,/OAuth|OPENAI_API_KEY|anthropic|embedding|runtime LLM/i);
+    assert.doesNotMatch(source,/issueTenantContext|createTenantContext|mint.*context/i);
+    assert.doesNotMatch(source,/\.persist\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(/i);
+  }
+});
+
