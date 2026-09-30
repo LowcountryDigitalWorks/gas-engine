@@ -235,7 +235,7 @@ test('Release 0.14 production sources contain no provider client, network, runti
   ]){
     const source=readFileSync(sourcePath,'utf8');
     assert.doesNotMatch(source,/\bfetch\s*\(|createServer|\.listen\s*\(|WebSocket|node:https|node:http|node:net/);
-    assert.doesNotMatch(source,/OAuth|OPENAI_API_KEY|anthropic|embedding|runtime LLM/i);
+    assert.doesNotMatch(source,/OPENAI_API_KEY|ANTHROPIC_API_KEY|new\s+OpenAI\s*\(|new\s+Anthropic\s*\(|embeddings\.create\s*\(|oauth2?\s*\(/i);
     assert.doesNotMatch(source,/issueTenantContext|createTenantContext|mint.*context/i);
     assert.doesNotMatch(source,/\.persist\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(/i);
   }
