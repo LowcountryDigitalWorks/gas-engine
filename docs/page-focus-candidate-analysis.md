@@ -1,6 +1,6 @@
-# Release 0.12 — Page-Focus Candidate Analysis draft candidate
+# Release 0.12 — Page-Focus Candidate Analysis
 
-Release 0.12 is a bounded draft candidate under Issue #40. It adds one pure/local evidence layer over accepted Release 0.10 Search Analytics evidence.
+Release 0.12 is accepted and merged on `main` through PR #41. It adds one pure/local evidence layer over accepted Release 0.10 Search Analytics evidence.
 
 The question is deliberately narrow:
 
