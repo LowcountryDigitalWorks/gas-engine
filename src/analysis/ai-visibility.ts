@@ -68,6 +68,12 @@ export interface AiVisibilityProviderReadiness {
   readonly reasons: readonly AiVisibilityReadinessReason[];
 }
 
+export interface AiVisibilityProviderComparability {
+  readonly providerId: 'bing-webmaster-ai-performance' | 'zerorank';
+  readonly state: 'comparable' | 'not_comparable';
+  readonly reasons: readonly AiVisibilityReadinessReason[];
+}
+
 export interface AiVisibilityChange {
   readonly id: string;
   readonly providerId: 'bing-webmaster-ai-performance' | 'zerorank';
@@ -131,6 +137,7 @@ export interface AiVisibilitySiteReport {
   readonly evaluatedAt: string;
   readonly policy: AiVisibilityPolicy;
   readonly readiness: readonly AiVisibilityProviderReadiness[];
+  readonly comparability: readonly AiVisibilityProviderComparability[];
   readonly bing: Readonly<{
     collectionId: string;
     property: string;
@@ -345,33 +352,69 @@ function zeroRankReadiness(
   };
 }
 
-function bingComparable(baseline: ValidatedBingAiWindow | undefined, current: ValidatedBingAiWindow): boolean {
-  if (baseline === undefined) return false;
-  if (!same(scopeOf(baseline), scopeOf(current))
-      || baseline.semantics.trustedProperty !== current.semantics.trustedProperty
-      || baseline.semantics.dataState !== 'final'
-      || current.semantics.dataState !== 'final'
-      || baseline.semantics.availability.state !== 'available'
-      || current.semantics.availability.state !== 'available'
-      || baseline.semantics.period.end > current.semantics.period.start
-      || !same(baseline.semantics.coverage, current.semantics.coverage)) {
-    return false;
+function bingComparability(
+  baseline: ValidatedBingAiWindow | undefined,
+  current: ValidatedBingAiWindow,
+): AiVisibilityProviderComparability {
+  if (baseline === undefined) {
+    return {
+      providerId: 'bing-webmaster-ai-performance',
+      state: 'not_comparable',
+      reasons: ['insufficient_comparable_windows'],
+    };
   }
+  const reasons: AiVisibilityReadinessReason[] = [];
+  if (!same(scopeOf(baseline), scopeOf(current))
+      || baseline.semantics.trustedProperty !== current.semantics.trustedProperty) {
+    reasons.push('incompatible_scope');
+  }
+  if (baseline.semantics.availability.state !== 'available'
+      || current.semantics.availability.state !== 'available') {
+    reasons.push('source_unavailable');
+  }
+  if (baseline.semantics.dataState === 'preliminary' || current.semantics.dataState === 'preliminary') reasons.push('preliminary');
+  if (baseline.semantics.dataState === 'processing' || current.semantics.dataState === 'processing') reasons.push('processing');
+  if (baseline.semantics.coverage.state === 'filtered' || current.semantics.coverage.state === 'filtered') reasons.push('filtered');
+  if (baseline.semantics.coverage.state === 'unknown' || current.semantics.coverage.state === 'unknown') reasons.push('unknown_coverage');
+
   const baselineDuration = Date.parse(baseline.semantics.period.end) - Date.parse(baseline.semantics.period.start);
   const currentDuration = Date.parse(current.semantics.period.end) - Date.parse(current.semantics.period.start);
-  return baselineDuration === currentDuration;
+  if (baseline.semantics.period.end > current.semantics.period.start
+      || baselineDuration !== currentDuration
+      || !same(baseline.semantics.coverage, current.semantics.coverage)) {
+    reasons.push('incompatible_periods');
+  }
+  return {
+    providerId: 'bing-webmaster-ai-performance',
+    state: reasons.length === 0 ? 'comparable' : 'not_comparable',
+    reasons: [...new Set(reasons)],
+  };
 }
 
-function zeroRankComparable(
+function zeroRankComparability(
   baseline: ZeroRankVisibilityProjection | undefined,
   current: ZeroRankVisibilityProjection,
-): boolean {
-  return baseline !== undefined
-    && same(baseline.scope, current.scope)
-    && baseline.trustedTargetOrigin === current.trustedTargetOrigin
-    && baseline.observedAt < current.observedAt
-    && baseline.availability.state === 'available'
-    && current.availability.state === 'available';
+): AiVisibilityProviderComparability {
+  if (baseline === undefined) {
+    return {
+      providerId: 'zerorank',
+      state: 'not_comparable',
+      reasons: ['insufficient_comparable_windows'],
+    };
+  }
+  const reasons: AiVisibilityReadinessReason[] = [];
+  if (!same(baseline.scope, current.scope) || baseline.trustedTargetOrigin !== current.trustedTargetOrigin) {
+    reasons.push('incompatible_scope');
+  }
+  if (baseline.availability.state !== 'available' || current.availability.state !== 'available') {
+    reasons.push('source_unavailable');
+  }
+  if (!(baseline.observedAt < current.observedAt)) reasons.push('incompatible_periods');
+  return {
+    providerId: 'zerorank',
+    state: reasons.length === 0 ? 'comparable' : 'not_comparable',
+    reasons,
+  };
 }
 
 function keyed<T>(values: readonly T[], key: (value: T) => string): Map<string, T> {
@@ -382,7 +425,7 @@ function bingChanges(
   baseline: ValidatedBingAiWindow | undefined,
   current: ValidatedBingAiWindow,
 ): AiVisibilityChange[] {
-  const comparable = bingComparable(baseline, current);
+  const comparable = bingComparability(baseline, current).state === 'comparable';
   const changes: AiVisibilityChange[] = [];
   changes.push(makeChange(
     'bing-webmaster-ai-performance',
@@ -456,7 +499,7 @@ function zeroRankChanges(
   baseline: ZeroRankVisibilityProjection | undefined,
   current: ZeroRankVisibilityProjection,
 ): AiVisibilityChange[] {
-  const comparable = zeroRankComparable(baseline, current);
+  const comparable = zeroRankComparability(baseline, current).state === 'comparable';
   const changes: AiVisibilityChange[] = [];
   const rankingBefore = keyed(baseline?.rankings ?? [], (row) => row.id);
   const rankingAfter = keyed(current.rankings, (row) => row.id);
@@ -487,6 +530,7 @@ function concentrationFindings(
   currentBing: ValidatedBingAiWindow,
   currentZeroRank: ZeroRankVisibilityProjection,
   bingReadinessState: AiVisibilityProviderReadiness,
+  zeroRankReadinessState: AiVisibilityProviderReadiness,
   policy: AiVisibilityPolicy,
 ): AiVisibilityConcentrationFinding[] {
   const findings: AiVisibilityConcentrationFinding[] = [];
@@ -520,7 +564,9 @@ function concentrationFindings(
     }
   }
 
-  if (currentZeroRank.endpointCompleteness.sourceUrls === 'complete') {
+  const zeroRankConcentrationBlocked = zeroRankReadinessState.reasons.some((reason) =>
+    reason === 'source_unavailable' || reason === 'stale' || reason === 'incompatible_scope');
+  if (!zeroRankConcentrationBlocked && currentZeroRank.endpointCompleteness.sourceUrls === 'complete') {
     const rows = currentZeroRank.sourceUrls.filter((row) => row.totalCitations !== undefined);
     const zrDenominator = rows.reduce((sum, row) => sum + (row.totalCitations ?? 0), 0);
     if (zrDenominator > 0) {
@@ -604,10 +650,22 @@ function trustedTargetsCompatible(
 function crossSourceFindings(
   bing: ValidatedBingAiWindow,
   zeroRank: ZeroRankVisibilityProjection,
+  bingReadinessState: AiVisibilityProviderReadiness,
+  zeroRankReadinessState: AiVisibilityProviderReadiness,
   mappings: readonly z.infer<typeof cohortMappingSchema>[],
 ): AiVisibilityCrossSourceFinding[] {
   const findings: AiVisibilityCrossSourceFinding[] = [];
   if (!trustedTargetsCompatible(bing, zeroRank)) return findings;
+  const hardBlockers = new Set<AiVisibilityReadinessReason>([
+    'source_unavailable',
+    'preliminary',
+    'processing',
+    'stale',
+    'incompatible_scope',
+  ]);
+  const bingBlocked = bingReadinessState.reasons.some((reason) => hardBlockers.has(reason));
+  const zeroRankBlocked = zeroRankReadinessState.reasons.some((reason) => hardBlockers.has(reason));
+  if (bingBlocked || zeroRankBlocked) return findings;
   const bingState = bingPresence(bing);
   const zeroRankState = zeroRankPresence(zeroRank);
   if (bingState !== 'unknown' && zeroRankState !== 'unknown' && bingState !== zeroRankState) {
@@ -638,7 +696,11 @@ function crossSourceFindings(
     const query = queries.get(mapping.bingGroundingQueryIdentity);
     const prompt = prompts.get(mapping.zeroRankPromptId);
     if (query === undefined || prompt === undefined) continue;
-    const bingMappedState: 'present' | 'absent' = query.citationCount > 0 ? 'present' : 'absent';
+    const bingMappedState: 'present' | 'absent' | 'unknown' = query.citationCount > 0
+      ? 'present'
+      : bing.semantics.dataState === 'final' && bing.semantics.coverage.state === 'complete_export_view'
+        ? 'absent'
+        : 'unknown';
     const chats = chatsByPrompt.get(prompt.id) ?? [];
     const positive = chats.some((chat) => (chat.citationCount ?? 0) > 0);
     const zeroMappedState: 'present' | 'absent' | 'unknown' = positive
@@ -646,7 +708,7 @@ function crossSourceFindings(
       : zeroRank.endpointCompleteness.chats === 'complete'
         ? 'absent'
         : 'unknown';
-    if (zeroMappedState !== 'unknown' && bingMappedState !== zeroMappedState) {
+    if (bingMappedState !== 'unknown' && zeroMappedState !== 'unknown' && bingMappedState !== zeroMappedState) {
       const material = {
         kind: 'cross_source_cohort_coverage_divergence_candidate' as const,
         bingState: bingMappedState,
@@ -664,11 +726,14 @@ function crossSourceFindings(
 function traditionalSearchContext(
   input: SearchAnalyticsAdaptationResult | undefined,
   scope: Scope,
+  expectedProperty: string,
   pages: readonly BingAiPageRow[],
 ): AiVisibilityTraditionalSearchContext[] {
   if (input === undefined) return [];
   const validated = validateSearchAnalyticsWindow(input);
-  if (!same(validated.collection.scope, scope)) fail('invalid_context', 'Search Analytics context scope does not match AI-visibility scope.');
+  if (!same(validated.collection.scope, scope) || validated.semantics.property !== expectedProperty) {
+    fail('invalid_context', 'Search Analytics context scope/property does not match AI-visibility evidence.');
+  }
   const byPage = new Map<string, typeof validated.rows>();
   for (const page of pages) byPage.set(page.url, validated.rows.filter((row) => row.sidecar.page === page.url));
   return pages.map((page) => {
@@ -748,6 +813,11 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
       ] as const
     : [bingProviderReadiness, zeroRankProviderReadiness] as const;
 
+  const comparability = [
+    bingComparability(bingBaseline, bing),
+    zeroRankComparability(zeroRankBaseline, zeroRank),
+  ] as const;
+
   const changes = [
     ...bingChanges(bingBaseline, bing),
     ...zeroRankChanges(zeroRankBaseline, zeroRank),
@@ -757,15 +827,15 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
     || asciiCompare(left.identity, right.identity)
     || asciiCompare(left.metric, right.metric));
 
-  const concentrations = concentrationFindings(bing, zeroRank, readiness[0], request.policy)
+  const concentrations = concentrationFindings(bing, zeroRank, readiness[0], readiness[1], request.policy)
     .sort((left, right) => asciiCompare(left.id, right.id));
-  const cross = crossSourceFindings(bing, zeroRank, request.cohortMappings)
+  const cross = crossSourceFindings(bing, zeroRank, readiness[0], readiness[1], request.cohortMappings)
     .sort((left, right) => asciiCompare(left.id, right.id));
 
   const pages = bing.rows.filter((row): row is BingAiPageRow => row.kind === 'page');
   const queries = bing.rows.filter((row): row is BingAiGroundingQueryRow => row.kind === 'grounding_query');
   const pageSet = new Set(pages.map((page) => page.url));
-  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), pages);
+  const traditional = traditionalSearchContext(request.searchAnalytics, scopeOf(bing), bing.semantics.trustedProperty, pages);
   const changeContext = changeOutcomeContext(request.searchChange, scopeOf(bing), pageSet);
   const focusContext = pageFocusContext(request.pageFocus, scopeOf(bing), pageSet);
 
@@ -775,6 +845,7 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
     target: zeroRank.trustedTargetOrigin,
     evaluatedAt: request.evaluatedAt,
     policy: request.policy,
+    comparability,
     bingCollectionId: bing.collection.id,
     zeroRankCollections: zeroRank.collections,
     changes: changes.map((value) => value.id),
@@ -792,6 +863,7 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
     evaluatedAt: request.evaluatedAt,
     policy: structuredClone(request.policy),
     readiness,
+    comparability,
     bing: {
       collectionId: bing.collection.id,
       property: bing.semantics.trustedProperty,
