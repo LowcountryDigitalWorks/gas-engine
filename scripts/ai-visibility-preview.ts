@@ -50,7 +50,7 @@ const zeroRankConfig:ZeroRankAdapterConfig={
 const projection=projectValidatedZeroRankVisibility(bytes(zeroRank),zeroRankConfig);
 const report=analyzeAiVisibility({
   bingCurrent:adaptBingAiPerformanceEvidence(bytes(bing),bingConfig),
-  zeroRankCurrent:{...projection,trustedTargetOrigin:'https://example.test'},
+  zeroRankCurrent:projection,
   evaluatedAt:'2026-09-30T13:00:00.000Z',
   policy:{
     id:'release-014-preview-policy',
