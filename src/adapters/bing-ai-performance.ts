@@ -914,6 +914,9 @@ function rebuildExpectedWindow(
   batches: readonly CollectionBatch[];
 }> {
   const artifact = reconstructArtifactFromWindow(input);
+  if (canonicalCollection.providerConnectionId === undefined) {
+    fail('invalid_output', 'Bing AI canonical collection is missing provider connection identity.');
+  }
   const config = parseConfig({
     scope: structuredClone(canonicalCollection.scope),
     expectedProperty: input.semantics.trustedProperty,
