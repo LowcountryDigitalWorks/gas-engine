@@ -51,7 +51,7 @@ function report(mutate?: (value:MutableJson)=>void){
   const projection=projectValidatedZeroRankVisibility(bytes(zr),zconfig);
   return analyzeAiVisibility({
     bingCurrent:adaptBingAiPerformanceEvidence(bytes(bing),bconfig),
-    zeroRankCurrent:{...projection,trustedTargetOrigin:'https://example.test'},
+    zeroRankCurrent:projection,
     evaluatedAt:'2026-09-30T13:00:00.000Z',
     policy:{id:'ai-visibility-policy',version:'1.0.0',maxEvidenceAgeSeconds:86_400,topN:1,concentrationShareThresholdPct:60}
   });
