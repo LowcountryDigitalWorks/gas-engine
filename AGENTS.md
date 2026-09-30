@@ -65,3 +65,23 @@ Keep portable Zod wire schemas free of hidden transforms/refinements; cross-fiel
 For provider adapters, prefer validated import/export boundaries over new sensor/network clients. Preserve exact provider identity, provenance, mapping-version semantics, source availability, and deterministic bounded output. The accepted Release 0.5 WQT adapter must continue to reject unknown WQT minor versions until deliberately reviewed and must keep its own synthetic contract fixture rather than depending on the WQT repository at test/runtime. The accepted Release 0.6 ZeroRank adapter must likewise reject unsupported artifact versions, preserve exact request/completeness semantics, and keep sensing/credentials upstream.
 
 Report the starting revision, final head, changed files, validation results, PR, exclusions, cost/security impact, and unresolved issues to Product ORCH2. Do not mark a candidate accepted, merge, or advance to the next release without the owning Product Orchestrator's bounded authority.
+
+## Release 0.14 draft-candidate development gate
+
+Issue #44 authorizes one complete bounded Release 0.14 development candidate in draft PR #47. The accepted baseline remains Releases 0.1–0.13 until Product review, final independent exact-head review, merge, and post-merge verification complete.
+
+Preserve these Release 0.14 boundaries:
+
+- Bing AI Performance input is sanitized/exported evidence only under `ldw.bing-ai-performance-evidence.v1` minor 0. G.A.S. does not retrieve Bing AI Performance data and does not assume an AI Performance API.
+- Bing evidence remains sampled/aggregated. `complete_export_view` is complete only for that exported provider view; it is not population completeness.
+- Grounding queries are provider-grouped phrases, not exact user prompts. Provider intent/topic labels remain provider evidence.
+- Reuse accepted Release 0.6 ZeroRank validation/canonical adaptation before any Release 0.14 visibility projection. Do not add a second independent ZeroRank parser.
+- Bing and ZeroRank metric magnitudes remain provider-specific. Never normalize ZeroRank rank/visibility/sentiment/share-style values into Bing citation semantics.
+- Cross-source presence findings require compatible trusted scope/target and explicit provider-specific positive versus explicit complete zero/absence. Unknown, filtered, sampled gaps, incomplete endpoints, and missing rows do not become absence.
+- Cross-source cohort comparison requires exact caller-supplied Bing grounding-query ↔ ZeroRank prompt mapping. No fuzzy, embedding, LLM, or inferred semantic matching.
+- Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
+- Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
+- Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 0.15 implementation.
+- Package candidate version is 0.14.0. Do not mark Release 0.14 accepted from Development.
+
+See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
