@@ -49,6 +49,8 @@ export type DiscoveryFindingKind =
 export type IndexNowContextState =
   | 'no_submission_evidence'
   | 'submission_rejected'
+  | 'submission_rate_limited'
+  | 'submission_unknown'
   | 'submission_accepted_no_later_engine_observation'
   | 'submission_accepted_later_present_observed'
   | 'submission_accepted_later_absent_observed'
@@ -322,8 +324,14 @@ function indexNowContext(
     ...(row.resultCode === undefined ? {} : { resultCode: row.resultCode }),
     note,
   };
-  if (row.submissionResult !== 'accepted') {
+  if (row.submissionResult === 'rejected') {
     return { ...common, state: 'submission_rejected', laterProviders: [] };
+  }
+  if (row.submissionResult === 'rate_limited') {
+    return { ...common, state: 'submission_rate_limited', laterProviders: [] };
+  }
+  if (row.submissionResult === 'unknown') {
+    return { ...common, state: 'submission_unknown', laterProviders: [] };
   }
   const later = readyRows.filter((value) => {
     if (value.observedAt <= row.submittedAt) return false;
@@ -346,6 +354,8 @@ function zeroIndexNowCounts(): Record<IndexNowContextState, number> {
   return {
     no_submission_evidence: 0,
     submission_rejected: 0,
+    submission_rate_limited: 0,
+    submission_unknown: 0,
     submission_accepted_no_later_engine_observation: 0,
     submission_accepted_later_present_observed: 0,
     submission_accepted_later_absent_observed: 0,

@@ -287,6 +287,59 @@ test('IndexNow correlation is descriptive only across rejected, no-later, later-
   assert.match(url(withPresent, 'permission').indexNow.note, /does not prove or cause indexing/);
 });
 
+test('IndexNow rejected, rate-limited and unknown source results remain distinct non-accepted states', () => {
+  const scenarios = [
+    {
+      source: 'rejected',
+      state: 'submission_rejected',
+      resultCode: 400,
+    },
+    {
+      source: 'rate_limited',
+      state: 'submission_rate_limited',
+      resultCode: 429,
+    },
+    {
+      source: 'unknown',
+      state: 'submission_unknown',
+      resultCode: 503,
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const indexNow = adapt('indexnow', alphaScope, (value) => {
+      const row = value.rows.find((item: MutableJson) => item.url === 'https://example.test/clean');
+      assert.ok(row);
+      row.submissionResult = scenario.source;
+      row.resultCode = scenario.resultCode;
+    });
+    const report = analyze([adapt('google'), adapt('bing'), adapt('yandex')], indexNow);
+    const context = url(report, 'clean').indexNow;
+
+    assert.equal(context.state, scenario.state);
+    assert.equal(context.submissionResult, scenario.source);
+    assert.equal(context.resultCode, scenario.resultCode);
+    assert.deepEqual(context.laterProviders, []);
+    assert.equal(report.totals.indexNowCounts[scenario.state], 1);
+
+    const serialized = JSON.stringify(context);
+    if (scenario.source !== 'rejected') {
+      assert.doesNotMatch(serialized, /submission_rejected/);
+    }
+    assert.doesNotMatch(serialized, /submission_accepted_later_(?:present|absent|mixed)_observed/);
+    assert.doesNotMatch(serialized, /"searchPresence":"present"|"indexed":true/);
+    assert.match(context.note, /does not prove or cause indexing/);
+
+    const reversed = analyze([adapt('yandex'), adapt('google'), adapt('bing')], indexNow);
+    assert.deepEqual(reversed, report);
+  }
+
+  const accepted = analyze();
+  assert.equal(url(accepted, 'broad').indexNow.submissionResult, 'accepted');
+  assert.equal(url(accepted, 'broad').indexNow.state, 'submission_accepted_later_absent_observed');
+  assert.ok(url(accepted, 'broad').indexNow.laterProviders.length > 0);
+});
+
 test('optional Release 0.10 search context aggregates exact page rows and never converts absence to zero', () => {
   const search = adaptSearch();
   const report = analyze(undefined, undefined, { searchAnalytics: search });

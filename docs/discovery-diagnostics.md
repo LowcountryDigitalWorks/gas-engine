@@ -172,10 +172,14 @@ IndexNow context states:
 
 - `no_submission_evidence`
 - `submission_rejected`
+- `submission_rate_limited`
+- `submission_unknown`
 - `submission_accepted_no_later_engine_observation`
 - `submission_accepted_later_present_observed`
 - `submission_accepted_later_absent_observed`
 - `submission_accepted_mixed_later_observation`
+
+Rejected, rate-limited and unknown source results remain distinct non-accepted states, preserve the exact source result/code, keep `laterProviders = []`, and do not inspect later engine evidence as though the submission were accepted.
 
 Only READY search-engine rows with an observation timestamp after the accepted submission can contribute to later-observation states.
 

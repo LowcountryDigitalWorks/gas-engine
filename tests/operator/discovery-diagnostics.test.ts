@@ -82,6 +82,8 @@ function report(): DiscoverySiteReport {
       indexNowCounts: {
         no_submission_evidence: 0,
         submission_rejected: 0,
+        submission_rate_limited: 0,
+        submission_unknown: 0,
         submission_accepted_no_later_engine_observation: 0,
         submission_accepted_later_present_observed: 0,
         submission_accepted_later_absent_observed: 1,
@@ -185,6 +187,8 @@ test('standalone discovery HTML exposes provider matrix, readiness, findings, ca
   assert.match(html, /https:\/\/example\.test\/canonical-a/);
   assert.match(html, /https:\/\/example\.test\/canonical-b/);
   assert.match(html, /Submission is not indexing proof/);
+  assert.match(html, /submission_rate_limited/);
+  assert.match(html, /submission_unknown/);
   assert.match(html, /Current Search Analytics context — descriptive only/);
   assert.doesNotMatch(html, /<script\b/i);
   assert.doesNotMatch(html, /<form\b/i);
