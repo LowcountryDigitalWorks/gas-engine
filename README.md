@@ -14,6 +14,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.11 is accepted and merged on `main` through PR #38.** It adds only a pure/local application composition between one human/trusted-caller change annotation, one exact Release 0.10 search row/metric, and existing Release 0.8 measurement/outcome services. It prepares deterministic baseline/follow-up measurement inputs and readiness for later human assessment without new persistence, scheduling, provider networking, action authority, automatic outcome direction, causality, runtime AI, cloud resources, customer evidence, or paid dependencies. The accepted release binds follow-up deterministic identity to the exact canonical baseline measurement relationship. See the [Release 0.11 search-change guide](docs/search-change-outcome-cohorts.md) and [ADR 0011](docs/decisions/0011-search-change-outcome-cohorts.md).
 
+**Release 0.12 is an authorized draft candidate under Issue #40 and is not accepted or merged.** It adds only pure/local one-page aggregation over accepted Release 0.10 search evidence with strict caller-supplied query-cluster assignments and explicit threshold policy. It may emit a neutral page-focus divergence candidate only from final/complete/nontruncated/nonanonymized evidence and always requires separate SERP/result validation before any intent or content-architecture conclusion. It adds no cluster inference, provider networking, persistence, recommendation/action, runtime AI, cloud resource, customer evidence, or paid dependency. See the [Release 0.12 page-focus guide](docs/page-focus-candidate-analysis.md) and [proposed ADR 0012](docs/decisions/0012-page-focus-candidate-analysis.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -91,6 +93,8 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Search-analytics signal-pack decision — accepted ADR 0010](docs/decisions/0010-search-analytics-signal-pack.md)
 - [Release 0.11 search change annotation & outcome cohorts — accepted](docs/search-change-outcome-cohorts.md)
 - [Search change/outcome cohort decision — accepted ADR 0011](docs/decisions/0011-search-change-outcome-cohorts.md)
+- [Release 0.12 page-focus candidate analysis — draft](docs/page-focus-candidate-analysis.md)
+- [Page-focus explicit-cluster / SERP-validation decision — proposed ADR 0012](docs/decisions/0012-page-focus-candidate-analysis.md)
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
