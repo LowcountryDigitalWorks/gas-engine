@@ -158,3 +158,32 @@ Keep evidence concepts and provider boundaries portable. Release 0.3 defines a m
 Internal automation does not prove commercial demand. The audit-first/service-first business model continues independently. This is internal managed-service enabling infrastructure, not customer SaaS or standalone commercial software. No public price, SLA, ranking/citation/traffic/lead/time-savings/causal-performance guarantee, or internal pricing hypothesis belongs in this repository.
 
 Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic; Releases 0.7–0.8 use canonical synthetic scenarios and synthetic tenant isolation only. There is no software license grant. See [authorization](authorization.md), [roadmap](roadmap.md), and ADRs [0001](decisions/0001-evidence-core.md), [0003](decisions/0003-authenticated-ingestion-boundary.md), [0004](decisions/0004-wqt-normalized-evidence-adapter.md), [0005](decisions/0005-zerorank-sanitized-evidence-adapter.md), [0006](decisions/0006-longitudinal-evidence-diff.md), and [0007](decisions/0007-human-review-measurement-ledger.md).
+
+## Release 0.14 draft-candidate AI visibility seam
+
+The accepted architecture remains unchanged through Release 0.13. Release 0.14 is a draft application-local extension under Issue #44 and PR #47.
+
+```text
+sanitized Bing AI Performance artifact
+  -> strict local adapter
+  -> accepted collection/source/observation wire contracts
+  -> bounded Bing sidecar
+
+accepted sanitized ZeroRank artifact
+  -> accepted Release 0.6 validation/adaptation
+  -> bounded ZeroRank visibility projection
+
+validated provider windows
+  -> explicit readiness/comparability
+  -> provider-specific change + concentration
+  -> narrow explicit cross-source divergence
+  -> optional accepted context
+  -> deterministic site report
+  -> static read-only HTML
+```
+
+The seam introduces no new canonical wire schema, repository method, SQLite/D1 migration, provider networking, credential flow, tenant-authority issuer, runtime AI, scheduler, worker, crawler, cloud resource, or write/action path.
+
+Provider meaning is intentionally not flattened. Bing citation evidence remains sampled/aggregated Bing evidence. ZeroRank vendor metrics remain ZeroRank evidence. Cross-source composition is allowed only where explicit provider predicates and compatible trusted target/scope make the comparison safe; otherwise the report preserves evidence and omits the finding.
+
+The Release 0.14 operator renderer is an application-local read-only projection and follows the accepted Release 0.9/0.13 static-HTML security model. It does not create a dashboard/runtime tier.
