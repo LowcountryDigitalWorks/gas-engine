@@ -1,10 +1,10 @@
-# Release 0.11 — Search Change Annotation & Outcome Cohorts draft candidate
+# Release 0.11 — Search Change Annotation & Outcome Cohorts
 
-Release 0.11 is a bounded draft candidate under Issue #37. It composes accepted Release 0.10 search evidence with accepted Release 0.8 measurement/outcome history without adding a second experiment, measurement, outcome, or persistence system.
+Release 0.11 is accepted and merged on `main` through PR #38. It composes accepted Release 0.10 search evidence with accepted Release 0.8 measurement/outcome history without adding a second experiment, measurement, outcome, or persistence system.
 
 ## Purpose
 
-The candidate proves one pure/local application composition:
+The accepted release proves one pure/local application composition:
 
 > HUMAN CHANGE ANNOTATION → EXACT BASELINE SEARCH COHORT → FOLLOW-UP DUE/EVIDENCE STATE → RELEASE 0.10 COMPATIBILITY/COVERAGE → RELEASE 0.8 MEASUREMENT DRAFTS → READY / NOT READY FOR HUMAN ASSESSMENT
 
@@ -119,4 +119,4 @@ The public repository uses synthetic evidence only. Incremental recurring cost r
 
 ## Validation
 
-The candidate uses the existing Node 24 locked validation and must keep all Releases 0.1–0.10 regressions green. No generated wire schema changes are expected because Release 0.11 reuses canonical measurement/outcome contracts unchanged.
+The accepted release uses the existing Node 24 locked validation and must keep all Releases 0.1–0.10 regressions green. No generated wire schema changes are expected because Release 0.11 reuses canonical measurement/outcome contracts unchanged.
