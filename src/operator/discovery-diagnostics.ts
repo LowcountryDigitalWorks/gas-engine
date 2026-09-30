@@ -149,7 +149,7 @@ th,td{border:1px solid #ccd6d5;padding:.5rem;text-align:left;vertical-align:top;
 <header>
 <p class="muted">Lowcountry Digital Works · G.A.S. Engine · Release 0.13 read-only discovery diagnostics</p>
 <h1>Discovery Diagnostics</h1>
-<p><span class="badge">READ ONLY</span>Cross-engine findings are bounded evidence candidates, not universal index truth or remediation instructions.</p>
+<p><span class="badge">READ ONLY</span>Cross-engine findings are bounded evidence candidates, not universal index truth or execution instructions.</p>
 </header>
 <nav aria-label="Report sections">
 <a href="#context">Context</a><a href="#providers">Providers</a><a href="#totals">Totals</a><a href="#urls">URL evidence</a>
