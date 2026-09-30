@@ -43,6 +43,12 @@ function expectCode(code: BingAiAdapterError['code']):(error:unknown)=>boolean {
   return (error) => error instanceof BingAiAdapterError && error.code === code;
 }
 
+function expectWindowReject(mutate:(value:any)=>void):void {
+  const tampered=structuredClone(adapt()) as any;
+  mutate(tampered);
+  assert.throws(()=>validateBingAiWindow(tampered),expectCode('invalid_output'));
+}
+
 test('Bing AI v1/minor0 strict artifact adapts into provider-specific canonical evidence',()=>{
   const value=fixture();
   const result=adapt(value);
@@ -181,6 +187,74 @@ test('canonical adapted window revalidation rejects sidecar identity tampering',
   const tampered=structuredClone(result) as any;
   tampered.rows[0].rowIdentity='bing-ai.row:forged';
   assert.throws(()=>validateBingAiWindow(tampered),expectCode('invalid_output'));
+});
+
+test('canonical adapted window rejects page citation-count sidecar tampering',()=>{
+  expectWindowReject((tampered)=>{
+    const row=tampered.rows.find((entry:any)=>entry.kind==='page');
+    assert.ok(row);
+    row.citationCount+=1;
+  });
+});
+
+test('canonical adapted window rejects grounding-query citation-count and citation-share tampering',()=>{
+  for(const field of ['citationCount','citationSharePct'] as const){
+    expectWindowReject((tampered)=>{
+      const row=tampered.rows.find((entry:any)=>entry.kind==='grounding_query'&&entry.citationSharePct!==undefined);
+      assert.ok(row);
+      row[field]+=1;
+    });
+  }
+});
+
+test('canonical adapted window rejects summary total and average cited-page tampering',()=>{
+  for(const field of ['totalCitations','averageCitedPages'] as const){
+    expectWindowReject((tampered)=>{
+      assert.ok(tampered.summary?.[field]!==undefined);
+      tampered.summary[field]+=1;
+    });
+  }
+});
+
+test('canonical adapted window rejects readiness-driving data-state and coverage tampering',()=>{
+  expectWindowReject((tampered)=>{
+    tampered.semantics.dataState='preliminary';
+  });
+  expectWindowReject((tampered)=>{
+    tampered.semantics.coverage={
+      state:'filtered',
+      filters:['page=https://example.test/alpha'],
+      reason:'Synthetic sidecar tamper'
+    };
+  });
+});
+
+test('canonical adapted window rejects availability/readiness semantic tampering',()=>{
+  expectWindowReject((tampered)=>{
+    tampered.semantics.availability={state:'unavailable',reason:'Synthetic sidecar tamper'};
+  });
+});
+
+test('canonical adapted window rejects canonical observation-value tampering with unchanged sidecar',()=>{
+  expectWindowReject((tampered)=>{
+    const observation=tampered.batches
+      .flatMap((part:any)=>part.observations)
+      .find((entry:any)=>entry.record.cohort.context.metric.id==='bing-ai-page-citation-count');
+    assert.ok(observation);
+    observation.record.value.value.value+=1;
+  });
+});
+
+test('canonical adapted window rejects canonical source integrity tampering with unchanged sidecar',()=>{
+  expectWindowReject((tampered)=>{
+    const page=tampered.rows.find((entry:any)=>entry.kind==='page');
+    assert.ok(page);
+    const source=tampered.batches
+      .flatMap((part:any)=>part.sources)
+      .find((entry:any)=>entry.id===page.sourceId);
+    assert.ok(source);
+    source.record.integrity.digest='0'.repeat(64);
+  });
 });
 
 test('sampled provider totals are preserved without false reconciliation across summary and page views',()=>{
