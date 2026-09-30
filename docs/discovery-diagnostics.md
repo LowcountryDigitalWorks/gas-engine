@@ -1,6 +1,6 @@
 # Release 0.13 — Discovery Diagnostics Pack
 
-Release 0.13 is a provider-neutral but provider-preserving discovery/index diagnostics layer over sanitized Google, Bing, Yandex and IndexNow evidence.
+Release 0.13 is accepted and merged on `main` through PR #45. It is a provider-neutral but provider-preserving discovery/index diagnostics layer over sanitized Google, Bing, Yandex and IndexNow evidence.
 
 The release answers bounded evidence questions such as:
 
