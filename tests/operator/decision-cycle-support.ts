@@ -71,11 +71,14 @@ export async function decisionCycleFixture(t: TestContext): Promise<{
   if (selected === undefined) throw new Error('Synthetic Release 0.16 fixture requires at least one Release 0.15 attention item.');
 
   const recommendation = cycleRecommendation(prepared.pair.baseline.observations[0]!.record);
-  const basePlan = structuredClone(modules.searchChanges[0]!);
-  basePlan.annotation = {
-    ...basePlan.annotation,
-    id: 'synthetic-decision-cycle-change',
-    recommendationId: recommendation.id,
+  const sourcePlan = modules.searchChanges[0]!;
+  const basePlan = {
+    ...structuredClone(sourcePlan),
+    annotation: {
+      ...structuredClone(sourcePlan.annotation),
+      id: 'synthetic-decision-cycle-change',
+      recommendationId: recommendation.id,
+    },
   };
   const reference = selected.identity.url !== undefined
     ? [{ kind: 'url' as const, value: selected.identity.url }]
