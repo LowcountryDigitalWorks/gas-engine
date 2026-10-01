@@ -451,10 +451,10 @@ function readiness(
       return { state: 'follow_up_not_due', reasons: ['follow_up_not_due'] };
     }
     if (followUp.result.state === 'not_measured') {
-      return { state: 'follow_up_not_measured', reasons: [...plan.readiness.state === 'not_ready' ? plan.readiness.reasons : []] };
+      return { state: 'follow_up_not_measured', reasons: plan.readiness.state === 'not_ready' ? [...plan.readiness.reasons] : [] };
     }
     if (followUp.comparability.state !== 'comparable') {
-      return { state: 'follow_up_not_comparable', reasons: [...plan.readiness.state === 'not_ready' ? plan.readiness.reasons : ['incomparable']] };
+      return { state: 'follow_up_not_comparable', reasons: plan.readiness.state === 'not_ready' ? [...plan.readiness.reasons] : ['incomparable'] };
     }
     if (plan.readiness.state === 'not_ready') {
       return { state: 'follow_up_not_ready', reasons: [...plan.readiness.reasons] };
