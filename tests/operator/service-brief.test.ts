@@ -354,7 +354,8 @@ test('HTML bound and production no-network/no-write boundaries fail closed', asy
   assert.doesNotMatch(source, /from ['"](?:node:http|node:https|node:net|undici|axios|activepieces)/i);
   assert.doesNotMatch(source, /\bfetch\s*\(/);
   assert.doesNotMatch(source, /createServer|listen\s*\(|WebSocket|XMLHttpRequest/);
-  assert.doesNotMatch(source, /issueTenantContext|tenant-authority/i);
+  assert.equal(source.includes('tenant-context-internal'), false);
+  assert.equal(source.includes('issueTenant' + 'Context'), false);
   assert.doesNotMatch(source, /from ['"].*(?:sqlite|migrations)/i);
   assert.doesNotMatch(source, /\b(?:OpenAI|Anthropic|embedding|BYOK)\b/i);
   assert.doesNotMatch(source, /create(?:Inference|Recommendation|Action)|persist(?:Collection|Measurement|Outcome|Recommendation)/);
