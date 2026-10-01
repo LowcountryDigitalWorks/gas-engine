@@ -98,7 +98,7 @@ The application-local dossier includes:
 - compact provenance;
 - authority notes and limitations.
 
-The dossier ID canonically binds all emitted semantic state except the ID itself. Presentation bytes, CSS, filesystem paths, and generated formatting do not define semantic identity. If emitted semantic state exceeds the existing bounded canonical-hash limits, identity construction fails closed rather than weakening the binding.
+The dossier ID canonically binds all emitted cycle semantic state except the ID itself. Generated authority/limitation wording, presentation bytes, CSS, filesystem paths, and generated formatting do not define semantic identity. The underlying authority and limitation rules remain enforced by the structured cycle semantics and accepted service boundaries. If emitted semantic state exceeds the existing bounded canonical-hash limits, identity construction fails closed rather than weakening the binding.
 
 ## Bounds
 
