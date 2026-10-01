@@ -318,6 +318,18 @@ function parseTrustedTarget(value: string): string {
   return parsed.origin;
 }
 
+function providerTargetMatchesTarget(providerTarget: string, target: string): boolean {
+  if (providerTarget.startsWith('sc-domain:')) {
+    return providerTarget.slice('sc-domain:'.length).toLowerCase() === new URL(target).hostname.toLowerCase();
+  }
+  try {
+    const parsed = new URL(providerTarget);
+    return parsed.origin === target && parsed.pathname === '/' && parsed.search === '' && parsed.hash === '';
+  } catch {
+    return false;
+  }
+}
+
 function propertyMatchesTarget(property: string, target: string): boolean {
   const expected = new URL(target);
   if (property.startsWith('sc-domain:')) {
@@ -1039,7 +1051,7 @@ export async function assembleServiceBrief(
     if (!sameScope(discovery.scope, request.scope)) {
       fail('scope_mismatch', 'Discovery Diagnostics evidence is outside the requested Release 0.15 scope.');
     }
-    if (discovery.trustedTarget !== request.trustedTarget) {
+    if (!providerTargetMatchesTarget(discovery.trustedTarget, request.trustedTarget)) {
       fail('target_mismatch', 'Discovery Diagnostics evidence does not match the requested Release 0.15 target.');
     }
     if (discovery.urls.some((entry) => !pageMatchesTarget(entry.url, request.trustedTarget))) {
