@@ -102,12 +102,15 @@ async function generate(): Promise<void> {
     if (selected === undefined) throw new Error('Synthetic Release 0.16 preview requires one Release 0.15 attention item.');
 
     const candidate = recommendation(source.observations[0]!.record);
-    const searchChangePlan = structuredClone(modules.searchChanges[0]!);
-    searchChangePlan.annotation = {
-      ...searchChangePlan.annotation,
-      id: 'synthetic-release-016-change',
-      recommendationId: candidate.id,
-      summary: 'Human recorded a synthetic search change for measurement.',
+    const sourcePlan = modules.searchChanges[0]!;
+    const searchChangePlan = {
+      ...structuredClone(sourcePlan),
+      annotation: {
+        ...structuredClone(sourcePlan.annotation),
+        id: 'synthetic-release-016-change',
+        recommendationId: candidate.id,
+        summary: 'Human recorded a synthetic search change for measurement.',
+      },
     };
     const references = selected.identity.url === undefined
       ? []
