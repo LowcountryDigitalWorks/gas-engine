@@ -114,12 +114,19 @@ export async function prepareServiceBriefRepositories(t: TestContext) {
   const proposed = await createHumanRecommendation(review, evidence, alpha, {
     recommendation: recommendation(pair.baseline.observations[0]!.record),
   });
-  const accepted = await transitionHumanRecommendation(review, evidence, alpha, {
+  const inReview = await transitionHumanRecommendation(review, evidence, alpha, {
     scope: proposed.scope,
     id: proposed.id,
     expectedCurrentRevision: 1,
-    lifecycle: 'accepted',
+    lifecycle: 'in_review',
     updatedAt: '2026-09-01T03:00:00.000Z',
+  });
+  const accepted = await transitionHumanRecommendation(review, evidence, alpha, {
+    scope: inReview.scope,
+    id: inReview.id,
+    expectedCurrentRevision: 2,
+    lifecycle: 'accepted',
+    updatedAt: '2026-09-01T04:00:00.000Z',
   });
 
   const baselineMeasurement = measurement(
