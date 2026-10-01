@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.14 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.15 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.14 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.14 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.15 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.15 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -127,9 +127,9 @@ This authority does **not** authorize:
 Bing sampled/aggregated semantics, grouped-grounding-query semantics, ZeroRank vendor-specific semantics, conservative missingness/absence rules, and the internal ZeroRank raw-evidence/trusted-config analysis boundary are mandatory accepted Release 0.14 behavior.
 
 
-## Release 0.15 candidate authority boundary
+## Release 0.15 accepted authority boundary
 
-Release 0.15 is **CANDIDATE / NOT ACCEPTED** under Issue #51.
+Release 0.15 is **ACCEPTED AND MERGED through PR #52** after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge, and post-merge Contracts verification.
 
 The service-brief assembler receives an already-issued trusted TenantContext. It neither imports nor calls the tenant-context issuer. Repository selectors, module/report IDs, URLs, scope-shaped evidence, provider identities, manifest entries, and rendered output cannot mint tenant/site/provider authority.
 

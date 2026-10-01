@@ -10,7 +10,7 @@
 
 ## Accepted baseline and next-release gates
 
-Releases 0.1–0.14 are accepted and merged. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
+Releases 0.1–0.15 are accepted and merged. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
 
 Accepted Release 0.7 requires collection compatibility for exact scope, provider, provider-connection presence/value, adapter, source schema, and full collection method before absence/completeness semantics may be used. Repository-backed comparison resolves each side through atomic `getCollectionSnapshot(...)`; the dedicated snapshot read is bounded to 2,048 observations while general `listObservations(...)` remains uniformly capped at 100 records. Release 0.7 does not authorize cross-provider/generic correlation, universal scoring, direction/severity/materiality/business-impact policy, prioritization, inference, recommendations, actions, UI, network/provider access, runtime AI/BYOK, new persistence schema/tables, diff persistence, or Release 0.8. See [longitudinal diff guide](docs/analysis/diff.md).
 
@@ -68,7 +68,7 @@ Report the starting revision, final head, changed files, validation results, PR,
 
 ## Release 0.14 accepted boundary
 
-Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The accepted baseline is now Releases 0.1–0.14.
+Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The accepted baseline is now Releases 0.1–0.15.
 
 Preserve these Release 0.14 boundaries:
 
@@ -81,15 +81,15 @@ Preserve these Release 0.14 boundaries:
 - Cross-source cohort comparison requires exact caller-supplied Bing grounding-query ↔ ZeroRank prompt mapping. No fuzzy, embedding, LLM, or inferred semantic matching.
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
-- Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 0.15 implementation.
-- Package candidate version is 0.15.0 on the authorized Release 0.15 branch. Releases 0.1–0.14 remain the accepted baseline until Product accepts and merges Release 0.15.
+- Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 1.0 implementation.
+- Package version is 0.15.0 on the accepted Release 0.15 baseline. Releases 0.1–0.15 are accepted and merged.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
 
 
-## Release 0.15 candidate boundary
+## Release 0.15 accepted boundary
 
-Release 0.15 is **CANDIDATE / NOT ACCEPTED** under Issue #51 and draft/ready PR #52 until Product completes whole-pack and independent exact-head review.
+Release 0.15 is **accepted and merged on `main` through PR #52** after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge `8f7a093710a256911e708a6d7831240ac226c59c`, and post-merge Contracts run `36920896815` SUCCESS.
 
 Preserve the Release 0.15 composition boundary:
 

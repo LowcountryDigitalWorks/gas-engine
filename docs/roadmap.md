@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.14 are accepted and merged. Release 1.0 remains separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.15 are accepted and merged. Release 1.0 remains separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -18,7 +18,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.12 | Accepted: Page-Focus Candidate Analysis; aggregate every row for one exact Release 0.10 page into strict caller-supplied query clusters, apply explicit threshold policy, emit candidate/no-candidate/not-ready state, and require separate SERP validation before any intent or split/consolidate conclusion. No semantic clustering, persistence, recommendation/action creation, or autonomous content generation/publishing. See [page-focus guide](page-focus-candidate-analysis.md) and [ADR 0012](decisions/0012-page-focus-candidate-analysis.md). |
 | 0.13 | Accepted: Discovery Diagnostics Pack over sanitized Google/Bing/Yandex/IndexNow-style evidence; provider-preserving canonical adaptation, exact-URL readiness, deterministic multi-finding diagnostics, IndexNow submission context, optional Release 0.10 search context, deterministic site rollup, and static operator preview. No provider networking, implicit URL equivalence, universal score, automatic remediation, new persistence, or runtime AI. See [discovery guide](discovery-diagnostics.md) and [ADR 0013](decisions/0013-discovery-diagnostics-pack.md). |
 | 0.14 | Accepted: AI Visibility Intelligence Pack over sanitized Bing AI Performance evidence plus accepted Release 0.6 ZeroRank validation/projection; provider-specific readiness/change/concentration, bounded cross-source divergence, optional accepted context, deterministic report and static HTML. See [AI Visibility guide](ai-visibility-intelligence.md) and [ADR 0014](decisions/0014-ai-visibility-intelligence-pack.md). |
-| 0.15 | **Candidate / not accepted:** Unified Operator Intelligence & Service Brief Pack; strict read-only composition over accepted Release 0.7–0.14 surfaces, fixed readiness, unranked attention, exact-string URL index, bounded human history, provenance manifest, deterministic JSON/HTML outputs, no new schema/persistence/network/AI/action. See [service-brief guide](service-brief.md) and [ADR 0015](decisions/0015-unified-operator-service-brief.md). |
+| 0.15 | **Accepted:** Unified Operator Intelligence & Service Brief Pack; strict read-only composition over accepted Release 0.7–0.14 surfaces, fixed readiness, unranked attention, exact-string URL index, bounded human history, provenance manifest, deterministic JSON/HTML outputs, no new schema/persistence/network/AI/action. See [service-brief guide](service-brief.md) and [ADR 0015](decisions/0015-unified-operator-service-brief.md). |
 | 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
 
 ## Release 0.7 narrowing decision
@@ -48,7 +48,7 @@ This sequence is not self-executing. Each functional release still requires exac
 
 ## Gates and evaluation
 
-Releases 0.1–0.14 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.15 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 0.15 was accepted after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge via PR #52, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Future functional releases require adversarial synthetic second-tenant testing for every newly implemented owned surface. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
@@ -66,7 +66,7 @@ Internal automation does not establish commercial demand. Audit-first/service-fi
 
 Release 0.14 is **accepted and merged through PR #47** under Issue #44. Preserve the accepted provider-specific evidence semantics, conservative missingness/absence rules, and the ZeroRank raw-evidence/trusted-config analysis boundary.
 
-The candidate combines:
+The accepted release combines:
 
 1. strict sanitized Bing AI Performance evidence adaptation with no provider networking;
 2. accepted Release 0.6 ZeroRank validation reuse and bounded visibility projection;
@@ -81,13 +81,13 @@ The candidate combines:
 
 The product boundary is deliberately narrower than a general AEO/GEO platform: no universal score, provider metric blending, automatic semantic query/prompt matching, causal attribution, priority/remediation, provider retrieval, runtime AI, new persistence, cloud deployment, or paid dependency.
 
-Incremental recurring-cost target remains $0. Existing Node/Zod/canonical contracts are sufficient for the candidate.
+Incremental recurring-cost target remains $0. Existing Node/Zod/canonical contracts are sufficient for the accepted release.
 
-Release 0.15 is now the separately authorized **Unified Operator Intelligence & Service Brief Pack candidate** under Issue #51 and PR #52. Internal-link / authority-opportunity work remains separate under Issue #49 and was not authorized into Release 0.15.
+Release 0.15 is the **accepted Unified Operator Intelligence & Service Brief Pack** under Issue #51 and merged PR #52. Internal-link / authority-opportunity work remains separate under Issue #49 and was not authorized into Release 0.15.
 
 
-## Release 0.15 — candidate Unified Operator Intelligence & Service Brief Pack
+## Release 0.15 — accepted Unified Operator Intelligence & Service Brief Pack
 
-Issue #51 authorizes one bounded composition release over accepted Release 0.7–0.14 capabilities. The candidate owns only strict input validation, producer reuse, readiness presentation, unranked finding navigation, exact-string URL evidence indexing, bounded human-history reads, compact provenance, deterministic brief identity/JSON, and static printable HTML.
+Issue #51 records the accepted bounded composition release over accepted Release 0.7–0.14 capabilities. Release 0.15 owns only strict input validation, producer reuse, readiness presentation, unranked finding navigation, exact-string URL evidence indexing, bounded human-history reads, compact provenance, deterministic brief identity/JSON, and static printable HTML.
 
 It does not authorize generic correlation, causal inference, priority/severity/materiality/business-impact scoring, automatic recommendations, remediation/action, new persistence/schema, provider networking, credentials, runtime AI, cloud deployment, customer/private evidence, paid dependencies, Issue #49 implementation, or Release 1.0.

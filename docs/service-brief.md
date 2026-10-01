@@ -1,8 +1,8 @@
 # Release 0.15 Unified Operator Intelligence & Service Brief
 
-**Status: CANDIDATE / NOT ACCEPTED**
+**Status: ACCEPTED AND MERGED through PR #52**
 
-Release 0.15 composes accepted G.A.S. evidence, analysis, review-history, and reporting surfaces into one bounded read-only service-delivery brief for one exact trusted scope/site. It is application-local. It creates no canonical wire contract, persistence, network client, schedule, delivery mechanism, recommendation, remediation, or execution authority.
+Release 0.15, accepted and merged through PR #52, composes accepted G.A.S. evidence, analysis, review-history, and reporting surfaces into one bounded read-only service-delivery brief for one exact trusted scope/site. It is application-local. It creates no canonical wire contract, persistence, network client, schedule, delivery mechanism, recommendation, remediation, or execution authority.
 
 ## Purpose
 

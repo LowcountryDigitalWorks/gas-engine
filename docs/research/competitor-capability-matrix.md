@@ -241,8 +241,8 @@ ZeroRank remains a replaceable upstream evidence sensor. Release 0.14 reuses acc
 
 ## Release 0.15 composition update
 
-Issue #51 converts the earlier “richer operator/report output” watch item into a bounded internal composition candidate rather than a new reporting SaaS or data platform.
+Issue #51 delivered the earlier “richer operator/report output” watch item as an accepted bounded internal composition layer rather than a new reporting SaaS or data platform.
 
-Release 0.15 reuses accepted G.A.S. evidence/analysis/history outputs and static HTML patterns. It deliberately does not buy or rebuild AgencyAnalytics-style dashboard/reporting infrastructure, add a generic SEO suite, duplicate provider sensing, or introduce a persistent dashboard tier. The value hypothesis is reduced recurring LDW delivery/reconciliation effort through one deterministic service brief over already accepted evidence.
+Accepted Release 0.15 reuses accepted G.A.S. evidence/analysis/history outputs and static HTML patterns. It deliberately does not buy or rebuild AgencyAnalytics-style dashboard/reporting infrastructure, add a generic SEO suite, duplicate provider sensing, or introduce a persistent dashboard tier. The value hypothesis is reduced recurring LDW delivery/reconciliation effort through one deterministic service brief over already accepted evidence.
 
 Issue #49 internal-link research remains a separate future upstream/SiteOne gate and is not implemented by this release.
