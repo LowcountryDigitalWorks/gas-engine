@@ -1,6 +1,6 @@
 # ADR 0014 — Provider-preserving AI visibility intelligence over bounded exported evidence
 
-- Status: Proposed / Release 0.14 draft candidate
+- Status: Accepted / Release 0.14
 - Date: 2026-09-30
 - Issue: #44
 
@@ -14,7 +14,7 @@ Current public Bing documentation also does not establish an AI Performance API 
 
 ## Decision
 
-Release 0.14 candidate adds:
+Release 0.14 adds:
 
 1. strict sanitized `ldw.bing-ai-performance-evidence.v1` minor-0 import;
 2. explicit provider identity `bing-webmaster-ai-performance`;
@@ -96,4 +96,4 @@ Incremental recurring cost target remains $0.
 
 ## Acceptance
 
-This ADR remains **Proposed** while PR #47 is a draft Release 0.14 candidate. Product and final independent exact-head review must occur before merge/acceptance. Acceptance metadata must be updated only after that release process completes.
+This ADR is **Accepted** with Release 0.14 through PR #47. Acceptance followed Product exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS.
