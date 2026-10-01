@@ -190,9 +190,9 @@ Provider meaning is intentionally not flattened. Bing citation evidence remains 
 The Release 0.14 operator renderer is an application-local read-only projection and follows the accepted Release 0.9/0.13 static-HTML security model. It does not create a dashboard/runtime tier.
 
 
-## Release 0.15 candidate service-brief seam
+## Release 0.15 accepted service-brief seam
 
-Release 0.15 is a candidate application-local composition layer under Issue #51 and PR #52. The accepted architecture remains Releases 0.1–0.14 until Product acceptance.
+Release 0.15 is an accepted application-local composition layer under Issue #51 and merged PR #52. The accepted architecture now includes Releases 0.1–0.15 while preserving the existing wire-contract, persistence, authority, network, and cloud boundaries.
 
 ```text
 accepted repository reads + accepted Release 0.7–0.14 producer inputs
@@ -207,4 +207,4 @@ accepted repository reads + accepted Release 0.7–0.14 producer inputs
   -> escaped standalone printable HTML
 ```
 
-The candidate does not add a new wire contract, persistence layer, network tier, dashboard runtime, cloud resource, credential path, inference engine, recommendation engine, or execution path. Exact URL co-occurrence remains descriptive only. The application-local brief references accepted evidence/report identities and does not replace source evidence.
+The accepted release does not add a new wire contract, persistence layer, network tier, dashboard runtime, cloud resource, credential path, inference engine, recommendation engine, or execution path. Exact URL co-occurrence remains descriptive only. The application-local brief references accepted evidence/report identities and does not replace source evidence.
