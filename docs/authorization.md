@@ -125,3 +125,16 @@ This authority does **not** authorize:
 - Release 0.15 or Release 1.0 implementation.
 
 Bing sampled/aggregated semantics, grouped-grounding-query semantics, ZeroRank vendor-specific semantics, conservative missingness/absence rules, and the internal ZeroRank raw-evidence/trusted-config analysis boundary are mandatory accepted Release 0.14 behavior.
+
+
+## Release 0.15 candidate authority boundary
+
+Release 0.15 is **CANDIDATE / NOT ACCEPTED** under Issue #51.
+
+The service-brief assembler receives an already-issued trusted TenantContext. It neither imports nor calls the tenant-context issuer. Repository selectors, module/report IDs, URLs, scope-shaped evidence, provider identities, manifest entries, and rendered output cannot mint tenant/site/provider authority.
+
+Every repository-backed read remains enforced by accepted EvidenceRepository / ReviewLedgerRepository ownership checks. Supplied module outputs must reconcile to the exact requested scope and compatible target semantics before composition.
+
+Release 0.15 creates no recommendation, action, mutation, remediation, publishing, provider write, schedule, webhook, report-delivery authority, or external execution permission. Human recommendation acceptance remains non-executing. Human-declared outcome direction and attribution remain recorded history rather than Release 0.15 inference.
+
+No customer/private evidence, credential, token, PHI, CUI, or production secret is authorized in this public repository.
