@@ -63,7 +63,7 @@ function recommendation(observation: Contract<'observation'>): Contract<'recomme
   };
 }
 
-function measurement(
+export function measurement(
   observation: Contract<'observation'>,
   id: string,
   relationship: Contract<'measurement'>['relationship'],
