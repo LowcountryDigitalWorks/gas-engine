@@ -10,7 +10,11 @@ import {
   type BingAiQueryPageMappingRow,
   type ValidatedBingAiWindow,
 } from '../adapters/bing-ai-performance.js';
-import type { ZeroRankVisibilityProjection } from '../adapters/zerorank.js';
+import {
+  projectValidatedZeroRankVisibility,
+  type ZeroRankAdapterConfig,
+  type ZeroRankVisibilityProjection,
+} from '../adapters/zerorank.js';
 import type { SearchAnalyticsAdaptationResult } from '../adapters/search-analytics.js';
 import { validateSearchAnalyticsWindow } from './search-analytics.js';
 import type { SearchChangeOutcomeCohort } from './search-change.js';
@@ -43,6 +47,11 @@ const invocationSchema = z.strictObject({
 });
 
 export type AiVisibilityPolicy = z.infer<typeof policySchema>;
+
+export interface ZeroRankAnalysisInput {
+  readonly bytes: Uint8Array;
+  readonly trustedConfig: ZeroRankAdapterConfig;
+}
 export type AiVisibilityChangeState =
   | 'increase_observed'
   | 'decrease_observed'
@@ -208,8 +217,8 @@ export class AiVisibilityAnalysisError extends Error {
 interface ParsedInvocation {
   readonly bingCurrent: BingAiAdaptationResult;
   readonly bingBaseline?: BingAiAdaptationResult;
-  readonly zeroRankCurrent: ZeroRankVisibilityProjection;
-  readonly zeroRankBaseline?: ZeroRankVisibilityProjection;
+  readonly zeroRankCurrent: ZeroRankAnalysisInput;
+  readonly zeroRankBaseline?: ZeroRankAnalysisInput;
   readonly evaluatedAt: string;
   readonly policy: AiVisibilityPolicy;
   readonly cohortMappings: readonly z.infer<typeof cohortMappingSchema>[];
@@ -267,6 +276,28 @@ function makeChange(
   return { id: changeId(base), ...base };
 }
 
+function parseZeroRankAnalysisInput(input: unknown, label: string): ZeroRankAnalysisInput {
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
+    fail('invalid_input', `${label} must provide sanitized bytes and trusted configuration.`);
+  }
+  const candidate = input as Record<string, unknown>;
+  if (Object.keys(candidate).sort().join(',') !== 'bytes,trustedConfig'
+      || !(candidate['bytes'] instanceof Uint8Array)
+      || candidate['trustedConfig'] === null
+      || typeof candidate['trustedConfig'] !== 'object'
+      || Array.isArray(candidate['trustedConfig'])) {
+    fail('invalid_input', `${label} must provide only sanitized bytes and trusted configuration.`);
+  }
+  try {
+    return {
+      bytes: Uint8Array.from(candidate['bytes'] as Uint8Array),
+      trustedConfig: structuredClone(candidate['trustedConfig']) as ZeroRankAdapterConfig,
+    };
+  } catch {
+    fail('invalid_input', `${label} must contain cloneable bounded analysis input.`);
+  }
+}
+
 function parseInvocation(input: unknown): ParsedInvocation {
   const parsed = invocationSchema.safeParse(input);
   if (!parsed.success) fail('invalid_input', 'AI-visibility invocation or policy is invalid.');
@@ -283,8 +314,10 @@ function parseInvocation(input: unknown): ParsedInvocation {
   return {
     bingCurrent: data.bingCurrent as BingAiAdaptationResult,
     ...(data.bingBaseline === undefined ? {} : { bingBaseline: data.bingBaseline as BingAiAdaptationResult }),
-    zeroRankCurrent: data.zeroRankCurrent as ZeroRankVisibilityProjection,
-    ...(data.zeroRankBaseline === undefined ? {} : { zeroRankBaseline: data.zeroRankBaseline as ZeroRankVisibilityProjection }),
+    zeroRankCurrent: parseZeroRankAnalysisInput(data.zeroRankCurrent, 'zeroRankCurrent'),
+    ...(data.zeroRankBaseline === undefined
+      ? {}
+      : { zeroRankBaseline: parseZeroRankAnalysisInput(data.zeroRankBaseline, 'zeroRankBaseline') }),
     evaluatedAt: data.evaluatedAt,
     policy: data.policy,
     cohortMappings: data.cohortMappings ?? [],
@@ -292,20 +325,6 @@ function parseInvocation(input: unknown): ParsedInvocation {
     ...(data.searchChange === undefined ? {} : { searchChange: data.searchChange as SearchChangeOutcomeCohort }),
     ...(data.pageFocus === undefined ? {} : { pageFocus: data.pageFocus as PageFocusReport }),
   };
-}
-
-function validateZeroRankProjection(input: ZeroRankVisibilityProjection): ZeroRankVisibilityProjection {
-  if (input.providerId !== 'zerorank'
-      || Object.keys(input.collections).sort().join(',') !== 'chats,prompts,rankings,sourceUrls,sources'
-      || Object.keys(input.endpointCompleteness).sort().join(',') !== 'chats,prompts,rankings,sourceUrls,sources') {
-    fail('invalid_window', 'ZeroRank visibility projection metadata is invalid.');
-  }
-  try {
-    canonicalJson(input);
-  } catch {
-    fail('invalid_window', 'ZeroRank visibility projection exceeds bounded canonical data.');
-  }
-  return input;
 }
 
 function bingReadiness(
@@ -831,8 +850,16 @@ export function analyzeAiVisibility(input: unknown): AiVisibilitySiteReport {
   const request = parseInvocation(input);
   const bing = validateBingAiWindow(request.bingCurrent);
   const bingBaseline = request.bingBaseline === undefined ? undefined : validateBingAiWindow(request.bingBaseline);
-  const zeroRank = validateZeroRankProjection(request.zeroRankCurrent);
-  const zeroRankBaseline = request.zeroRankBaseline === undefined ? undefined : validateZeroRankProjection(request.zeroRankBaseline);
+  const zeroRank = projectValidatedZeroRankVisibility(
+    request.zeroRankCurrent.bytes,
+    request.zeroRankCurrent.trustedConfig,
+  );
+  const zeroRankBaseline = request.zeroRankBaseline === undefined
+    ? undefined
+    : projectValidatedZeroRankVisibility(
+        request.zeroRankBaseline.bytes,
+        request.zeroRankBaseline.trustedConfig,
+      );
 
   if (!same(scopeOf(bing), zeroRank.scope)) fail('configuration_mismatch', 'Bing and ZeroRank trusted scopes do not match.');
   const bingProviderReadiness = bingReadiness(bing, request.evaluatedAt, request.policy);
