@@ -160,15 +160,19 @@ test('malformed ZeroRank bytes fail through accepted Release 0.6 validation befo
 
 test('trusted ZeroRank target and workspace mismatches fail through accepted validation',()=>{
   const value=zrFixture();
-  const targetMismatch=zrConfig(value);
-  targetMismatch.expectedTargetOrigin='https://other.example.test';
+  const targetMismatch:ZeroRankAdapterConfig={
+    ...zrConfig(value),
+    expectedTargetOrigin:'https://other.example.test'
+  };
   assert.throws(
     ()=>analyze({zeroRankCurrent:{bytes:bytes(value),trustedConfig:targetMismatch}}),
     (error:unknown)=>error instanceof ZeroRankAdapterError&&error.code==='configuration_mismatch'
   );
 
-  const workspaceMismatch=zrConfig(value);
-  workspaceMismatch.expectedWorkspaceId='other-workspace';
+  const workspaceMismatch:ZeroRankAdapterConfig={
+    ...zrConfig(value),
+    expectedWorkspaceId:'other-workspace'
+  };
   assert.throws(
     ()=>analyze({zeroRankCurrent:{bytes:bytes(value),trustedConfig:workspaceMismatch}}),
     (error:unknown)=>error instanceof ZeroRankAdapterError&&error.code==='configuration_mismatch'
