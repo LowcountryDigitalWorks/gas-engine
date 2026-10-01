@@ -472,3 +472,212 @@ test('Release 0.16 production surface adds no network, server, runtime AI, persi
   assert.doesNotMatch(source, /internal[-_ ]link/i);
   assert.doesNotMatch(source, /Release\s+1\.0/i);
 });
+
+
+test('plan-only cycle rediscovers its exact outcome through tenant-safe scope-only reads', async (t) => {
+  const fixture = await decisionCycleFixture(t);
+  const input = structuredClone(fixture.input) as any;
+  delete input.recommendation;
+  delete input.searchChangePlan.annotation.recommendationId;
+  input.decision.disposition = 'investigate';
+  input.decision.summary = 'Human investigates a plan-only Search Change cycle without a recommendation association.';
+
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, input, 'baseline');
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, input, 'follow_up');
+
+  const ready = await prepareDecisionCycle(fixture.prepared.evidence, fixture.prepared.review, alpha, input);
+  assert.equal(ready.recommendation, undefined);
+  assert.equal(ready.readiness.state, 'ready_for_human_assessment');
+  const plan = ready.measurementPlan!;
+
+  const betaScope = {
+    tenantId: 'tenant-beta',
+    siteId: 'site-beta',
+    siteScopeRevisionId: 'synthetic-scope-beta-r1',
+  };
+  await fixture.prepared.review.persistOutcome(beta, {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-plan-only-outcome',
+    scope: betaScope,
+    assessment: {
+      direction: 'inconclusive',
+      measurements: [
+        { scope: betaScope, id: plan.baseline.measurement.id },
+        { scope: betaScope, id: plan.followUp.measurement.id },
+      ],
+      reason: 'Synthetic cross-tenant outcome must not enter the alpha decision cycle.',
+    },
+    attribution: {
+      strength: 'none',
+      reason: 'No attribution.',
+    },
+    createdAt: '2026-10-01T19:49:00.000Z',
+  });
+
+  const outcome: Contract<'outcome'> = {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-plan-only-outcome',
+    scope: structuredClone(serviceBriefScope),
+    assessment: {
+      direction: 'unchanged',
+      measurements: [
+        { scope: structuredClone(serviceBriefScope), id: plan.baseline.measurement.id },
+        { scope: structuredClone(serviceBriefScope), id: plan.followUp.measurement.id },
+      ],
+      comparability: 'comparable',
+      rationale: 'Human-declared plan-only outcome bound to the exact current measurements.',
+    },
+    attribution: {
+      strength: 'none',
+      reason: 'No causal attribution is asserted.',
+    },
+    createdAt: '2026-10-01T19:50:00.000Z',
+  };
+  await commitDecisionOutcome(fixture.prepared.evidence, fixture.prepared.review, alpha, input, outcome);
+
+  const final = await prepareDecisionCycle(fixture.prepared.evidence, fixture.prepared.review, alpha, input);
+  assert.equal(final.readiness.state, 'outcome_recorded');
+  assert.deepEqual(final.humanOutcomes.map((record) => record.id), [outcome.id]);
+  assert.deepEqual(final.provenance.outcomeIds, [outcome.id]);
+  assert.notEqual(final.id, ready.id);
+});
+
+test('current cycle excludes an old same-recommendation outcome and rejects cross-cycle outcome commit', async (t) => {
+  const fixture = await decisionCycleFixture(t);
+  await commitDecisionRecommendation(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input);
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input, 'baseline');
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input, 'follow_up');
+
+  const cycleA = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    fixture.input,
+  );
+  const planA = cycleA.measurementPlan!;
+
+  const inputB = structuredClone(fixture.input) as any;
+  inputB.searchChangePlan.annotation.id = 'synthetic-decision-cycle-change-b';
+  inputB.decision.id = 'synthetic-decision-cycle-decision-b';
+  inputB.decision.summary = 'Human starts a second measurement cycle for the same canonical recommendation.';
+
+  const beforeOldOutcome = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.notEqual(beforeOldOutcome.measurementPlan!.baseline.measurement.id, planA.baseline.measurement.id);
+  assert.notEqual(beforeOldOutcome.measurementPlan!.followUp.measurement.id, planA.followUp.measurement.id);
+  assert.equal(beforeOldOutcome.humanOutcomes.length, 0);
+  assert.notEqual(beforeOldOutcome.readiness.state, 'outcome_recorded');
+
+  const outcomeA: Contract<'outcome'> = {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-decision-cycle-outcome-a',
+    scope: structuredClone(serviceBriefScope),
+    recommendationId: fixture.recommendation.id,
+    assessment: {
+      direction: 'unchanged',
+      measurements: [
+        { scope: structuredClone(serviceBriefScope), id: planA.baseline.measurement.id },
+        { scope: structuredClone(serviceBriefScope), id: planA.followUp.measurement.id },
+      ],
+      comparability: 'comparable',
+      rationale: 'Human closes cycle A only.',
+    },
+    attribution: {
+      strength: 'technical_verification',
+      basis: 'Synthetic technical verification only; no causal claim.',
+    },
+    createdAt: '2026-10-01T19:50:00.000Z',
+  };
+  await commitDecisionOutcome(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    fixture.input,
+    outcomeA,
+  );
+
+  const afterOldOutcome = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.equal(afterOldOutcome.id, beforeOldOutcome.id);
+  assert.equal(afterOldOutcome.humanOutcomes.length, 0);
+  assert.deepEqual(afterOldOutcome.provenance.outcomeIds, []);
+  assert.notEqual(afterOldOutcome.readiness.state, 'outcome_recorded');
+
+  const crossCycle = structuredClone(outcomeA) as Contract<'outcome'>;
+  crossCycle.id = 'synthetic-decision-cycle-cross-cycle-outcome';
+  crossCycle.createdAt = '2026-10-01T20:00:00.000Z';
+  await assert.rejects(
+    commitDecisionOutcome(
+      fixture.prepared.evidence,
+      fixture.prepared.review,
+      alpha,
+      inputB,
+      crossCycle,
+    ),
+    (error: unknown) => error instanceof DecisionCycleError && error.code === 'invalid_selection',
+  );
+
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, inputB, 'baseline');
+  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, inputB, 'follow_up');
+  const readyB = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.equal(readyB.readiness.state, 'ready_for_human_assessment');
+  assert.equal(readyB.humanOutcomes.length, 0);
+
+  const planB = readyB.measurementPlan!;
+  const outcomeB: Contract<'outcome'> = {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-decision-cycle-outcome-b',
+    scope: structuredClone(serviceBriefScope),
+    recommendationId: fixture.recommendation.id,
+    assessment: {
+      direction: 'unchanged',
+      measurements: [
+        { scope: structuredClone(serviceBriefScope), id: planB.baseline.measurement.id },
+        { scope: structuredClone(serviceBriefScope), id: planB.followUp.measurement.id },
+      ],
+      comparability: 'comparable',
+      rationale: 'Human closes only cycle B with cycle-B measurements.',
+    },
+    attribution: {
+      strength: 'technical_verification',
+      basis: 'Synthetic technical verification only; no causal claim.',
+    },
+    createdAt: '2026-10-01T20:05:00.000Z',
+  };
+  await commitDecisionOutcome(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+    outcomeB,
+  );
+
+  const finalB = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.equal(finalB.readiness.state, 'outcome_recorded');
+  assert.deepEqual(finalB.humanOutcomes.map((record) => record.id), [outcomeB.id]);
+  assert.deepEqual(finalB.provenance.outcomeIds, [outcomeB.id]);
+  assert.notEqual(finalB.id, readyB.id);
+  assert.equal(finalB.humanOutcomes.some((record) => record.id === outcomeA.id), false);
+});
