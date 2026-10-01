@@ -47,13 +47,13 @@ const baselineTiming:ZeroRankAdapterConfig['timing']={
 };
 
 function bytes(value:unknown):Uint8Array{return Buffer.from(JSON.stringify(value),'utf8');}
-function bingFixture():MutableJson{return JSON.parse(bingText) as MutableJson;}
-function zrFixture(targetOrigin='https://example.test'):MutableJson{
-  const value=JSON.parse(zrText) as MutableJson;
-  value.targetOrigin=targetOrigin;
-  return value;
+function bingFixture(targetOrigin='https://lowcountrydigitalworks.com'):MutableJson{
+  return JSON.parse(bingText.replaceAll('https://example.test',targetOrigin)) as MutableJson;
 }
-function searchFixture():MutableJson{return JSON.parse(searchText) as MutableJson;}
+function zrFixture():MutableJson{return JSON.parse(zrText) as MutableJson;}
+function searchFixture(targetOrigin='https://lowcountrydigitalworks.com'):MutableJson{
+  return JSON.parse(searchText.replaceAll('https://example.test',targetOrigin)) as MutableJson;
+}
 function bingConfig(value:MutableJson,scope:Scope=alphaScope):BingAiAdapterConfig{
   return {
     scope:structuredClone(scope),
@@ -205,8 +205,8 @@ test('provider readiness preserves Bing sampling and accepted ZeroRank unknown-e
 });
 
 test('incompatible validated trusted targets are limited and block cross-source divergence',()=>{
-  const value=zrFixture('https://lowcountrydigitalworks.com');
-  const report=analyze({zeroRankCurrent:zrInput(value)});
+  const value=bingFixture('https://example.test');
+  const report=analyze({bingCurrent:adaptBing(value)});
   assert.equal(report.readiness.every((entry)=>entry.reasons.includes('incompatible_scope')),true);
   assert.equal(report.crossSourceFindings.length,0);
 });
@@ -229,23 +229,23 @@ test('Bing within-provider baseline/current emits increase, decrease, unchanged 
   baselineValue.period={start:'2026-09-16T00:00:00.000Z',end:'2026-09-23T00:00:00.000Z'};
   baselineValue.summary.totalCitations=15;
   baselineValue.pages=[
-    {url:'https://example.test/alpha',citationCount:10},
-    {url:'https://example.test/beta',citationCount:6},
-    {url:'https://example.test/gamma',citationCount:2}
+    {url:'https://lowcountrydigitalworks.com/alpha',citationCount:10},
+    {url:'https://lowcountrydigitalworks.com/beta',citationCount:6},
+    {url:'https://lowcountrydigitalworks.com/gamma',citationCount:2}
   ];
   baselineValue.groundingQueries=[
     {phrase:'synthetic grouped phrase alpha',citationCount:10,intent:'Synthetic provider intent',topic:'Synthetic provider topic',citationSharePct:55.5},
     {phrase:'synthetic grouped phrase beta',citationCount:5,citationSharePct:20}
   ];
   baselineValue.queryPageMappings=[
-    {phrase:'synthetic grouped phrase alpha',url:'https://example.test/alpha',citationCount:7},
-    {phrase:'synthetic grouped phrase beta',url:'https://example.test/beta',citationCount:2}
+    {phrase:'synthetic grouped phrase alpha',url:'https://lowcountrydigitalworks.com/alpha',citationCount:7},
+    {phrase:'synthetic grouped phrase beta',url:'https://lowcountrydigitalworks.com/beta',citationCount:2}
   ];
   const report=analyze({bingBaseline:adaptBing(baselineValue)});
   const byIdentity=(identity:string,metric:string)=>report.changes.find((row)=>row.providerId==='bing-webmaster-ai-performance'&&row.identity===identity&&row.metric===metric);
-  assert.equal(byIdentity('https://example.test/alpha','page_citations')?.state,'increase_observed');
-  assert.equal(byIdentity('https://example.test/beta','page_citations')?.state,'decrease_observed');
-  assert.equal(byIdentity('https://example.test/gamma','page_citations')?.state,'unchanged_observed');
+  assert.equal(byIdentity('https://lowcountrydigitalworks.com/alpha','page_citations')?.state,'increase_observed');
+  assert.equal(byIdentity('https://lowcountrydigitalworks.com/beta','page_citations')?.state,'decrease_observed');
+  assert.equal(byIdentity('https://lowcountrydigitalworks.com/gamma','page_citations')?.state,'unchanged_observed');
   assert.equal(report.changes.some((row)=>/improv|regress|success|failure/i.test(row.state)),false);
 
   const incompatibleBaseline=bingFixture();
@@ -302,8 +302,10 @@ test('explicit positive ZeroRank evidence remains usable and can diverge from pr
   const absent=bingFixture();
   absent.summary.totalCitations=0;
   absent.pages=absent.pages.map((row:any)=>({...row,citationCount:0}));
-  const report=analyze({bingCurrent:adaptBing(absent)});
-  assert.equal(report.zeroRank.rankings.some((row)=>row.domain==='example.test'&&(row.mentions??0)>0),true);
+  const zr=zrFixture();
+  zr.endpoints.rankings.rows[0].domain='lowcountrydigitalworks.com';
+  const report=analyze({bingCurrent:adaptBing(absent),zeroRankCurrent:zrInput(zr)});
+  assert.equal(report.zeroRank.rankings.some((row)=>row.domain==='lowcountrydigitalworks.com'&&(row.mentions??0)>0),true);
   assert.equal(report.crossSourceFindings.some((row)=>
     row.kind==='cross_source_visibility_presence_divergence_candidate'
     && row.bingState==='absent'
@@ -377,8 +379,8 @@ test('Search Analytics attaches exact-page descriptive context and missing page 
   };
   const search=adaptSearchAnalyticsEvidence(bytes(value),config);
   const report=analyze({searchAnalytics:search});
-  const alpha=report.traditionalSearchContext.find((row)=>row.page==='https://example.test/alpha');
-  const gamma=report.traditionalSearchContext.find((row)=>row.page==='https://example.test/gamma');
+  const alpha=report.traditionalSearchContext.find((row)=>row.page==='https://lowcountrydigitalworks.com/alpha');
+  const gamma=report.traditionalSearchContext.find((row)=>row.page==='https://lowcountrydigitalworks.com/gamma');
   assert.equal(alpha?.state,'observed');
   assert.equal(alpha?.impressions,42);
   assert.equal(gamma?.state,'not_observed');
@@ -390,7 +392,7 @@ test('optional 0.11/0.12 contexts are isolated and cannot change Release 0.14 fi
   const fakeSearchChange={
     id:'search-change:synthetic',
     annotation:{id:'annotation-synthetic',occurredAt:'2026-09-24T00:00:00.000Z',recordedAt:'2026-09-24T01:00:00.000Z',summary:'Synthetic change'},
-    target:{rowIdentity:'search-row',query:'synthetic',page:'https://example.test/alpha',metric:'clicks',baselineObservationId:'obs-a'},
+    target:{rowIdentity:'search-row',query:'synthetic',page:'https://lowcountrydigitalworks.com/alpha',metric:'clicks',baselineObservationId:'obs-a'},
     baseline:{measurement:{cohort:{context:{scope:structuredClone(alphaScope)}}}},
     followUp:{measurement:{cohort:{context:{scope:structuredClone(alphaScope)}}}},
     readiness:{state:'not_ready',reasons:['follow_up_not_measured']}
@@ -398,7 +400,7 @@ test('optional 0.11/0.12 contexts are isolated and cannot change Release 0.14 fi
   const fakePageFocus={
     id:'page-focus:synthetic',
     source:{scope:structuredClone(alphaScope)},
-    page:'https://example.test/alpha',
+    page:'https://lowcountrydigitalworks.com/alpha',
     state:'candidate',
     serpValidationRequired:true
   };
@@ -445,7 +447,7 @@ test('stale or unavailable ZeroRank evidence cannot create a cross-source diverg
 
 test('filtered Bing zero evidence remains unknown for mapped cohort absence',()=>{
   const value=bingFixture();
-  value.state.coverage={state:'filtered',filters:['page=https://example.test/alpha'],reason:'Synthetic page filter'};
+  value.state.coverage={state:'filtered',filters:['page=https://lowcountrydigitalworks.com/alpha'],reason:'Synthetic page filter'};
   value.groundingQueries[0].citationCount=0;
   const bingCurrent=adaptBing(value);
   const query=bingCurrent.rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
@@ -478,7 +480,7 @@ test('Search Analytics optional context requires the same trusted site despite p
 
 test('URL-prefix Bing properties remain incompatible with whole-site ZeroRank presence comparison',()=>{
   const value=bingFixture();
-  value.property='https://example.test/subpath';
+  value.property='https://lowcountrydigitalworks.com/subpath';
   const report=analyze({bingCurrent:adaptBing(value)});
   assert.equal(report.readiness.every((entry)=>entry.reasons.includes('incompatible_scope')),true);
   assert.equal(report.crossSourceFindings.length,0);
