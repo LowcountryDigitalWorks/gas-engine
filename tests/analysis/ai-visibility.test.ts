@@ -8,6 +8,7 @@ import {
 import {
   adaptZeroRankSanitizedEvidence,
   projectValidatedZeroRankVisibility,
+  ZeroRankAdapterError,
   type ZeroRankAdapterConfig,
   type ZeroRankVisibilityProjection,
 } from '../../src/adapters/zerorank.js';
@@ -19,6 +20,7 @@ import {
   analyzeAiVisibility,
   AiVisibilityAnalysisError,
   type AiVisibilityPolicy,
+  type ZeroRankAnalysisInput,
 } from '../../src/analysis/ai-visibility.js';
 import type { Scope } from '../../src/persistence/repository.js';
 import { batch } from '../persistence/helpers.js';
@@ -29,10 +31,28 @@ const zrText=readFileSync('tests/fixtures/zerorank-evidence-v1.0.json','utf8');
 const searchText=readFileSync('tests/fixtures/search-analytics-evidence-v1.0.json','utf8');
 const alphaScope:Scope=structuredClone(batch('alpha').collection.scope);
 const betaScope:Scope=structuredClone(batch('beta').collection.scope);
+const currentTiming:ZeroRankAdapterConfig['timing']={
+  observedAt:'2026-09-30T12:00:00.000Z',
+  startedAt:'2026-09-30T11:50:00.000Z',
+  endedAt:'2026-09-30T11:58:00.000Z',
+  collectedAt:'2026-09-30T12:01:00.000Z',
+  receivedAt:'2026-09-30T12:02:00.000Z'
+};
+const baselineTiming:ZeroRankAdapterConfig['timing']={
+  observedAt:'2026-09-23T12:00:00.000Z',
+  startedAt:'2026-09-23T11:50:00.000Z',
+  endedAt:'2026-09-23T11:58:00.000Z',
+  collectedAt:'2026-09-23T12:01:00.000Z',
+  receivedAt:'2026-09-23T12:02:00.000Z'
+};
 
 function bytes(value:unknown):Uint8Array{return Buffer.from(JSON.stringify(value),'utf8');}
 function bingFixture():MutableJson{return JSON.parse(bingText) as MutableJson;}
-function zrFixture():MutableJson{return JSON.parse(zrText) as MutableJson;}
+function zrFixture(targetOrigin='https://example.test'):MutableJson{
+  const value=JSON.parse(zrText) as MutableJson;
+  value.targetOrigin=targetOrigin;
+  return value;
+}
 function searchFixture():MutableJson{return JSON.parse(searchText) as MutableJson;}
 function bingConfig(value:MutableJson,scope:Scope=alphaScope):BingAiAdapterConfig{
   return {
@@ -47,26 +67,28 @@ function bingConfig(value:MutableJson,scope:Scope=alphaScope):BingAiAdapterConfi
 function adaptBing(value:MutableJson=bingFixture(),scope:Scope=alphaScope){
   return adaptBingAiPerformanceEvidence(bytes(value),bingConfig(value,scope));
 }
-function zrConfig(scope:Scope=alphaScope):ZeroRankAdapterConfig{
+function zrConfig(
+  value:MutableJson,
+  scope:Scope=alphaScope,
+  timing:ZeroRankAdapterConfig['timing']=currentTiming,
+  availability:ZeroRankAdapterConfig['availability']={state:'available',reference:'synthetic-zerorank-artifact'},
+):ZeroRankAdapterConfig{
   return {
     scope:structuredClone(scope),
     expectedWorkspaceId:'example-workspace',
-    expectedTargetOrigin:'https://lowcountrydigitalworks.com',
+    expectedTargetOrigin:value.targetOrigin,
     providerConnectionId:'synthetic-zerorank-connection',
-    timing:{
-      observedAt:'2026-09-30T12:00:00.000Z',
-      startedAt:'2026-09-30T11:50:00.000Z',
-      endedAt:'2026-09-30T11:58:00.000Z',
-      collectedAt:'2026-09-30T12:01:00.000Z',
-      receivedAt:'2026-09-30T12:02:00.000Z'
-    },
-    availability:{state:'available',reference:'synthetic-zerorank-artifact'}
+    timing:structuredClone(timing),
+    availability:structuredClone(availability)
   };
 }
-function projectZr(scope:Scope=alphaScope):ZeroRankVisibilityProjection{
-  const projection=projectValidatedZeroRankVisibility(bytes(zrFixture()),zrConfig(scope));
-  // Analysis tests use an example.test target projection so the public synthetic providers align.
-  return {...projection,trustedTargetOrigin:'https://example.test'};
+function zrInput(
+  value:MutableJson=zrFixture(),
+  scope:Scope=alphaScope,
+  timing:ZeroRankAdapterConfig['timing']=currentTiming,
+  availability:ZeroRankAdapterConfig['availability']={state:'available',reference:'synthetic-zerorank-artifact'},
+):ZeroRankAnalysisInput{
+  return {bytes:bytes(value),trustedConfig:zrConfig(value,scope,timing,availability)};
 }
 function policy(overrides:Partial<AiVisibilityPolicy>={}):AiVisibilityPolicy{
   return {
@@ -81,19 +103,92 @@ function policy(overrides:Partial<AiVisibilityPolicy>={}):AiVisibilityPolicy{
 function analyze(overrides:Record<string,unknown>={}){
   return analyzeAiVisibility({
     bingCurrent:adaptBing(),
-    zeroRankCurrent:projectZr(),
+    zeroRankCurrent:zrInput(),
     evaluatedAt:'2026-09-30T13:00:00.000Z',
     policy:policy(),
     ...overrides
   });
 }
 
-test('provider readiness preserves Bing sampling disclosure while allowing bounded provider-specific findings',()=>{
+test('analysis accepts only raw sanitized ZeroRank evidence plus trusted config and rejects caller projections',()=>{
+  const value=zrFixture();
+  const config=zrConfig(value);
+  const projection=projectValidatedZeroRankVisibility(bytes(value),config);
+  assert.throws(
+    ()=>analyzeAiVisibility({
+      bingCurrent:adaptBing(),
+      zeroRankCurrent:projection,
+      evaluatedAt:'2026-09-30T13:00:00.000Z',
+      policy:policy()
+    }),
+    (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='invalid_input'
+  );
+
+  const fabrications:Array<[string,(projection:any)=>void]>=[
+    ['trusted target',(candidate)=>{candidate.trustedTargetOrigin='https://forged.example.test';}],
+    ['trusted scope',(candidate)=>{candidate.scope=structuredClone(betaScope);}],
+    ['availability',(candidate)=>{candidate.availability={state:'unavailable',reason:'forged'};}],
+    ['endpoint completeness',(candidate)=>{candidate.endpointCompleteness.sourceUrls='complete';}],
+    ['collection identity',(candidate)=>{candidate.collections.sourceUrls='zerorank.collection.sourceUrls:forged';}],
+    ['ranking value',(candidate)=>{candidate.rankings[0].mentions=999;}],
+    ['chat value',(candidate)=>{candidate.chats[0].citationCount=999;}],
+    ['source URL value',(candidate)=>{candidate.sourceUrls[0].totalCitations=999;}],
+  ];
+  for(const [label,mutate] of fabrications){
+    const candidate=structuredClone(projection) as any;
+    mutate(candidate);
+    assert.throws(
+      ()=>analyzeAiVisibility({
+        bingCurrent:adaptBing(),
+        zeroRankCurrent:candidate,
+        evaluatedAt:'2026-09-30T13:00:00.000Z',
+        policy:policy()
+      }),
+      (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='invalid_input',
+      label
+    );
+  }
+});
+
+test('malformed ZeroRank bytes fail through accepted Release 0.6 validation before findings',()=>{
+  const value=zrFixture();
+  assert.throws(
+    ()=>analyze({zeroRankCurrent:{bytes:Buffer.from('{','utf8'),trustedConfig:zrConfig(value)}}),
+    (error:unknown)=>error instanceof ZeroRankAdapterError&&error.code==='invalid_json'
+  );
+});
+
+test('trusted ZeroRank target and workspace mismatches fail through accepted validation',()=>{
+  const value=zrFixture();
+  const targetMismatch=zrConfig(value);
+  targetMismatch.expectedTargetOrigin='https://other.example.test';
+  assert.throws(
+    ()=>analyze({zeroRankCurrent:{bytes:bytes(value),trustedConfig:targetMismatch}}),
+    (error:unknown)=>error instanceof ZeroRankAdapterError&&error.code==='configuration_mismatch'
+  );
+
+  const workspaceMismatch=zrConfig(value);
+  workspaceMismatch.expectedWorkspaceId='other-workspace';
+  assert.throws(
+    ()=>analyze({zeroRankCurrent:{bytes:bytes(value),trustedConfig:workspaceMismatch}}),
+    (error:unknown)=>error instanceof ZeroRankAdapterError&&error.code==='configuration_mismatch'
+  );
+});
+
+test('provider readiness preserves Bing sampling and accepted ZeroRank unknown-exhaustion semantics',()=>{
   const report=analyze();
   const bing=report.readiness.find((entry)=>entry.providerId==='bing-webmaster-ai-performance');
+  const zr=report.readiness.find((entry)=>entry.providerId==='zerorank');
   assert.equal(bing?.state,'ready');
   assert.deepEqual(bing?.reasons,['sampled_aggregated']);
+  assert.equal(zr?.state,'limited');
+  assert.equal(zr?.reasons.includes('incomplete_endpoint'),true);
   assert.equal(report.bing.sampledAggregated,true);
+  assert.equal(report.zeroRank.endpointCompleteness.rankings,'unknown');
+  assert.equal(report.zeroRank.endpointCompleteness.chats,'unknown');
+  assert.equal(report.zeroRank.endpointCompleteness.sources,'unknown');
+  assert.equal(report.zeroRank.endpointCompleteness.sourceUrls,'unknown');
+  assert.equal(report.zeroRank.endpointCompleteness.prompts,'complete');
   assert.match(report.semantics.bingSamplingWarning,/sampled\/aggregated/i);
   assert.match(report.semantics.metricBoundaryWarning,/not ranking/i);
   assert.deepEqual(
@@ -105,16 +200,23 @@ test('provider readiness preserves Bing sampling disclosure while allowing bound
   );
 });
 
-test('incompatible trusted targets are limited and block cross-source divergence',()=>{
-  const incompatible=projectValidatedZeroRankVisibility(bytes(zrFixture()),zrConfig());
-  const report=analyzeAiVisibility({
-    bingCurrent:adaptBing(),
-    zeroRankCurrent:incompatible,
-    evaluatedAt:'2026-09-30T13:00:00.000Z',
-    policy:policy()
-  });
+test('incompatible validated trusted targets are limited and block cross-source divergence',()=>{
+  const value=zrFixture('https://lowcountrydigitalworks.com');
+  const report=analyze({zeroRankCurrent:zrInput(value)});
   assert.equal(report.readiness.every((entry)=>entry.reasons.includes('incompatible_scope')),true);
   assert.equal(report.crossSourceFindings.length,0);
+});
+
+test('scope mismatch fails closed after accepted ZeroRank validation and before findings',()=>{
+  assert.throws(
+    ()=>analyzeAiVisibility({
+      bingCurrent:adaptBing(),
+      zeroRankCurrent:zrInput(zrFixture(),betaScope),
+      evaluatedAt:'2026-09-30T13:00:00.000Z',
+      policy:policy()
+    }),
+    (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='configuration_mismatch'
+  );
 });
 
 test('Bing within-provider baseline/current emits increase, decrease, unchanged and not-comparable semantics without evaluative labels',()=>{
@@ -152,17 +254,20 @@ test('Bing within-provider baseline/current emits increase, decrease, unchanged 
   assert.equal(bingComparability?.reasons.includes('incompatible_periods'),true);
 });
 
-test('ZeroRank changes remain provider-specific and never become Bing citation movement',()=>{
-  const baseline=projectZr();
-  const older:ZeroRankVisibilityProjection={
-    ...baseline,
-    observedAt:'2026-09-29T12:00:00.000Z',
-    rankings:baseline.rankings.map((row)=>row.id==='1'?{...row,mentions:1,visibilityPercentage:2}:row),
-    sourceUrls:baseline.sourceUrls.map((row)=>row.id==='url-a'?{...row,totalCitations:1,totalUsage:1}:row)
-  };
-  const report=analyze({zeroRankBaseline:older});
+test('ZeroRank baseline/current change states come only from independently valid artifacts and trusted configs',()=>{
+  const baselineValue=zrFixture();
+  baselineValue.endpoints.rankings.rows[0].mentions=1;
+  baselineValue.endpoints.rankings.rows[0].visibilityPercentage=2;
+  baselineValue.endpoints.sourceUrls.rows[0].totalCitations=1;
+  baselineValue.endpoints.sourceUrls.rows[0].totalUsage=1;
+  baselineValue.endpoints.sourceUrls.rows[0].usagePercentage=0;
+  const report=analyze({
+    zeroRankBaseline:zrInput(baselineValue,alphaScope,baselineTiming)
+  });
   const zr=report.changes.filter((row)=>row.providerId==='zerorank');
   assert.equal(zr.some((row)=>row.family==='ranking'&&row.metric==='mentions'&&row.state==='increase_observed'),true);
+  assert.equal(zr.some((row)=>row.family==='ranking'&&row.metric==='visibilityPercentage'&&row.state==='decrease_observed'),true);
+  assert.equal(zr.some((row)=>row.family==='ranking'&&row.metric==='rank'&&row.state==='unchanged_observed'),true);
   assert.equal(zr.some((row)=>row.family==='source_url'&&row.metric==='totalCitations'&&row.state==='increase_observed'),true);
   assert.equal(zr.every((row)=>!row.metric.startsWith('bing-')),true);
 });
@@ -183,51 +288,76 @@ test('Bing page concentration is emitted only with sufficient exported-view read
   assert.equal(blocked.concentrationFindings.some((row)=>row.kind==='bing_page_citation_concentration_candidate'),false);
 });
 
-test('incomplete ZeroRank source URL evidence blocks denominator-dependent concentration',()=>{
+test('accepted ZeroRank v1 source URL unknown exhaustion blocks denominator-dependent concentration',()=>{
   const report=analyze();
   assert.equal(report.zeroRank.endpointCompleteness.sourceUrls,'unknown');
   assert.equal(report.concentrationFindings.some((row)=>row.kind==='zerorank_source_url_citation_concentration_candidate'),false);
 });
 
-test('explicit provider presence versus explicit complete absence emits bounded divergence; unknown never becomes absent',()=>{
-  const current=projectZr();
-  const explicitAbsent:ZeroRankVisibilityProjection={
-    ...current,
-    endpointCompleteness:{...current.endpointCompleteness,rankings:'complete',sourceUrls:'complete'},
-    rankings:current.rankings.map((row)=>({...row,mentions:0,visibilityPercentage:0})),
-    sourceUrls:current.sourceUrls.map((row)=>({...row,totalCitations:0}))
-  };
-  const divergent=analyze({zeroRankCurrent:explicitAbsent});
-  assert.equal(divergent.crossSourceFindings.some((row)=>row.kind==='cross_source_visibility_presence_divergence_candidate'&&row.bingState==='present'&&row.zeroRankState==='absent'),true);
-
-  const unknown:ZeroRankVisibilityProjection={...explicitAbsent,endpointCompleteness:{...explicitAbsent.endpointCompleteness,sourceUrls:'unknown'}};
-  const blocked=analyze({zeroRankCurrent:unknown});
-  assert.equal(blocked.crossSourceFindings.some((row)=>row.kind==='cross_source_visibility_presence_divergence_candidate'),false);
+test('explicit positive ZeroRank evidence remains usable and can diverge from provable Bing absence',()=>{
+  const absent=bingFixture();
+  absent.summary.totalCitations=0;
+  absent.pages=absent.pages.map((row:any)=>({...row,citationCount:0}));
+  const report=analyze({bingCurrent:adaptBing(absent)});
+  assert.equal(report.zeroRank.rankings.some((row)=>row.domain==='example.test'&&(row.mentions??0)>0),true);
+  assert.equal(report.crossSourceFindings.some((row)=>
+    row.kind==='cross_source_visibility_presence_divergence_candidate'
+    && row.bingState==='absent'
+    && row.zeroRankState==='present'
+  ),true);
 });
 
-test('cross-source cohort divergence requires explicit exact mapping; no fuzzy or automatic matching occurs',()=>{
-  const current=projectZr();
-  const explicit:ZeroRankVisibilityProjection={
-    ...current,
-    endpointCompleteness:{...current.endpointCompleteness,chats:'complete'},
-    chats:current.chats.map((row)=>row.promptId==='10'?{...row,citationCount:0}:row)
-  };
-  const noMapping=analyze({zeroRankCurrent:explicit});
+test('missing or zero ZeroRank rows under unknown exhaustion never become absence',()=>{
+  const value=zrFixture();
+  value.endpoints.rankings.rows=[];
+  value.endpoints.rankings.returnedCount=0;
+  value.endpoints.sourceUrls.rows=[];
+  value.endpoints.sourceUrls.returnedCount=0;
+  const report=analyze({zeroRankCurrent:zrInput(value)});
+  assert.equal(report.zeroRank.endpointCompleteness.rankings,'unknown');
+  assert.equal(report.zeroRank.endpointCompleteness.sourceUrls,'unknown');
+  assert.equal(report.crossSourceFindings.some((row)=>row.kind==='cross_source_visibility_presence_divergence_candidate'),false);
+});
+
+test('cross-source cohort divergence requires exact mapping and only contract-producible provider states',()=>{
+  const bingValue=bingFixture();
+  bingValue.groundingQueries[0].citationCount=0;
+  const bingCurrent=adaptBing(bingValue);
+
+  const noMapping=analyze({bingCurrent});
   assert.equal(noMapping.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
 
-  const query=adaptBing().rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
+  const query=bingCurrent.rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
   assert.ok(query?.kind==='grounding_query');
   const mapped=analyze({
-    zeroRankCurrent:explicit,
+    bingCurrent,
     cohortMappings:[{bingGroundingQueryIdentity:query.rowIdentity,zeroRankPromptId:'10'}]
   });
-  assert.equal(mapped.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),true);
+  assert.equal(mapped.crossSourceFindings.some((row)=>
+    row.kind==='cross_source_cohort_coverage_divergence_candidate'
+    && row.bingState==='absent'
+    && row.zeroRankState==='present'
+  ),true);
 
   const invented=analyze({
-    zeroRankCurrent:explicit,
+    bingCurrent,
     cohortMappings:[{bingGroundingQueryIdentity:query.rowIdentity,zeroRankPromptId:'999-not-present'}]
   });
   assert.equal(invented.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
+});
+
+test('zero-citation ZeroRank chat under unknown exhaustion does not become mapped absence',()=>{
+  const value=zrFixture();
+  value.endpoints.chats.rows=value.endpoints.chats.rows.map((row:any)=>({...row,citationCount:0}));
+  const input=zrInput(value);
+  const query=adaptBing().rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
+  assert.ok(query?.kind==='grounding_query');
+  const report=analyze({
+    zeroRankCurrent:input,
+    cohortMappings:[{bingGroundingQueryIdentity:query.rowIdentity,zeroRankPromptId:'10'}]
+  });
+  assert.equal(report.zeroRank.endpointCompleteness.chats,'unknown');
+  assert.equal(report.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
 });
 
 test('Search Analytics attaches exact-page descriptive context and missing page means not_observed, not zero traffic',()=>{
@@ -276,43 +406,37 @@ test('optional 0.11/0.12 contexts are isolated and cannot change Release 0.14 fi
   assert.deepEqual(withContext.crossSourceFindings.map((row)=>row.id),base.crossSourceFindings.map((row)=>row.id));
 });
 
-test('scope mismatch fails closed rather than cross-tenant composition',()=>{
-  const betaZr=projectZr(betaScope);
-  assert.throws(
-    ()=>analyzeAiVisibility({bingCurrent:adaptBing(),zeroRankCurrent:betaZr,evaluatedAt:'2026-09-30T13:00:00.000Z',policy:policy()}),
-    (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='configuration_mismatch'
-  );
-});
-
-test('validated Release 0.6 adaptation still produces identical output around projection use',()=>{
+test('validated Release 0.6 adaptation remains byte-semantic equivalent around Release 0.14 analysis projection',()=>{
   const value=zrFixture();
-  const config=zrConfig();
+  const config=zrConfig(value);
   const before=adaptZeroRankSanitizedEvidence(bytes(value),config);
-  projectValidatedZeroRankVisibility(bytes(value),config);
+  analyze({zeroRankCurrent:{bytes:bytes(value),trustedConfig:config}});
   const after=adaptZeroRankSanitizedEvidence(bytes(value),config);
   assert.deepEqual(after,before);
 });
 
-test('stale or unavailable provider evidence cannot create a cross-source divergence candidate',()=>{
-  const current=projectZr();
-  const explicitAbsent:ZeroRankVisibilityProjection={
-    ...current,
-    observedAt:'2026-09-01T00:00:00.000Z',
-    endpointCompleteness:{...current.endpointCompleteness,rankings:'complete',sourceUrls:'complete'},
-    rankings:current.rankings.map((row)=>({...row,mentions:0,visibilityPercentage:0})),
-    sourceUrls:current.sourceUrls.map((row)=>({...row,totalCitations:0}))
+test('stale or unavailable ZeroRank evidence cannot create a cross-source divergence candidate',()=>{
+  const staleTiming:ZeroRankAdapterConfig['timing']={
+    observedAt:'2026-09-01T12:00:00.000Z',
+    startedAt:'2026-09-01T11:50:00.000Z',
+    endedAt:'2026-09-01T11:58:00.000Z',
+    collectedAt:'2026-09-01T12:01:00.000Z',
+    receivedAt:'2026-09-01T12:02:00.000Z'
   };
-  const stale=analyze({zeroRankCurrent:explicitAbsent});
+  const stale=analyze({zeroRankCurrent:zrInput(zrFixture(),alphaScope,staleTiming)});
   assert.equal(stale.readiness.find((entry)=>entry.providerId==='zerorank')?.reasons.includes('stale'),true);
   assert.equal(stale.crossSourceFindings.length,0);
 
-  const unavailable:ZeroRankVisibilityProjection={
-    ...explicitAbsent,
-    observedAt:'2026-09-30T12:00:00.000Z',
-    availability:{state:'unavailable',reason:'Synthetic provider unavailable'}
-  };
-  const blocked=analyze({zeroRankCurrent:unavailable});
-  assert.equal(blocked.crossSourceFindings.length,0);
+  const unavailable=analyze({
+    zeroRankCurrent:zrInput(
+      zrFixture(),
+      alphaScope,
+      currentTiming,
+      {state:'unavailable',reason:'Synthetic provider unavailable'}
+    )
+  });
+  assert.equal(unavailable.readiness.find((entry)=>entry.providerId==='zerorank')?.reasons.includes('source_unavailable'),true);
+  assert.equal(unavailable.crossSourceFindings.length,0);
 });
 
 test('filtered Bing zero evidence remains unknown for mapped cohort absence',()=>{
@@ -322,15 +446,8 @@ test('filtered Bing zero evidence remains unknown for mapped cohort absence',()=
   const bingCurrent=adaptBing(value);
   const query=bingCurrent.rows.find((row)=>row.kind==='grounding_query'&&row.phrase==='synthetic grouped phrase alpha');
   assert.ok(query?.kind==='grounding_query');
-  const zr=projectZr();
-  const positive:ZeroRankVisibilityProjection={
-    ...zr,
-    endpointCompleteness:{...zr.endpointCompleteness,chats:'complete'},
-    chats:zr.chats.map((row)=>row.promptId==='10'?{...row,citationCount:2}:row)
-  };
   const report=analyze({
     bingCurrent,
-    zeroRankCurrent:positive,
     cohortMappings:[{bingGroundingQueryIdentity:query.rowIdentity,zeroRankPromptId:'10'}]
   });
   assert.equal(report.crossSourceFindings.some((row)=>row.kind==='cross_source_cohort_coverage_divergence_candidate'),false);
@@ -355,17 +472,6 @@ test('Search Analytics optional context requires the same trusted site despite p
   );
 });
 
-test('complete ZeroRank source URL evidence still cannot produce concentration when stale',()=>{
-  const zr=projectZr();
-  const complete:ZeroRankVisibilityProjection={
-    ...zr,
-    observedAt:'2026-09-01T00:00:00.000Z',
-    endpointCompleteness:{...zr.endpointCompleteness,sourceUrls:'complete'}
-  };
-  const report=analyze({zeroRankCurrent:complete});
-  assert.equal(report.concentrationFindings.some((row)=>row.kind==='zerorank_source_url_citation_concentration_candidate'),false);
-});
-
 test('URL-prefix Bing properties remain incompatible with whole-site ZeroRank presence comparison',()=>{
   const value=bingFixture();
   value.property='https://example.test/subpath';
@@ -374,3 +480,14 @@ test('URL-prefix Bing properties remain incompatible with whole-site ZeroRank pr
   assert.equal(report.crossSourceFindings.length,0);
 });
 
+test('analysis input object cannot smuggle a projection beside the raw evidence boundary',()=>{
+  const value=zrFixture();
+  const trustedConfig=zrConfig(value);
+  const projection:ZeroRankVisibilityProjection=projectValidatedZeroRankVisibility(bytes(value),trustedConfig);
+  assert.throws(
+    ()=>analyze({
+      zeroRankCurrent:{bytes:bytes(value),trustedConfig,projection}
+    }),
+    (error:unknown)=>error instanceof AiVisibilityAnalysisError&&error.code==='invalid_input'
+  );
+});
