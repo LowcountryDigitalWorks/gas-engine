@@ -4,7 +4,6 @@ import type { Contract } from '../contracts/wire.js';
 import { hashCanonicalJson, sha256Bytes } from '../lib/canonical-json.js';
 import {
   diffEvidenceCollections,
-  type EvidenceDeltaEntry,
   type EvidenceDeltaReport,
 } from '../analysis/diff.js';
 import {
