@@ -420,14 +420,51 @@ async function recordedMeasurements(
   return records.sort((left, right) => asciiCompare(left.id, right.id));
 }
 
+function outcomeBelongsToMeasurementPlan(
+  outcome: Contract<'outcome'>,
+  owner: Scope,
+  recommendationId: string | undefined,
+  plan: SearchChangeOutcomeCohort,
+): boolean {
+  if (!sameScope(outcome.scope, owner)) return false;
+  if (outcome.recommendationId !== recommendationId) return false;
+  if (!('measurements' in outcome.assessment)) return false;
+
+  const references = outcome.assessment.measurements;
+  if (references.length !== 2 || references.some((reference) => !sameScope(reference.scope, owner))) {
+    return false;
+  }
+
+  const actualIds = references.map((reference) => reference.id).sort(asciiCompare);
+  if (new Set(actualIds).size !== 2) return false;
+  const expectedIds = [
+    plan.baseline.measurement.id,
+    plan.followUp.measurement.id,
+  ].sort(asciiCompare);
+
+  return actualIds[0] === expectedIds[0] && actualIds[1] === expectedIds[1];
+}
+
 async function recordedOutcomes(
   reviewRepository: ReviewLedgerRepository,
   context: TenantContext,
   owner: Scope,
   recommendationId: string | undefined,
+  plan: SearchChangeOutcomeCohort | undefined,
 ): Promise<Contract<'outcome'>[]> {
-  if (recommendationId === undefined) return [];
-  return (await reviewRepository.listOutcomes(context, { scope: owner, recommendationId }))
+  if (plan === undefined) {
+    if (recommendationId === undefined) return [];
+    return (await reviewRepository.listOutcomes(context, { scope: owner, recommendationId }))
+      .map((record) => structuredClone(record))
+      .sort((left, right) => asciiCompare(left.id, right.id));
+  }
+
+  const candidates = await reviewRepository.listOutcomes(context, {
+    scope: owner,
+    ...(recommendationId === undefined ? {} : { recommendationId }),
+  });
+  return candidates
+    .filter((record) => outcomeBelongsToMeasurementPlan(record, owner, recommendationId, plan))
     .map((record) => structuredClone(record))
     .sort((left, right) => asciiCompare(left.id, right.id));
 }
@@ -565,7 +602,13 @@ export async function prepareDecisionCycle(
     recommendationId,
     measurementPlan,
   );
-  const outcomes = await recordedOutcomes(reviewRepository, context, brief.scope, recommendationId);
+  const outcomes = await recordedOutcomes(
+    reviewRepository,
+    context,
+    brief.scope,
+    recommendationId,
+    measurementPlan,
+  );
   const cycleReadiness = readiness(decision, recommendation, measurementPlan, measurements, outcomes);
 
   const base: Omit<DecisionCycleDossier, 'id'> = {
@@ -702,7 +745,19 @@ export async function commitDecisionOutcome(
   const outcome = parseContract('outcome', outcomeInput);
   if (!sameScope(outcome.scope, dossier.scope)) fail('scope_mismatch', 'Human outcome is outside the Release 0.16 decision scope.');
   const expectedRecommendationId = dossier.recommendation?.current?.id ?? dossier.recommendation?.candidate?.id;
-  if (outcome.recommendationId !== undefined
+  if (dossier.measurementPlan !== undefined) {
+    if (!outcomeBelongsToMeasurementPlan(
+      outcome,
+      dossier.scope,
+      expectedRecommendationId,
+      dossier.measurementPlan,
+    )) {
+      fail(
+        'invalid_selection',
+        'Human outcome must reference the exact current Release 0.11 baseline/follow-up measurement pair and recommendation association.',
+      );
+    }
+  } else if (outcome.recommendationId !== undefined
       && expectedRecommendationId !== undefined
       && outcome.recommendationId !== expectedRecommendationId) {
     fail('invalid_selection', 'Human outcome recommendation does not match the Release 0.16 decision recommendation.');
