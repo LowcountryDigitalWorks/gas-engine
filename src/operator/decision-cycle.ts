@@ -405,19 +405,26 @@ async function recordedMeasurements(
   recommendationId: string | undefined,
   plan: SearchChangeOutcomeCohort | undefined,
 ): Promise<Contract<'measurement'>[]> {
-  if (recommendationId !== undefined) {
-    return (await reviewRepository.listMeasurements(context, { scope: owner, recommendationId }))
-      .map((entry) => structuredClone(entry.record))
-      .sort((left, right) => asciiCompare(left.id, right.id));
+  if (plan !== undefined) {
+    const ids = [plan.baseline.measurement.id, plan.followUp.measurement.id];
+    const records: Contract<'measurement'>[] = [];
+    for (const id of ids) {
+      const stored = await reviewRepository.getMeasurement(context, owner, id);
+      if (stored === null) continue;
+      if (stored.recommendationId !== recommendationId) {
+        fail(
+          'invalid_selection',
+          'Persisted current-plan measurement recommendation association does not match the Release 0.16 decision cycle.',
+        );
+      }
+      records.push(structuredClone(stored.record));
+    }
+    return records.sort((left, right) => asciiCompare(left.id, right.id));
   }
-  if (plan === undefined) return [];
-  const ids = [plan.baseline.measurement.id, plan.followUp.measurement.id];
-  const records: Contract<'measurement'>[] = [];
-  for (const id of ids) {
-    const stored = await reviewRepository.getMeasurement(context, owner, id);
-    if (stored !== null) records.push(structuredClone(stored.record));
-  }
-  return records.sort((left, right) => asciiCompare(left.id, right.id));
+  if (recommendationId === undefined) return [];
+  return (await reviewRepository.listMeasurements(context, { scope: owner, recommendationId }))
+    .map((entry) => structuredClone(entry.record))
+    .sort((left, right) => asciiCompare(left.id, right.id));
 }
 
 function outcomeBelongsToMeasurementPlan(
