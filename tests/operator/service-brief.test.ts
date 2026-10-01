@@ -123,7 +123,7 @@ test('service history preserves immutable human semantics and rejects invalid se
   assert.equal(current?.authorityClass, 'internal_review');
   assert.deepEqual(
     brief.serviceHistory?.selectedHistories[0]?.history.map((entry) => entry.lifecycle),
-    ['proposed', 'accepted'],
+    ['proposed', 'in_review', 'accepted'],
   );
   assert.equal(brief.serviceHistory?.selectedHistories[0]?.outcomes[0]?.assessment.direction, 'regressed');
   assert.equal(Object.hasOwn(brief, 'actions'), false);
