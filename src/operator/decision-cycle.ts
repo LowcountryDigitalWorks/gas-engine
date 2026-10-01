@@ -478,7 +478,10 @@ function readiness(
 function dossierIdentityMaterial(
   dossier: Omit<DecisionCycleDossier, 'id'>,
 ): unknown {
-  return dossier;
+  // Bind emitted cycle semantics, but not generated presentation/governance prose.
+  // Authority/limitation wording may be refined without changing the decision evidence.
+  const { authorityNotes: _authorityNotes, limitations: _limitations, ...semantic } = dossier;
+  return semantic;
 }
 
 function buildDossierId(dossier: Omit<DecisionCycleDossier, 'id'>): string {
