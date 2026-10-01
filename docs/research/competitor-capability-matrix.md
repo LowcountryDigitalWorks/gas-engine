@@ -237,3 +237,12 @@ Status: candidate research basis for Issue #44, 2026-09-30.
 Current first-party Bing research used by Issue #44 includes Bing Webmaster Help and Bing Search/Webmaster announcements describing AI Performance, grouped grounding queries, Intents, Topics, Citation Share, Compare, sampling/aggregation, and export behavior. The implementation intentionally relies only on the frozen sanitized evidence contract rather than runtime vendor behavior.
 
 ZeroRank remains a replaceable upstream evidence sensor. Release 0.14 reuses accepted Release 0.6 validation and does not expand ZeroRank runtime authority.
+
+
+## Release 0.15 composition update
+
+Issue #51 converts the earlier “richer operator/report output” watch item into a bounded internal composition candidate rather than a new reporting SaaS or data platform.
+
+Release 0.15 reuses accepted G.A.S. evidence/analysis/history outputs and static HTML patterns. It deliberately does not buy or rebuild AgencyAnalytics-style dashboard/reporting infrastructure, add a generic SEO suite, duplicate provider sensing, or introduce a persistent dashboard tier. The value hypothesis is reduced recurring LDW delivery/reconciliation effort through one deterministic service brief over already accepted evidence.
+
+Issue #49 internal-link research remains a separate future upstream/SiteOne gate and is not implemented by this release.
