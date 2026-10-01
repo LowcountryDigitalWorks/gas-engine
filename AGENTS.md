@@ -105,3 +105,24 @@ Preserve the Release 0.15 composition boundary:
 - no canonical schema, persistence/migration, provider networking, credentials/OAuth, scheduler/delivery, runtime AI/LLM/embedding/BYOK, cloud, automatic recommendation/remediation/action, paid dependency, customer/private evidence, Issue #49 implementation, or Release 1.0 implementation.
 
 See [Release 0.15 guide](docs/service-brief.md) and [ADR 0015](docs/decisions/0015-unified-operator-service-brief.md).
+
+
+## Release 0.16 candidate boundary
+
+Release 0.16 is **CANDIDATE / NOT ACCEPTED** under Issue #54. Development may build only the bounded Human Decision & Measurement Cycle Pack.
+
+Preserve these candidate rules:
+
+- recompute accepted Release 0.15 through `assembleServiceBrief(...)`; never trust a caller-created/mutated `ServiceBrief` as decision evidence;
+- exact human attention selection is bounded to 32 IDs from that recomputed brief and is not ranking, severity, priority, materiality, or business impact;
+- human disposition/rationale remain explicitly human-authored;
+- optional recommendation creation must remain canonical Release 0.8 `internal_review` / `unassessed`, exact-scope, canonical-observation-backed, and separately committed;
+- selected Release 0.15 finding IDs are not canonical observation evidence;
+- recommendation transitions/revisions, measurement writes, and outcomes delegate to accepted Release 0.8 services and expected-revision/evidence/comparability rules;
+- optional measurement planning is only accepted Release 0.11 Search Change composition; do not invent generic methodologies for Discovery, AI Visibility, Page Focus, or other modules;
+- record one prepared measurement at a time; no multi-write pseudo-transaction or rollback framework;
+- numeric movement never selects outcome direction;
+- dossier identity must bind all emitted semantic state canonically; static JSON/HTML remain bounded, deterministic, escaped, CSP-restricted, no-JavaScript, no-network, and non-executing;
+- add no canonical schema, table/migration, dependency, provider networking, credentials/OAuth, scheduler/worker, runtime AI, cloud, task/project manager, automated recommendation/action, customer/private evidence, paid service, Issue #49 implementation, or Release 1.0 implementation.
+
+See [Release 0.16 guide](docs/decision-cycle.md) and [ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md).
