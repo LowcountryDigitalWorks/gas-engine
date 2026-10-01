@@ -141,8 +141,11 @@ export function serviceBriefDiscoveryInput(target = 'https://example.test') {
   };
 }
 
-export function serviceBriefAiInput() {
+export function serviceBriefAiInput(availabilityState: 'available' | 'unavailable' = 'available') {
   const target = 'https://lowcountrydigitalworks.com';
+  const availability = availabilityState === 'available'
+    ? { state: 'available' as const, reference: 'synthetic-service-brief-ai' }
+    : { state: 'unavailable' as const, reason: 'Synthetic provider unavailable.' };
   const bing = JSON.parse(bingText.replaceAll('https://example.test', target)) as MutableJson;
   bing.property = target + '/';
   const bingConfig: BingAiAdapterConfig = {
@@ -151,7 +154,7 @@ export function serviceBriefAiInput() {
     providerConnectionId: 'synthetic-service-brief-bing-ai',
     collectedAt: '2026-09-30T12:11:00.000Z',
     receivedAt: '2026-09-30T12:12:00.000Z',
-    availability: { state: 'available', reference: 'synthetic-service-brief-bing' },
+    availability: structuredClone(availability),
   };
   const zeroRankConfig: ZeroRankAdapterConfig = {
     scope: structuredClone(serviceBriefScope),
@@ -165,7 +168,7 @@ export function serviceBriefAiInput() {
       collectedAt: '2026-09-30T12:01:00.000Z',
       receivedAt: '2026-09-30T12:02:00.000Z',
     },
-    availability: { state: 'available', reference: 'synthetic-service-brief-zr' },
+    availability: structuredClone(availability),
   };
   return {
     bingCurrent: adaptBingAiPerformanceEvidence(bytes(bing), bingConfig),
