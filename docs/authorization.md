@@ -88,3 +88,40 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 ## Stop and return
 
 Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking, generic correlation outside the exact Issue #43 Release 0.13 diagnostic rules, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Issue #31 supplies live authority only for competitor-informed roadmap work and separately frozen bounded internal R&D releases. Release 1.0 cloud deployment, external/customer software, provider-network expansion, paid tooling, and other material scope expansions remain separately gated; Release 0.13 and #31 do not grant those authorities automatically.
+
+## Release 0.14 — AI Visibility Intelligence Pack candidate authorization
+
+**Status: PRODUCT FROZEN / LARGE BOUNDED DEVELOPMENT AUTHORIZED in Issue #44. Draft candidate only; not accepted.**
+
+Accepted protected-main baseline remains Releases 0.1–0.13. Release 0.14 implementation authority is limited to the complete bounded candidate in draft PR #47.
+
+Authorized candidate surfaces:
+
+- strict sanitized Bing AI Performance v1/minor0 adaptation into existing canonical collection/source/observation contracts plus an application-local provider sidecar;
+- accepted Release 0.6 ZeroRank validation/canonical-output reuse plus a bounded application-local provider-specific visibility projection;
+- explicit versioned readiness/comparability policy;
+- within-provider descriptive change states;
+- provider-specific concentration candidates;
+- narrow explicit-presence cross-source divergence;
+- optional exact caller-mapped cohort-coverage divergence;
+- optional already-valid Release 0.10 Search Analytics, Release 0.11 change/outcome, and Release 0.12 page-focus context;
+- deterministic application-local site report;
+- deterministic escaped static read-only operator HTML;
+- publication-safe synthetic tests, docs, ADR, and package version 0.14.0.
+
+This authority does **not** authorize:
+- Bing or ZeroRank live retrieval/API clients;
+- OAuth, credentials, or secrets;
+- canonical wire-schema changes;
+- new persistence/migration;
+- runtime LLM/AI, embeddings, BYOK, prompt execution, or semantic/fuzzy mapping;
+- generic crawler or SERP scraper;
+- scheduler/background worker;
+- universal AEO/GEO/AI-visibility score;
+- provider metric equivalence or raw Bing↔ZeroRank magnitude comparison;
+- business severity/priority, automatic recommendation/remediation, publishing, or external action;
+- cloud resources or paid vendors/subscriptions;
+- customer/private evidence, PHI, or CUI;
+- Release 0.15 or Release 1.0 implementation.
+
+Bing sampled/aggregated semantics, grouped-grounding-query semantics, ZeroRank vendor-specific semantics, and conservative missingness/absence rules are mandatory. Product and final independent exact-head review remain required before Release 0.14 can become accepted.

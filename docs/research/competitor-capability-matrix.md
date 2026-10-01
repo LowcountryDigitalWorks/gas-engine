@@ -215,3 +215,25 @@ Revisit this matrix before each material capability expansion and at least when:
 - current pricing/support/privacy materially changes the BUILD/INTEGRATE/WATCH/SKIP choice.
 
 Do not mechanically expand G.A.S. because a competitor has a feature.
+
+## Release 0.14 research update — Bing AI Performance and ZeroRank semantic boundary
+
+Status: candidate research basis for Issue #44, 2026-09-30.
+
+| Capability / evidence | Bing Webmaster Tools AI Performance | ZeroRank | Release 0.14 treatment |
+| --- | --- | --- | --- |
+| Total citation activity | First-party sampled/aggregated provider reporting | Vendor-specific citation/visibility evidence | Preserve separately; never treat raw magnitudes as equivalent |
+| Page citation counts | Supported in AI Performance views/exports | Source URL citation/usage fields available in accepted sanitized evidence | Exact provider-specific rows; separate concentration candidates |
+| Grounding queries / prompts | Bing returns grouped grounding-query phrases | ZeroRank preserves exact vendor prompt IDs/text | Not equivalent by default; exact caller mapping required for cohort comparison |
+| Query/page relation | Bing can expose grounding-query/page mapping views | ZeroRank chats/sources preserve vendor relations | Use only explicit supplied relations; never invent mappings |
+| Time/change views | Bing trend/Compare are observational | ZeroRank provider evidence may be compared longitudinally under accepted semantics | Provider-specific descriptive change only; no causality |
+| Intent / topic | Bing preview provider classifications | ZeroRank prompt topic/tags when supplied | Preserve as provider evidence; do not promote to universal G.A.S. intent truth |
+| Citation share / visibility / rank | Bing preview citation share is Bing-specific | ZeroRank visibility/rank/share-style metrics are ZeroRank-specific | No cross-provider normalization or magnitude blending |
+| Export | Bing documents CSV/Excel exports | Sanitized upstream ZeroRank artifact already accepted in Release 0.6 | Release 0.14 consumes sanitized local evidence only |
+| AI Performance API | No Release 0.14-authorized public API contract established by current research | Existing upstream read-only ZeroRank sensing remains outside G.A.S. | No provider client, OAuth, or networking in G.A.S. |
+| Sampling/completeness | Bing documents aggregation/sampling and possible view/filter total differences | Endpoint completeness is explicit in accepted sanitized evidence | Unknown/filtered/sampled/incomplete evidence never becomes absence |
+| Action authority | Reporting/measurement source only | Reporting/measurement source only | No automatic content/remediation/publishing action |
+
+Current first-party Bing research used by Issue #44 includes Bing Webmaster Help and Bing Search/Webmaster announcements describing AI Performance, grouped grounding queries, Intents, Topics, Citation Share, Compare, sampling/aggregation, and export behavior. The implementation intentionally relies only on the frozen sanitized evidence contract rather than runtime vendor behavior.
+
+ZeroRank remains a replaceable upstream evidence sensor. Release 0.14 reuses accepted Release 0.6 validation and does not expand ZeroRank runtime authority.

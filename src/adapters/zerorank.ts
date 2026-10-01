@@ -1013,3 +1013,219 @@ export function adaptZeroRankSanitizedEvidence(
   const sourceUrls = buildEndpointCollection(artifact, config, 'sourceUrls', makeSourceUrlsUnits(artifact));
   return { inputSha256, collections: [rankings, prompts, chats, sources, sourceUrls] };
 }
+
+
+export interface ZeroRankVisibilityProjection {
+  readonly providerId: typeof ZERORANK_PROVIDER_ID;
+  readonly inputSha256: string;
+  readonly scope: Scope;
+  readonly trustedTargetOrigin: string;
+  readonly providerConnectionId: string;
+  readonly observedAt: string;
+  readonly collectedAt: string;
+  readonly receivedAt: string;
+  readonly availability: Contract<'sourceRecord'>['availability'];
+  readonly collections: Readonly<Record<ZeroRankEndpointId, string>>;
+  readonly endpointCompleteness: Readonly<Record<ZeroRankEndpointId, 'complete' | 'unknown' | 'failed'>>;
+  readonly rankings: readonly ZeroRankVisibilityRanking[];
+  readonly prompts: readonly ZeroRankVisibilityPrompt[];
+  readonly chats: readonly ZeroRankVisibilityChat[];
+  readonly sources: readonly ZeroRankVisibilitySource[];
+  readonly sourceUrls: readonly ZeroRankVisibilitySourceUrl[];
+}
+
+export interface ZeroRankVisibilityRanking {
+  readonly id: string;
+  readonly domain?: string;
+  readonly rank?: number;
+  readonly mentions?: number;
+  readonly sentiment?: number | string;
+  readonly visibilityPercentage?: number;
+  readonly growth?: number;
+}
+export interface ZeroRankVisibilityPrompt {
+  readonly id: string;
+  readonly text?: string;
+  readonly status?: string;
+  readonly topic?: unknown;
+  readonly tags?: unknown;
+  readonly aiSearchVolume?: number;
+}
+export interface ZeroRankVisibilityChat {
+  readonly id: string;
+  readonly promptId?: string;
+  readonly question?: string;
+  readonly model?: string;
+  readonly sourceCount?: number;
+  readonly citationCount?: number;
+}
+export interface ZeroRankVisibilitySource {
+  readonly id: string;
+  readonly domain?: string;
+  readonly usage?: number;
+  readonly averageCitations?: number;
+  readonly urlCount?: number;
+}
+export interface ZeroRankVisibilitySourceUrl {
+  readonly id: string;
+  readonly sourceUrl?: string;
+  readonly sourceDomain?: string;
+  readonly totalUsage?: number;
+  readonly totalCitations?: number;
+  readonly uniqueChats?: number;
+  readonly usagePercentage?: number;
+}
+
+function projectionString(value: unknown, max = 2_048): string | undefined {
+  return typeof value === 'string' && value.length > 0 && value.length <= max && /\S/.test(value)
+    ? value
+    : undefined;
+}
+function projectionNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && !Object.is(value, -0) && Math.abs(value) <= 1e15
+    ? value
+    : undefined;
+}
+function projectionBoundedUnknown(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  try {
+    const canonical = canonicalJson(value);
+    if (Buffer.byteLength(canonical, 'utf8') > 4_096) return undefined;
+    return JSON.parse(canonical) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+function projectionId(value: unknown, label: string): string {
+  if (typeof value === 'string' && value.length > 0 && value.length <= 128 && /\S/.test(value)) return value;
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return String(value);
+  fail('invalid_source', `Validated ZeroRank ${label} row lost its usable stable ID during projection.`);
+}
+function endpointProjectionCompleteness(endpoint: ListEndpointLike): 'complete' | 'unknown' | 'failed' {
+  if (endpoint.status === 'failed') return 'failed';
+  return endpoint.completeness === 'complete' ? 'complete' : 'unknown';
+}
+
+/**
+ * Build a bounded Release 0.14 application-local visibility projection only after the
+ * accepted Release 0.6 adapter has successfully validated and adapted the same bytes.
+ * This is deliberately not a second ZeroRank parser and does not change Release 0.6 output.
+ */
+export function projectValidatedZeroRankVisibility(
+  bytes: Uint8Array,
+  trustedConfig: ZeroRankAdapterConfig,
+): ZeroRankVisibilityProjection {
+  const adapted = adaptZeroRankSanitizedEvidence(bytes, trustedConfig);
+  const { artifact, inputSha256 } = parseInput(bytes);
+  const config = parseConfig(trustedConfig);
+  validateArtifactSemantics(artifact, config);
+
+  const rankings = artifact.endpoints.rankings.rows.map((row) => {
+    const id = projectionId(row.id, 'ranking');
+    const domain = projectionString(row.domain);
+    const sentiment = projectionNumber(row.sentiment) ?? projectionString(row.sentiment, 256);
+    return {
+      id,
+      ...(domain === undefined ? {} : { domain }),
+      ...(projectionNumber(row.rank) === undefined ? {} : { rank: projectionNumber(row.rank)! }),
+      ...(projectionNumber(row.mentions) === undefined ? {} : { mentions: projectionNumber(row.mentions)! }),
+      ...(sentiment === undefined ? {} : { sentiment }),
+      ...(projectionNumber(row.visibilityPercentage) === undefined ? {} : { visibilityPercentage: projectionNumber(row.visibilityPercentage)! }),
+      ...(projectionNumber(row.growth) === undefined ? {} : { growth: projectionNumber(row.growth)! }),
+    } satisfies ZeroRankVisibilityRanking;
+  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+  const prompts = artifact.endpoints.prompts.rows.map((row) => {
+    const id = projectionId(row.id, 'prompt');
+    const text = projectionString(row.text);
+    const status = projectionString(row.status, 256);
+    const topic = projectionBoundedUnknown(row.topic);
+    const tags = projectionBoundedUnknown(row.tags);
+    const aiSearchVolume = projectionNumber(row.aiSearchVolume);
+    return {
+      id,
+      ...(text === undefined ? {} : { text }),
+      ...(status === undefined ? {} : { status }),
+      ...(topic === undefined ? {} : { topic }),
+      ...(tags === undefined ? {} : { tags }),
+      ...(aiSearchVolume === undefined ? {} : { aiSearchVolume }),
+    } satisfies ZeroRankVisibilityPrompt;
+  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+  const chats = artifact.endpoints.chats.rows.map((row) => {
+    const id = projectionId(row.id, 'chat');
+    const promptId = row.promptId === undefined ? undefined : projectionId(row.promptId, 'chat prompt reference');
+    const question = projectionString(row.question);
+    const model = projectionString(row.aiModel, 256);
+    const sourceCount = projectionNumber(row.sourceCount);
+    const citationCount = projectionNumber(row.citationCount);
+    return {
+      id,
+      ...(promptId === undefined ? {} : { promptId }),
+      ...(question === undefined ? {} : { question }),
+      ...(model === undefined ? {} : { model }),
+      ...(sourceCount === undefined ? {} : { sourceCount }),
+      ...(citationCount === undefined ? {} : { citationCount }),
+    } satisfies ZeroRankVisibilityChat;
+  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+  const sources = artifact.endpoints.sources.rows.map((row) => {
+    const id = projectionId(row.id, 'source');
+    const domain = projectionString(row.domain);
+    const usage = projectionNumber(row.usage);
+    const averageCitations = projectionNumber(row.avgCitations);
+    const urlCount = projectionNumber(row.urlCount);
+    return {
+      id,
+      ...(domain === undefined ? {} : { domain }),
+      ...(usage === undefined ? {} : { usage }),
+      ...(averageCitations === undefined ? {} : { averageCitations }),
+      ...(urlCount === undefined ? {} : { urlCount }),
+    } satisfies ZeroRankVisibilitySource;
+  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+  const sourceUrls = artifact.endpoints.sourceUrls.rows.map((row) => {
+    const id = projectionId(row.id, 'source URL');
+    const sourceUrl = projectionString(row.sourceUrl);
+    const sourceDomain = projectionString(row.sourceDomain);
+    const totalUsage = projectionNumber(row.totalUsage);
+    const totalCitations = projectionNumber(row.totalCitations);
+    const uniqueChats = projectionNumber(row.uniqueChats);
+    const usagePercentage = projectionNumber(row.usagePercentage);
+    return {
+      id,
+      ...(sourceUrl === undefined ? {} : { sourceUrl }),
+      ...(sourceDomain === undefined ? {} : { sourceDomain }),
+      ...(totalUsage === undefined ? {} : { totalUsage }),
+      ...(totalCitations === undefined ? {} : { totalCitations }),
+      ...(uniqueChats === undefined ? {} : { uniqueChats }),
+      ...(usagePercentage === undefined ? {} : { usagePercentage }),
+    } satisfies ZeroRankVisibilitySourceUrl;
+  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+  const collections = Object.fromEntries(adapted.collections.map((entry) => [entry.endpoint, entry.collectionId])) as Record<ZeroRankEndpointId, string>;
+  return {
+    providerId: ZERORANK_PROVIDER_ID,
+    inputSha256,
+    scope: structuredClone(config.scope),
+    trustedTargetOrigin: config.expectedTargetOrigin,
+    providerConnectionId: config.providerConnectionId,
+    observedAt: config.timing.observedAt,
+    collectedAt: config.timing.collectedAt,
+    receivedAt: config.timing.receivedAt,
+    availability: structuredClone(config.availability),
+    collections,
+    endpointCompleteness: {
+      rankings: endpointProjectionCompleteness(artifact.endpoints.rankings as ListEndpointLike),
+      prompts: endpointProjectionCompleteness(artifact.endpoints.prompts as ListEndpointLike),
+      chats: endpointProjectionCompleteness(artifact.endpoints.chats as ListEndpointLike),
+      sources: endpointProjectionCompleteness(artifact.endpoints.sources as ListEndpointLike),
+      sourceUrls: endpointProjectionCompleteness(artifact.endpoints.sourceUrls as ListEndpointLike),
+    },
+    rankings,
+    prompts,
+    chats,
+    sources,
+    sourceUrls,
+  };
+}

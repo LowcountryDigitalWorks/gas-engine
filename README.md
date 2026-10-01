@@ -18,6 +18,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.13 is accepted and merged on `main` through PR #45.** It adds one pure/local Discovery Diagnostics Pack over sanitized Google/Bing/Yandex/IndexNow-style evidence: provider-preserving adaptation into existing canonical observations, exact-URL cross-engine readiness/findings, descriptive IndexNow submission context, optional accepted Release 0.10 Search Analytics context, deterministic site rollups, and a compact static operator preview. It adds no provider networking/credentials, canonical schema or persistence change, generic crawler, automatic remediation/recommendation, runtime AI, cloud resource, customer evidence, paid service, or new dependency. See the [Release 0.13 adapter guide](docs/adapters/discovery-diagnostics.md), [Discovery Diagnostics guide](docs/discovery-diagnostics.md), and [ADR 0013](docs/decisions/0013-discovery-diagnostics-pack.md).
 
+**Release 0.14 is currently a Product-authorized draft candidate in PR #47, not an accepted release.** The candidate adds a strict local Bing AI Performance sanitized-evidence adapter, accepted Release 0.6 ZeroRank validation reuse with a bounded provider-specific projection, explicit readiness/comparability, within-provider descriptive change, provider-specific concentration, narrowly bounded cross-source presence/coverage divergence, optional accepted Release 0.10/0.11/0.12 context, and a deterministic static read-only operator report. Bing evidence remains explicitly sampled/aggregated, grounding queries remain grouped provider phrases rather than exact user prompts, and Bing/ZeroRank raw metric magnitudes are never treated as equivalent. No provider networking, canonical schema/persistence change, runtime AI, action authority, cloud resource, paid service, or new dependency is added. See the [Bing AI adapter guide](docs/adapters/bing-ai-performance.md), [Release 0.14 AI Visibility guide](docs/ai-visibility-intelligence.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -53,7 +55,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, and the Release 0.13 synthetic discovery-diagnostics preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, and the Release 0.14 draft-candidate synthetic AI-visibility preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -103,3 +105,7 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Engineering authorization boundary](docs/authorization.md)
 - [Security and private reporting](SECURITY.md)
 - [Agent instructions](AGENTS.md)
+
+- [Release 0.14 draft-candidate Bing AI Performance adapter](docs/adapters/bing-ai-performance.md)
+- [Release 0.14 draft-candidate AI Visibility Intelligence guide](docs/ai-visibility-intelligence.md)
+- [ADR 0014 — provider-preserving AI visibility intelligence](docs/decisions/0014-ai-visibility-intelligence-pack.md)
