@@ -17,6 +17,7 @@ import {
   recordHumanOutcome,
   recordMeasurement,
   reviseHumanRecommendation,
+  transitionHumanRecommendation,
 } from '../../src/review/service.js';
 import {
   serviceBriefAiInput,
@@ -415,6 +416,22 @@ test('review-history identity changes when the same recommendation receives a se
     'Synthetic human-authored rationale changed for Release 0.15 identity regression coverage.');
   assert.notEqual(reviewHistoryIdentity(changed), reviewHistoryIdentity(brief));
   assert.notEqual(changed.id, brief.id);
+
+  const revised = await prepared.review.getCurrentRecommendation(alpha, serviceBriefScope, current.id);
+  assert.ok(revised);
+  await transitionHumanRecommendation(prepared.review, prepared.evidence, alpha, {
+    scope: revised.scope,
+    id: revised.id,
+    expectedCurrentRevision: revised.revision,
+    lifecycle: 'superseded',
+    updatedAt: '2026-09-01T06:00:00.000Z',
+  });
+  const lifecycleChanged = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  const lifecycleCurrent = lifecycleChanged.serviceHistory?.currentRecommendations.find((entry) => entry.id === current.id);
+  assert.equal(lifecycleCurrent?.lifecycle, 'superseded');
+  assert.equal(lifecycleCurrent?.revision, revised.revision + 1);
+  assert.notEqual(reviewHistoryIdentity(lifecycleChanged), reviewHistoryIdentity(changed));
+  assert.notEqual(lifecycleChanged.id, changed.id);
 });
 
 test('review-history identity binds unselected scope measurement counts', async (t) => {
