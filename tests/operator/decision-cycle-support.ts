@@ -1,5 +1,6 @@
 import type { TestContext } from 'node:test';
 import type { Contract } from '../../src/contracts/wire.js';
+import { alpha } from '../persistence/helpers.js';
 import {
   assembleServiceBrief,
 } from '../../src/operator/service-brief.js';
@@ -54,7 +55,7 @@ export async function decisionCycleFixture(t: TestContext): Promise<{
     policy: serviceBriefPolicy(),
     searchAnalytics: modules.searchAnalytics,
   };
-  const brief = await assembleServiceBrief(prepared.evidence, prepared.review, (await import('../persistence/helpers.js')).alpha, serviceBriefRequest);
+  const brief = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, serviceBriefRequest);
   const selected = brief.attentionRegister.find((item) =>
     item.moduleId === 'search_analytics' && (item.identity.url !== undefined || item.identity.query !== undefined),
   ) ?? brief.attentionRegister[0];
@@ -93,7 +94,6 @@ export async function decisionCycleFixture(t: TestContext): Promise<{
     generatedAt: '2026-10-01T20:00:00.000Z',
     evaluatedAt: '2026-09-16T09:00:00.000Z',
   };
-  const { alpha } = await import('../persistence/helpers.js');
   const dossier = await prepareDecisionCycle(prepared.evidence, prepared.review, alpha, input);
   return {
     dossier,
