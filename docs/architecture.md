@@ -169,9 +169,10 @@ sanitized Bing AI Performance artifact
   -> accepted collection/source/observation wire contracts
   -> bounded Bing sidecar
 
-accepted sanitized ZeroRank artifact
+accepted sanitized ZeroRank artifact + trusted adapter config
+  -> Release 0.14 analysis boundary
   -> accepted Release 0.6 validation/adaptation
-  -> bounded ZeroRank visibility projection
+  -> internally produced bounded ZeroRank visibility projection
 
 validated provider windows
   -> explicit readiness/comparability
