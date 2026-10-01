@@ -34,9 +34,9 @@ CURRENT/OPTIONAL BASELINE PROVIDER WINDOWS
 
 ## ZeroRank reuse
 
-`projectValidatedZeroRankVisibility(...)` invokes the accepted Release 0.6 `adaptZeroRankSanitizedEvidence(...)` path before projection. It does not introduce a second independently evolving source parser.
+`analyzeAiVisibility(...)` accepts ZeroRank only as the sanitized artifact bytes plus trusted `ZeroRankAdapterConfig`. Inside analysis it synchronously invokes `projectValidatedZeroRankVisibility(...)`, which in turn invokes the accepted Release 0.6 `adaptZeroRankSanitizedEvidence(...)` path before projection. Caller-created or caller-mutated `ZeroRankVisibilityProjection` values are not an analysis input.
 
-Existing Release 0.6 canonical output and fail-closed validation remain authoritative. The projection exposes only bounded provider-specific fields needed for Release 0.14 reporting.
+Existing Release 0.6 canonical output and fail-closed validation remain authoritative. The internally produced projection exposes only bounded provider-specific fields needed for Release 0.14 reporting. Successful rankings, chats, sources, and source-URL endpoints preserve unknown exhaustion under artifact v1; only prompts can become complete when the accepted pagination predicate proves exhaustion.
 
 ZeroRank visibility, rank, mentions, sentiment, growth, usage, share-style values, and source-URL citation data remain ZeroRank-specific. They are never renamed into Bing metrics.
 
