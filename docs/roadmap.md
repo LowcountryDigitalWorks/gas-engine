@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.13 are accepted and merged. Release 1.0 remains separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.14 are accepted and merged. Release 1.0 remains separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -46,7 +46,7 @@ This sequence is not self-executing. Each functional release still requires exac
 
 ## Gates and evaluation
 
-Releases 0.1–0.13 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.14 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Future functional releases require adversarial synthetic second-tenant testing for every newly implemented owned surface. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
@@ -60,9 +60,9 @@ Cross-provider/generic correlation, direction/severity/materiality/business-impa
 
 Internal automation does not establish commercial demand. Audit-first/service-first validation continues independently; this roadmap offers no public pricing, SLA, or outcome guarantees. See [authorization](authorization.md) and [architecture](architecture.md).
 
-## Release 0.14 — current Product-authorized draft candidate
+## Release 0.14 — accepted AI Visibility Intelligence Pack
 
-Release 0.14 is the current large bounded development candidate under Issue #44. It is **not accepted** while PR #47 remains draft.
+Release 0.14 is **accepted and merged through PR #47** under Issue #44. Preserve the accepted provider-specific evidence semantics, conservative missingness/absence rules, and the ZeroRank raw-evidence/trusted-config analysis boundary.
 
 The candidate combines:
 
@@ -81,4 +81,4 @@ The product boundary is deliberately narrower than a general AEO/GEO platform: n
 
 Incremental recurring-cost target remains $0. Existing Node/Zod/canonical contracts are sufficient for the candidate.
 
-Release 0.15 remains separate and unauthorized in this PR. Its current likely direction—Internal-Link / Authority Opportunity Intelligence—must be revalidated after Release 0.14 acceptance and must not cause an external backlink crawler to be built without new evidence/authorization.
+Release 0.15 remains separate and unauthorized. Its current likely direction—Internal-Link / Authority Opportunity Intelligence—must be separately revalidated and authorized before implementation and must not cause an external backlink crawler to be built without new evidence/authorization.
