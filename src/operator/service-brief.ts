@@ -794,7 +794,6 @@ function buildManifest(
       identity,
       providerIds: uniqueSorted(providerIds),
       scope: structuredClone(request.scope),
-      trustedTarget: undefined,
       target: request.trustedTarget,
       sourcePeriods: sourcePeriods.map((value) => structuredClone(value)),
       ...(evaluatedAt === undefined ? {} : { evaluatedAt }),
