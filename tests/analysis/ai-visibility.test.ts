@@ -52,7 +52,8 @@ function bingFixture(targetOrigin='https://lowcountrydigitalworks.com'):MutableJ
 }
 function zrFixture():MutableJson{return JSON.parse(zrText) as MutableJson;}
 function searchFixture(targetOrigin='https://lowcountrydigitalworks.com'):MutableJson{
-  return JSON.parse(searchText.replaceAll('https://example.test',targetOrigin)) as MutableJson;
+  const hostname=new URL(targetOrigin).hostname;
+  return JSON.parse(searchText.replaceAll('example.test',hostname)) as MutableJson;
 }
 function bingConfig(value:MutableJson,scope:Scope=alphaScope):BingAiAdapterConfig{
   return {
