@@ -1,10 +1,10 @@
-# Release 0.14 candidate — AI Visibility Intelligence Pack
+# Release 0.14 — AI Visibility Intelligence Pack
 
-Status: **PRODUCT-AUTHORIZED DRAFT CANDIDATE — not accepted**
+Status: **ACCEPTED AND MERGED through PR #47**
 
 Issue: [#44 — Release 0.14 — AI Visibility Intelligence Pack](https://github.com/LowcountryDigitalWorks/gas-engine/issues/44)
 
-Accepted baseline remains Releases 0.1–0.13 on `main`. This document describes the Release 0.14 candidate only.
+Accepted baseline is Releases 0.1–0.14 on `main`. This document describes the accepted Release 0.14 boundary.
 
 ## Objective
 
@@ -44,7 +44,7 @@ ZeroRank visibility, rank, mentions, sentiment, growth, usage, share-style value
 
 Provider evidence remains visible even when it cannot support a finding.
 
-The candidate distinguishes:
+The accepted release distinguishes:
 - unavailable source;
 - preliminary or processing Bing evidence;
 - stale evidence;
@@ -136,6 +136,6 @@ Public Release 0.14 evidence is synthetic only.
 
 No canonical schema, persistence migration, runtime network, provider credential, AI runtime, new dependency, cloud resource, or paid service is introduced.
 
-Incremental recurring cost remains **$0** for this bounded candidate.
+Incremental recurring cost remains **$0** for this accepted bounded release.
 
-Release 0.15 is explicitly outside this PR.
+Release 0.15 remains explicitly outside the accepted Release 0.14 boundary and requires separate authorization.

@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.13 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.14 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.13 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.13 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.14 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.14 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -89,11 +89,11 @@ Release 1.0 cloud deployment remains separately gated. The gate must assess curr
 
 Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking, generic correlation outside the exact Issue #43 Release 0.13 diagnostic rules, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Issue #31 supplies live authority only for competitor-informed roadmap work and separately frozen bounded internal R&D releases. Release 1.0 cloud deployment, external/customer software, provider-network expansion, paid tooling, and other material scope expansions remain separately gated; Release 0.13 and #31 do not grant those authorities automatically.
 
-## Release 0.14 — AI Visibility Intelligence Pack candidate authorization
+## Release 0.14 — accepted AI Visibility Intelligence Pack
 
-**Status: PRODUCT FROZEN / LARGE BOUNDED DEVELOPMENT AUTHORIZED in Issue #44. Draft candidate only; not accepted.**
+**Status: ACCEPTED AND MERGED through PR #47 after Product exact-head review, bounded semantic-integrity corrections, final independent exact-head re-review, protected-main squash merge, and post-merge Contracts verification.**
 
-Accepted protected-main baseline remains Releases 0.1–0.13. Release 0.14 implementation authority is limited to the complete bounded candidate in draft PR #47.
+Accepted protected-main baseline is Releases 0.1–0.14. Release 0.14 is bounded to the merged PR #47 implementation and does not expand authority beyond the semantics documented here.
 
 Authorized candidate surfaces:
 
@@ -124,4 +124,4 @@ This authority does **not** authorize:
 - customer/private evidence, PHI, or CUI;
 - Release 0.15 or Release 1.0 implementation.
 
-Bing sampled/aggregated semantics, grouped-grounding-query semantics, ZeroRank vendor-specific semantics, and conservative missingness/absence rules are mandatory. Product and final independent exact-head review remain required before Release 0.14 can become accepted.
+Bing sampled/aggregated semantics, grouped-grounding-query semantics, ZeroRank vendor-specific semantics, conservative missingness/absence rules, and the internal ZeroRank raw-evidence/trusted-config analysis boundary are mandatory accepted Release 0.14 behavior.

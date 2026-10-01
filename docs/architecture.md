@@ -159,9 +159,9 @@ Internal automation does not prove commercial demand. The audit-first/service-fi
 
 Publish only safe architecture and clearly synthetic fixtures. No customer evidence, private vendor payloads, confidential business records, credentials, or secrets belong in public GitHub. Release 0.5's checked-in WQT-style fixture uses only `example-site` / `https://example.test`; Release 0.6's checked-in ZeroRank fixture is explicitly synthetic; Releases 0.7–0.8 use canonical synthetic scenarios and synthetic tenant isolation only. There is no software license grant. See [authorization](authorization.md), [roadmap](roadmap.md), and ADRs [0001](decisions/0001-evidence-core.md), [0003](decisions/0003-authenticated-ingestion-boundary.md), [0004](decisions/0004-wqt-normalized-evidence-adapter.md), [0005](decisions/0005-zerorank-sanitized-evidence-adapter.md), [0006](decisions/0006-longitudinal-evidence-diff.md), and [0007](decisions/0007-human-review-measurement-ledger.md).
 
-## Release 0.14 draft-candidate AI visibility seam
+## Release 0.14 accepted AI visibility seam
 
-The accepted architecture remains unchanged through Release 0.13. Release 0.14 is a draft application-local extension under Issue #44 and PR #47.
+Release 0.14 is an accepted application-local extension under Issue #44 and merged PR #47. The accepted architecture now includes this bounded AI-visibility seam while preserving prior canonical, persistence, authority, and runtime boundaries.
 
 ```text
 sanitized Bing AI Performance artifact
