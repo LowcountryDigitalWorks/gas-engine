@@ -82,6 +82,26 @@ Preserve these Release 0.14 boundaries:
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
 - Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 0.15 implementation.
-- Package version is 0.14.0. Preserve this accepted Release 0.14 boundary until a separately authorized later release changes it.
+- Package candidate version is 0.15.0 on the authorized Release 0.15 branch. Releases 0.1–0.14 remain the accepted baseline until Product accepts and merges Release 0.15.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
+
+
+## Release 0.15 candidate boundary
+
+Release 0.15 is **CANDIDATE / NOT ACCEPTED** under Issue #51 and draft/ready PR #52 until Product completes whole-pack and independent exact-head review.
+
+Preserve the Release 0.15 composition boundary:
+
+- use one already-issued trusted TenantContext for repository-backed reads; IDs, URLs, scope-shaped data, report IDs, and provider evidence never mint authority;
+- reuse accepted Release 0.7–0.14 producers/validators instead of parallel parsers, completeness rules, or alternate analysis semantics;
+- module readiness is fixed and descriptive only: not_supplied, ready, limited, not_ready, unavailable, with underlying reasons preserved;
+- the attention register is deterministic navigation only, never priority, severity, business impact, remediation order, or a task queue;
+- exact-page composition uses exact URL string identity only; do not normalize slash/query/canonical/redirect/protocol/host/case variants into equivalence;
+- human recommendation priority and outcome direction remain canonical/human-declared; Release 0.15 does not recalculate them;
+- the provenance manifest references accepted evidence identities and does not embed raw provider artifacts;
+- service-brief identity binds compact semantic material, not rendered HTML/CSS, filesystem paths, prose formatting, or raw provider bytes;
+- JSON/HTML outputs are bounded and fail closed rather than truncate;
+- no canonical schema, persistence/migration, provider networking, credentials/OAuth, scheduler/delivery, runtime AI/LLM/embedding/BYOK, cloud, automatic recommendation/remediation/action, paid dependency, customer/private evidence, Issue #49 implementation, or Release 1.0 implementation.
+
+See [Release 0.15 guide](docs/service-brief.md) and [ADR 0015](docs/decisions/0015-unified-operator-service-brief.md).
