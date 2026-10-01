@@ -14,6 +14,11 @@ import {
 } from '../../src/operator/service-brief-html.js';
 import { alpha, batch, beta } from '../persistence/helpers.js';
 import {
+  recordHumanOutcome,
+  recordMeasurement,
+  reviseHumanRecommendation,
+} from '../../src/review/service.js';
+import {
   serviceBriefAiInput,
   serviceBriefDiscoveryInput,
   serviceBriefScope,
@@ -21,9 +26,16 @@ import {
 } from './service-brief-fixtures.js';
 import {
   baseServiceBrief,
+  measurement,
   prepareServiceBriefRepositories,
   serviceBriefPolicy,
 } from './service-brief-repo-support.js';
+
+function reviewHistoryIdentity(brief: ServiceBrief): string {
+  const entry = brief.provenanceManifest.find((item) => item.moduleId === 'review_history');
+  assert.ok(entry, 'review_history manifest entry must exist when service history is supplied');
+  return entry.identity;
+}
 
 test('strict Release 0.15 request rejects unknown fields and policy ceilings', async (t) => {
   const prepared = await prepareServiceBriefRepositories(t);
@@ -368,4 +380,160 @@ test('hard ceilings do not exceed Product-authorized Release 0.15 bounds', () =>
   assert.equal(SERVICE_BRIEF_HARD_LIMITS.detailedRecommendationHistories <= 10, true);
   assert.equal(SERVICE_BRIEF_HARD_LIMITS.searchChanges <= 32, true);
   assert.equal(SERVICE_BRIEF_HARD_LIMITS.pageFocusReports <= 64, true);
+});
+
+
+test('review-history semantic identity is stable for identical service-history output', async (t) => {
+  const { brief, prepared, request } = await baseServiceBrief(t);
+  const second = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+
+  assert.equal(reviewHistoryIdentity(second), reviewHistoryIdentity(brief));
+  assert.equal(second.id, brief.id);
+  assert.deepEqual(second.serviceHistory, brief.serviceHistory);
+});
+
+test('review-history identity changes when the same recommendation receives a semantic content revision', async (t) => {
+  const { brief, prepared, request } = await baseServiceBrief(t);
+  const current = await prepared.review.getCurrentRecommendation(alpha, serviceBriefScope, prepared.accepted.id);
+  assert.ok(current);
+
+  await reviseHumanRecommendation(prepared.review, prepared.evidence, alpha, {
+    scope: current.scope,
+    expectedCurrentRevision: current.revision,
+    recommendation: {
+      ...structuredClone(current),
+      rationale: 'Synthetic human-authored rationale changed for Release 0.15 identity regression coverage.',
+      revision: current.revision + 1,
+      updatedAt: '2026-09-01T05:00:00.000Z',
+    },
+  });
+
+  const changed = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  const changedCurrent = changed.serviceHistory?.currentRecommendations.find((entry) => entry.id === current.id);
+  assert.equal(changedCurrent?.revision, current.revision + 1);
+  assert.equal(changedCurrent?.rationale,
+    'Synthetic human-authored rationale changed for Release 0.15 identity regression coverage.');
+  assert.notEqual(reviewHistoryIdentity(changed), reviewHistoryIdentity(brief));
+  assert.notEqual(changed.id, brief.id);
+});
+
+test('review-history identity binds unselected scope measurement counts', async (t) => {
+  const { brief, prepared, request } = await baseServiceBrief(t);
+  const observation = prepared.pair.current.observations[0]!.record;
+  const extra = measurement(
+    observation,
+    'synthetic-service-brief-unselected-measurement',
+    { role: 'baseline' },
+  );
+  const selectedMeasurementCount = brief.serviceHistory?.selectedHistories[0]?.measurements.length;
+
+  await recordMeasurement(prepared.review, prepared.evidence, alpha, {
+    measurement: extra,
+    cohortObservationId: observation.id,
+  });
+
+  const changed = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  assert.equal(changed.serviceHistory?.measurementStateCounts.measured,
+    (brief.serviceHistory?.measurementStateCounts.measured ?? 0) + 1);
+  assert.equal(changed.serviceHistory?.selectedHistories[0]?.measurements.length, selectedMeasurementCount);
+  assert.notEqual(reviewHistoryIdentity(changed), reviewHistoryIdentity(brief));
+  assert.notEqual(changed.id, brief.id);
+});
+
+test('review-history identity binds unselected scope outcome counts', async (t) => {
+  const { brief, prepared, request } = await baseServiceBrief(t);
+  const selectedOutcomeCount = brief.serviceHistory?.selectedHistories[0]?.outcomes.length;
+
+  await recordHumanOutcome(prepared.review, alpha, {
+    outcome: {
+      schemaVersion: '1.0',
+      kind: 'outcome',
+      id: 'synthetic-service-brief-unselected-outcome',
+      scope: structuredClone(serviceBriefScope),
+      assessment: {
+        direction: 'not_measured',
+        reason: 'Synthetic unselected scope outcome for Release 0.15 identity regression coverage.',
+      },
+      attribution: {
+        strength: 'none',
+        reason: 'No attribution is asserted for this synthetic unselected outcome.',
+      },
+      createdAt: '2026-09-19T00:00:00.000Z',
+    },
+  });
+
+  const changed = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  assert.equal(changed.serviceHistory?.outcomeDirectionCounts.not_measured,
+    (brief.serviceHistory?.outcomeDirectionCounts.not_measured ?? 0) + 1);
+  assert.equal(changed.serviceHistory?.selectedHistories[0]?.outcomes.length, selectedOutcomeCount);
+  assert.notEqual(reviewHistoryIdentity(changed), reviewHistoryIdentity(brief));
+  assert.notEqual(changed.id, brief.id);
+});
+
+test('review-history identity binds selected immutable history, evidence, measurements and outcomes', async (t) => {
+  const { brief, prepared, request } = await baseServiceBrief(t);
+  const current = await prepared.review.getCurrentRecommendation(alpha, serviceBriefScope, prepared.accepted.id);
+  assert.ok(current);
+  const currentObservation = prepared.pair.current.observations[0]!.record;
+
+  await reviseHumanRecommendation(prepared.review, prepared.evidence, alpha, {
+    scope: current.scope,
+    expectedCurrentRevision: current.revision,
+    recommendation: {
+      ...structuredClone(current),
+      evidence: [
+        ...current.evidence.map((entry) => structuredClone(entry)),
+        { scope: structuredClone(current.scope), kind: 'observation', id: currentObservation.id },
+      ],
+      revision: current.revision + 1,
+      updatedAt: '2026-09-01T05:30:00.000Z',
+    },
+  });
+  const withEvidence = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  assert.equal(withEvidence.serviceHistory?.selectedHistories[0]?.history.length,
+    (brief.serviceHistory?.selectedHistories[0]?.history.length ?? 0) + 1);
+  assert.equal(withEvidence.serviceHistory?.selectedHistories[0]?.evidence.length,
+    (brief.serviceHistory?.selectedHistories[0]?.evidence.length ?? 0) + 1);
+  assert.notEqual(reviewHistoryIdentity(withEvidence), reviewHistoryIdentity(brief));
+  assert.notEqual(withEvidence.id, brief.id);
+
+  const selectedMeasurement = measurement(
+    currentObservation,
+    'synthetic-service-brief-selected-measurement',
+    { role: 'baseline' },
+  );
+  await recordMeasurement(prepared.review, prepared.evidence, alpha, {
+    measurement: selectedMeasurement,
+    cohortObservationId: currentObservation.id,
+    recommendationId: current.id,
+  });
+  const withMeasurement = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  assert.equal(withMeasurement.serviceHistory?.selectedHistories[0]?.measurements.length,
+    (withEvidence.serviceHistory?.selectedHistories[0]?.measurements.length ?? 0) + 1);
+  assert.notEqual(reviewHistoryIdentity(withMeasurement), reviewHistoryIdentity(withEvidence));
+  assert.notEqual(withMeasurement.id, withEvidence.id);
+
+  await recordHumanOutcome(prepared.review, alpha, {
+    outcome: {
+      schemaVersion: '1.0',
+      kind: 'outcome',
+      id: 'synthetic-service-brief-selected-outcome',
+      scope: structuredClone(serviceBriefScope),
+      recommendationId: current.id,
+      assessment: {
+        direction: 'not_measured',
+        reason: 'Synthetic selected outcome for Release 0.15 identity regression coverage.',
+      },
+      attribution: {
+        strength: 'none',
+        reason: 'No attribution is asserted for this synthetic selected outcome.',
+      },
+      createdAt: '2026-09-19T01:00:00.000Z',
+    },
+  });
+  const withOutcome = await assembleServiceBrief(prepared.evidence, prepared.review, alpha, request);
+  assert.equal(withOutcome.serviceHistory?.selectedHistories[0]?.outcomes.length,
+    (withMeasurement.serviceHistory?.selectedHistories[0]?.outcomes.length ?? 0) + 1);
+  assert.notEqual(reviewHistoryIdentity(withOutcome), reviewHistoryIdentity(withMeasurement));
+  assert.notEqual(withOutcome.id, withMeasurement.id);
 });
