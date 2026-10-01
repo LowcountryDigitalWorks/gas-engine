@@ -17,6 +17,8 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.11 | Accepted: Search Change Annotation & Outcome Cohorts; bind one human/trusted change annotation to one exact Release 0.10 row/metric, prepare existing Release 0.8 baseline/follow-up measurements, preserve readiness/coverage, bind follow-up identity to the exact canonical baseline relationship, and leave outcome direction human-declared without causal inference, provider scheduling, or new persistence. See [search-change guide](search-change-outcome-cohorts.md) and [ADR 0011](decisions/0011-search-change-outcome-cohorts.md). |
 | 0.12 | Accepted: Page-Focus Candidate Analysis; aggregate every row for one exact Release 0.10 page into strict caller-supplied query clusters, apply explicit threshold policy, emit candidate/no-candidate/not-ready state, and require separate SERP validation before any intent or split/consolidate conclusion. No semantic clustering, persistence, recommendation/action creation, or autonomous content generation/publishing. See [page-focus guide](page-focus-candidate-analysis.md) and [ADR 0012](decisions/0012-page-focus-candidate-analysis.md). |
 | 0.13 | Accepted: Discovery Diagnostics Pack over sanitized Google/Bing/Yandex/IndexNow-style evidence; provider-preserving canonical adaptation, exact-URL readiness, deterministic multi-finding diagnostics, IndexNow submission context, optional Release 0.10 search context, deterministic site rollup, and static operator preview. No provider networking, implicit URL equivalence, universal score, automatic remediation, new persistence, or runtime AI. See [discovery guide](discovery-diagnostics.md) and [ADR 0013](decisions/0013-discovery-diagnostics-pack.md). |
+| 0.14 | Accepted: AI Visibility Intelligence Pack over sanitized Bing AI Performance evidence plus accepted Release 0.6 ZeroRank validation/projection; provider-specific readiness/change/concentration, bounded cross-source divergence, optional accepted context, deterministic report and static HTML. See [AI Visibility guide](ai-visibility-intelligence.md) and [ADR 0014](decisions/0014-ai-visibility-intelligence-pack.md). |
+| 0.15 | **Candidate / not accepted:** Unified Operator Intelligence & Service Brief Pack; strict read-only composition over accepted Release 0.7–0.14 surfaces, fixed readiness, unranked attention, exact-string URL index, bounded human history, provenance manifest, deterministic JSON/HTML outputs, no new schema/persistence/network/AI/action. See [service-brief guide](service-brief.md) and [ADR 0015](decisions/0015-unified-operator-service-brief.md). |
 | 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
 
 ## Release 0.7 narrowing decision
@@ -81,4 +83,11 @@ The product boundary is deliberately narrower than a general AEO/GEO platform: n
 
 Incremental recurring-cost target remains $0. Existing Node/Zod/canonical contracts are sufficient for the candidate.
 
-Release 0.15 remains separate and unauthorized. Its current likely direction—Internal-Link / Authority Opportunity Intelligence—must be separately revalidated and authorized before implementation and must not cause an external backlink crawler to be built without new evidence/authorization.
+Release 0.15 is now the separately authorized **Unified Operator Intelligence & Service Brief Pack candidate** under Issue #51 and PR #52. Internal-link / authority-opportunity work remains separate under Issue #49 and was not authorized into Release 0.15.
+
+
+## Release 0.15 — candidate Unified Operator Intelligence & Service Brief Pack
+
+Issue #51 authorizes one bounded composition release over accepted Release 0.7–0.14 capabilities. The candidate owns only strict input validation, producer reuse, readiness presentation, unranked finding navigation, exact-string URL evidence indexing, bounded human-history reads, compact provenance, deterministic brief identity/JSON, and static printable HTML.
+
+It does not authorize generic correlation, causal inference, priority/severity/materiality/business-impact scoring, automatic recommendations, remediation/action, new persistence/schema, provider networking, credentials, runtime AI, cloud deployment, customer/private evidence, paid dependencies, Issue #49 implementation, or Release 1.0.

@@ -188,3 +188,23 @@ The seam introduces no new canonical wire schema, repository method, SQLite/D1 m
 Provider meaning is intentionally not flattened. Bing citation evidence remains sampled/aggregated Bing evidence. ZeroRank vendor metrics remain ZeroRank evidence. Cross-source composition is allowed only where explicit provider predicates and compatible trusted target/scope make the comparison safe; otherwise the report preserves evidence and omits the finding.
 
 The Release 0.14 operator renderer is an application-local read-only projection and follows the accepted Release 0.9/0.13 static-HTML security model. It does not create a dashboard/runtime tier.
+
+
+## Release 0.15 candidate service-brief seam
+
+Release 0.15 is a candidate application-local composition layer under Issue #51 and PR #52. The accepted architecture remains Releases 0.1–0.14 until Product acceptance.
+
+```text
+accepted repository reads + accepted Release 0.7–0.14 producer inputs
+  -> strict Release 0.15 request / exact scope + target reconciliation
+  -> fixed module readiness
+  -> unranked accepted finding/candidate register
+  -> exact-string URL evidence index
+  -> bounded human service-history composition
+  -> compact provenance manifest
+  -> deterministic semantic brief identity
+  -> bounded JSON service brief
+  -> escaped standalone printable HTML
+```
+
+The candidate does not add a new wire contract, persistence layer, network tier, dashboard runtime, cloud resource, credential path, inference engine, recommendation engine, or execution path. Exact URL co-occurrence remains descriptive only. The application-local brief references accepted evidence/report identities and does not replace source evidence.
