@@ -392,6 +392,13 @@ test('Decision Dossier identity binds emitted semantics and ignores harmless cal
     changed,
   );
   assert.notEqual(changedDossier.id, fixture.dossier.id);
+
+  const identitySource = readFileSync('src/operator/decision-cycle.ts', 'utf8');
+  assert.match(
+    identitySource,
+    /authorityNotes:\s*_authorityNotes,\s*limitations:\s*_limitations/,
+    'generated authority/limitation prose must remain outside dossier semantic identity material',
+  );
 });
 
 test('static Decision Dossier HTML is escaped, printable, CSP-restricted and bounded', async (t) => {
