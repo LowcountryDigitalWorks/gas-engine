@@ -79,6 +79,15 @@ async function generate(): Promise<void> {
     await evidence.persistCollection(alpha, source);
 
     const modules = serviceBriefSearchModules('https://example.test', serviceBriefScope);
+    const searchCollection = modules.baseline.batches[0]!.collection;
+    await evidence.createConnection(alpha, {
+      id: searchCollection.providerConnectionId!,
+      scope: structuredClone(searchCollection.scope),
+      providerId: searchCollection.providerId,
+    });
+    for (const part of [...modules.baseline.batches, ...modules.current.batches]) {
+      await evidence.persistCollection(alpha, part);
+    }
     const serviceBriefRequest = {
       scope: serviceBriefScope,
       trustedTarget: 'https://example.test',
