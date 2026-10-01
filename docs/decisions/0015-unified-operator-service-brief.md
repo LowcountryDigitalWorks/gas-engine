@@ -25,3 +25,20 @@ Repository-backed reads remain under an already-issued trusted TenantContext. ID
 ## Status
 
 Candidate only. Product review and independent exact-head review remain required before acceptance.
+
+
+## Implemented candidate surfaces
+
+The candidate exposes application-local Release 0.15 service-brief types, assembleServiceBrief(...), serializeServiceBriefJson(...), and renderServiceBriefHtml(...).
+
+The assembler owns producer invocation for supplied Search Analytics, Search Change, Page Focus, Discovery Diagnostics, and AI Visibility inputs. Repository-backed diff and review-history reads remain tenant-scoped through accepted repositories.
+
+Fixed hard ceilings do not exceed Product limits: 512 attention items, 256 exact URLs, 64 references per URL, 10 detailed recommendation histories, 32 Search Change inputs, and 64 Page-Focus inputs. Candidate JSON is capped at 1,500,000 UTF-8 bytes and HTML at 2,000,000 UTF-8 bytes. Overflow fails explicitly.
+
+Exact URL indexing is literal string grouping only. Co-occurrence is descriptive and does not establish correlation or causality.
+
+The static renderer uses restrictive CSP, no JavaScript or external resources, semantic headings/tables, dynamic-string escaping, focus styling, and print CSS.
+
+## Preview and cost
+
+The candidate adds npm run preview:service-brief to the deterministic check pipeline and writes synthetic JSON/HTML artifacts only under ignored local-artifacts/. It adds no package dependency and targets $0 incremental recurring cash cost.
