@@ -824,13 +824,15 @@ function buildManifest(
     );
   }
   if (history !== undefined) {
-    const recommendationDigest = hashJson(history.currentRecommendations.map((record) => record.id));
-    const measurementDigest = hashJson(history.selectedHistories.flatMap((entry) => entry.measurements.map((record) => record.id)).sort(asciiCompare));
-    const outcomeDigest = hashJson(history.selectedHistories.flatMap((entry) => entry.outcomes.map((record) => record.id)).sort(asciiCompare));
+    // The review-history manifest identity must bind every bounded semantic field
+    // emitted by ServiceBriefHistorySummary. IDs alone are insufficient because
+    // lifecycle/content revisions and scope-level measurement/outcome counts can
+    // change while record IDs remain stable.
+    const historySemanticDigest = hashCanonicalJson(history);
     push(
       'review_history',
       '0.8/0.9',
-      manifestIdentity('review_history', [recommendationDigest, measurementDigest, outcomeDigest]),
+      manifestIdentity('review_history', [historySemanticDigest]),
       [],
       [],
     );
