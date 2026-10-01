@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   contracts:
+    # Draft PRs intentionally skip the full hosted-runner gate until the candidate is frozen.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
