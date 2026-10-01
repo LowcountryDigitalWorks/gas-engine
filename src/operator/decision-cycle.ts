@@ -757,10 +757,19 @@ export async function commitDecisionOutcome(
         'Human outcome must reference the exact current Release 0.11 baseline/follow-up measurement pair and recommendation association.',
       );
     }
-  } else if (outcome.recommendationId !== undefined
-      && expectedRecommendationId !== undefined
-      && outcome.recommendationId !== expectedRecommendationId) {
-    fail('invalid_selection', 'Human outcome recommendation does not match the Release 0.16 decision recommendation.');
+  } else {
+    if (expectedRecommendationId === undefined) {
+      fail(
+        'invalid_state',
+        'Explicit outcome commit requires an exact recommendation association when no Release 0.11 measurement plan is present.',
+      );
+    }
+    if (outcome.recommendationId !== expectedRecommendationId) {
+      fail(
+        'invalid_selection',
+        'Human outcome recommendation must exactly match the Release 0.16 decision recommendation when no measurement plan is present.',
+      );
+    }
   }
   return recordHumanOutcome(reviewRepository, context, { outcome });
 }
