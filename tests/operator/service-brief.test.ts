@@ -301,7 +301,7 @@ test('static HTML provides all sections, accessible tables, print/CSP controls a
   const { brief } = await baseServiceBrief(t, { discoveryDiagnostics: serviceBriefDiscoveryInput() });
   const attacked = structuredClone(brief) as any;
   attacked.serviceHistory.currentRecommendations[0].rationale =
-    '\"><img src=x onerror=\"alert(1)\"><script>alert(\\'&\\')</script>';
+    "\"><img src=x onerror=\"alert(1)\"><script>alert('&')</script>";
   const html = renderServiceBriefHtml(attacked as ServiceBrief);
 
   assert.equal((html.match(/<h1>/g) ?? []).length, 1);
