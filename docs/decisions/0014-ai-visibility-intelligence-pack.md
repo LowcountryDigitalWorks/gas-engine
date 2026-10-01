@@ -48,7 +48,7 @@ Citation activity does not mean ranking, authority, quality, traffic, engagement
 
 Release 0.6 remains the source-validation boundary.
 
-Release 0.14 projection may preserve exact provider fields after accepted validation but cannot change Release 0.6 canonical output or expand its authority.
+Release 0.14 analysis receives sanitized ZeroRank bytes plus trusted adapter configuration, then synchronously creates the bounded projection through `projectValidatedZeroRankVisibility(...)` inside the analysis boundary. Caller-created or caller-mutated projections are not authoritative inputs. The projection may preserve exact provider fields after accepted validation but cannot change Release 0.6 canonical output or expand its authority. Artifact-v1 rankings, chats, sources, and source-URL endpoints retain unknown exhaustion when successful; Release 0.14 must not promote them to complete.
 
 ZeroRank rank, visibility, sentiment, mentions, growth, usage and share-style metrics remain vendor-specific. They are not converted to Bing citation units.
 
