@@ -48,6 +48,15 @@ export async function decisionCycleFixture(t: TestContext): Promise<{
 }> {
   const prepared = await prepareServiceBriefRepositories(t);
   const modules = serviceBriefSearchModules();
+  const searchCollection = modules.baseline.batches[0]!.collection;
+  await prepared.evidence.createConnection(alpha, {
+    id: searchCollection.providerConnectionId!,
+    scope: structuredClone(searchCollection.scope),
+    providerId: searchCollection.providerId,
+  });
+  for (const part of [...modules.baseline.batches, ...modules.current.batches]) {
+    await prepared.evidence.persistCollection(alpha, part);
+  }
   const serviceBriefRequest: Record<string, unknown> = {
     scope: serviceBriefScope,
     trustedTarget: 'https://example.test',
