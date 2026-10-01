@@ -545,11 +545,23 @@ test('plan-only cycle rediscovers its exact outcome through tenant-safe scope-on
   assert.notEqual(final.id, ready.id);
 });
 
-test('current cycle excludes an old same-recommendation outcome and rejects cross-cycle outcome commit', async (t) => {
+test('current cycle isolates reused-recommendation measurements and outcomes to the exact plan', async (t) => {
   const fixture = await decisionCycleFixture(t);
   await commitDecisionRecommendation(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input);
-  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input, 'baseline');
-  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, fixture.input, 'follow_up');
+  const baselineA = await commitDecisionMeasurement(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    fixture.input,
+    'baseline',
+  );
+  const followUpA = await commitDecisionMeasurement(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    fixture.input,
+    'follow_up',
+  );
 
   const cycleA = await prepareDecisionCycle(
     fixture.prepared.evidence,
@@ -558,6 +570,10 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
     fixture.input,
   );
   const planA = cycleA.measurementPlan!;
+  assert.deepEqual(
+    cycleA.recordedMeasurements.map((record) => record.id),
+    [baselineA.id, followUpA.id].sort(),
+  );
 
   const inputB = structuredClone(fixture.input) as any;
   inputB.searchChangePlan.annotation.id = 'synthetic-decision-cycle-change-b';
@@ -570,10 +586,13 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
     alpha,
     inputB,
   );
-  assert.notEqual(beforeOldOutcome.measurementPlan!.baseline.measurement.id, planA.baseline.measurement.id);
-  assert.notEqual(beforeOldOutcome.measurementPlan!.followUp.measurement.id, planA.followUp.measurement.id);
+  const planBPrepared = beforeOldOutcome.measurementPlan!;
+  assert.notEqual(planBPrepared.baseline.measurement.id, planA.baseline.measurement.id);
+  assert.notEqual(planBPrepared.followUp.measurement.id, planA.followUp.measurement.id);
+  assert.deepEqual(beforeOldOutcome.recordedMeasurements, []);
+  assert.deepEqual(beforeOldOutcome.provenance.measurementIds, []);
   assert.equal(beforeOldOutcome.humanOutcomes.length, 0);
-  assert.notEqual(beforeOldOutcome.readiness.state, 'outcome_recorded');
+  assert.equal(beforeOldOutcome.readiness.state, 'measurements_not_recorded');
 
   const outcomeA: Contract<'outcome'> = {
     schemaVersion: '1.0',
@@ -611,9 +630,11 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
     inputB,
   );
   assert.equal(afterOldOutcome.id, beforeOldOutcome.id);
+  assert.deepEqual(afterOldOutcome.recordedMeasurements, []);
+  assert.deepEqual(afterOldOutcome.provenance.measurementIds, []);
   assert.equal(afterOldOutcome.humanOutcomes.length, 0);
   assert.deepEqual(afterOldOutcome.provenance.outcomeIds, []);
-  assert.notEqual(afterOldOutcome.readiness.state, 'outcome_recorded');
+  assert.equal(afterOldOutcome.readiness.state, 'measurements_not_recorded');
 
   const crossCycle = structuredClone(outcomeA) as Contract<'outcome'>;
   crossCycle.id = 'synthetic-decision-cycle-cross-cycle-outcome';
@@ -629,18 +650,73 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
     (error: unknown) => error instanceof DecisionCycleError && error.code === 'invalid_selection',
   );
 
-  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, inputB, 'baseline');
-  await commitDecisionMeasurement(fixture.prepared.evidence, fixture.prepared.review, alpha, inputB, 'follow_up');
+  const baselineB = await commitDecisionMeasurement(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+    'baseline',
+  );
+  const afterBaselineB = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.equal(baselineB.id, planBPrepared.baseline.measurement.id);
+  assert.deepEqual(afterBaselineB.recordedMeasurements.map((record) => record.id), [baselineB.id]);
+  assert.deepEqual(afterBaselineB.provenance.measurementIds, [baselineB.id]);
+  assert.equal(afterBaselineB.readiness.state, 'measurements_not_recorded');
+  assert.equal(afterBaselineB.recordedMeasurements.some((record) => record.id === baselineA.id), false);
+  assert.equal(afterBaselineB.recordedMeasurements.some((record) => record.id === followUpA.id), false);
+
+  const followUpB = await commitDecisionMeasurement(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+    'follow_up',
+  );
   const readyB = await prepareDecisionCycle(
     fixture.prepared.evidence,
     fixture.prepared.review,
     alpha,
     inputB,
   );
+  const planB = readyB.measurementPlan!;
+  const expectedBIds = [baselineB.id, followUpB.id].sort();
+  assert.equal(followUpB.id, planBPrepared.followUp.measurement.id);
+  assert.deepEqual(readyB.recordedMeasurements.map((record) => record.id), expectedBIds);
+  assert.deepEqual(readyB.provenance.measurementIds, expectedBIds);
   assert.equal(readyB.readiness.state, 'ready_for_human_assessment');
   assert.equal(readyB.humanOutcomes.length, 0);
+  assert.equal(readyB.recordedMeasurements.some((record) => record.id === baselineA.id), false);
+  assert.equal(readyB.recordedMeasurements.some((record) => record.id === followUpA.id), false);
 
-  const planB = readyB.measurementPlan!;
+  const inputC = structuredClone(fixture.input) as any;
+  inputC.searchChangePlan.annotation.id = 'synthetic-decision-cycle-change-c';
+  inputC.decision.id = 'synthetic-decision-cycle-decision-c';
+  inputC.decision.summary = 'Human starts an unrelated third measurement cycle on the same recommendation.';
+  const unrelatedMeasurement = await commitDecisionMeasurement(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputC,
+    'baseline',
+  );
+  assert.equal(expectedBIds.includes(unrelatedMeasurement.id), false);
+
+  const afterUnrelatedMeasurement = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    inputB,
+  );
+  assert.equal(afterUnrelatedMeasurement.id, readyB.id);
+  assert.deepEqual(afterUnrelatedMeasurement.recordedMeasurements.map((record) => record.id), expectedBIds);
+  assert.deepEqual(afterUnrelatedMeasurement.provenance.measurementIds, expectedBIds);
+  assert.equal(afterUnrelatedMeasurement.readiness.state, readyB.readiness.state);
+
   const outcomeB: Contract<'outcome'> = {
     schemaVersion: '1.0',
     kind: 'outcome',
@@ -677,12 +753,13 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
     inputB,
   );
   assert.equal(finalB.readiness.state, 'outcome_recorded');
+  assert.deepEqual(finalB.recordedMeasurements.map((record) => record.id), expectedBIds);
+  assert.deepEqual(finalB.provenance.measurementIds, expectedBIds);
   assert.deepEqual(finalB.humanOutcomes.map((record) => record.id), [outcomeB.id]);
   assert.deepEqual(finalB.provenance.outcomeIds, [outcomeB.id]);
   assert.notEqual(finalB.id, readyB.id);
   assert.equal(finalB.humanOutcomes.some((record) => record.id === outcomeA.id), false);
 });
-
 
 test('no-plan outcome commit requires the exact cycle recommendation association', async (t) => {
   const fixture = await decisionCycleFixture(t);
