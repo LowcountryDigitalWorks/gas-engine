@@ -23,6 +23,7 @@ import {
   ServiceBriefError,
 } from '../../src/operator/service-brief.js';
 import { SEARCH_CHANGE_METHODOLOGY } from '../../src/analysis/search-change.js';
+import { createHumanRecommendation } from '../../src/review/service.js';
 import { alpha, batch, beta } from '../persistence/helpers.js';
 import { serviceBriefScope } from './service-brief-fixtures.js';
 import { decisionCycleFixture } from './decision-cycle-support.js';
@@ -680,4 +681,153 @@ test('current cycle excludes an old same-recommendation outcome and rejects cros
   assert.deepEqual(finalB.provenance.outcomeIds, [outcomeB.id]);
   assert.notEqual(finalB.id, readyB.id);
   assert.equal(finalB.humanOutcomes.some((record) => record.id === outcomeA.id), false);
+});
+
+
+test('no-plan outcome commit requires the exact cycle recommendation association', async (t) => {
+  const fixture = await decisionCycleFixture(t);
+  const input = structuredClone(fixture.input) as any;
+  delete input.searchChangePlan;
+
+  const created = await commitDecisionRecommendation(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    input,
+  );
+  assert.equal(created.id, fixture.recommendation.id);
+
+  const missingAssociation: Contract<'outcome'> = {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-no-plan-missing-recommendation',
+    scope: structuredClone(serviceBriefScope),
+    assessment: {
+      direction: 'not_due',
+      reason: 'Synthetic no-plan outcome intentionally omits the cycle recommendation.',
+    },
+    attribution: {
+      strength: 'none',
+      reason: 'No attribution.',
+    },
+    createdAt: '2026-10-01T20:10:00.000Z',
+  };
+  await assert.rejects(
+    commitDecisionOutcome(
+      fixture.prepared.evidence,
+      fixture.prepared.review,
+      alpha,
+      input,
+      missingAssociation,
+    ),
+    (error: unknown) => error instanceof DecisionCycleError && error.code === 'invalid_selection',
+  );
+  assert.equal(
+    await fixture.prepared.review.getOutcome(alpha, serviceBriefScope, missingAssociation.id),
+    null,
+  );
+
+  const recommendationS = structuredClone(fixture.recommendation);
+  recommendationS.id = 'synthetic-decision-cycle-recommendation-s';
+  recommendationS.rationale = 'Synthetic same-scope recommendation S for no-plan association rejection.';
+  await createHumanRecommendation(
+    fixture.prepared.review,
+    fixture.prepared.evidence,
+    alpha,
+    { recommendation: recommendationS },
+  );
+
+  const wrongAssociation: Contract<'outcome'> = {
+    ...structuredClone(missingAssociation),
+    id: 'synthetic-no-plan-wrong-recommendation',
+    recommendationId: recommendationS.id,
+    createdAt: '2026-10-01T20:11:00.000Z',
+  };
+  await assert.rejects(
+    commitDecisionOutcome(
+      fixture.prepared.evidence,
+      fixture.prepared.review,
+      alpha,
+      input,
+      wrongAssociation,
+    ),
+    (error: unknown) => error instanceof DecisionCycleError && error.code === 'invalid_selection',
+  );
+  assert.equal(
+    await fixture.prepared.review.getOutcome(alpha, serviceBriefScope, wrongAssociation.id),
+    null,
+  );
+
+  const exactAssociation: Contract<'outcome'> = {
+    ...structuredClone(missingAssociation),
+    id: 'synthetic-no-plan-exact-recommendation',
+    recommendationId: fixture.recommendation.id,
+    createdAt: '2026-10-01T20:12:00.000Z',
+  };
+  const recorded = await commitDecisionOutcome(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    input,
+    exactAssociation,
+  );
+  assert.equal(recorded.recommendationId, fixture.recommendation.id);
+
+  const final = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    input,
+  );
+  assert.equal(final.readiness.state, 'outcome_recorded');
+  assert.deepEqual(final.humanOutcomes.map((outcome) => outcome.id), [exactAssociation.id]);
+});
+
+test('no-plan cycle without a recommendation rejects explicit outcome commit as unbound', async (t) => {
+  const fixture = await decisionCycleFixture(t);
+  const input = structuredClone(fixture.input) as any;
+  delete input.searchChangePlan;
+  delete input.recommendation;
+  input.decision.disposition = 'investigate';
+  input.decision.summary = 'Human investigation has no plan and no canonical recommendation association.';
+
+  const prepared = await prepareDecisionCycle(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    input,
+  );
+  assert.equal(prepared.measurementPlan, undefined);
+  assert.equal(prepared.recommendation, undefined);
+
+  const unbound: Contract<'outcome'> = {
+    schemaVersion: '1.0',
+    kind: 'outcome',
+    id: 'synthetic-no-plan-unbound-outcome',
+    scope: structuredClone(serviceBriefScope),
+    assessment: {
+      direction: 'not_due',
+      reason: 'Synthetic outcome has no durable Release 0.16 cycle association.',
+    },
+    attribution: {
+      strength: 'none',
+      reason: 'No attribution.',
+    },
+    createdAt: '2026-10-01T20:15:00.000Z',
+  };
+
+  await assert.rejects(
+    commitDecisionOutcome(
+      fixture.prepared.evidence,
+      fixture.prepared.review,
+      alpha,
+      input,
+      unbound,
+    ),
+    (error: unknown) => error instanceof DecisionCycleError && error.code === 'invalid_state',
+  );
+  assert.equal(
+    await fixture.prepared.review.getOutcome(alpha, serviceBriefScope, unbound.id),
+    null,
+  );
 });
