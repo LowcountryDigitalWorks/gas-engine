@@ -5,10 +5,7 @@ import {
   adaptBingAiPerformanceEvidence,
   type BingAiAdapterConfig,
 } from '../../src/adapters/bing-ai-performance.js';
-import {
-  projectValidatedZeroRankVisibility,
-  type ZeroRankAdapterConfig,
-} from '../../src/adapters/zerorank.js';
+import type { ZeroRankAdapterConfig } from '../../src/adapters/zerorank.js';
 import { analyzeAiVisibility } from '../../src/analysis/ai-visibility.js';
 import {
   MAX_AI_VISIBILITY_OPERATOR_HTML_BYTES,
@@ -48,10 +45,9 @@ function report(mutate?: (value:MutableJson)=>void){
     },
     availability:{state:'available',reference:'synthetic-zerorank-artifact'}
   };
-  const projection=projectValidatedZeroRankVisibility(bytes(zr),zconfig);
   return analyzeAiVisibility({
     bingCurrent:adaptBingAiPerformanceEvidence(bytes(bing),bconfig),
-    zeroRankCurrent:projection,
+    zeroRankCurrent:{bytes:bytes(zr),trustedConfig:zconfig},
     evaluatedAt:'2026-09-30T13:00:00.000Z',
     policy:{id:'ai-visibility-policy',version:'1.0.0',maxEvidenceAgeSeconds:86_400,topN:1,concentrationShareThresholdPct:60}
   });
