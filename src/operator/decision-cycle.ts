@@ -4,7 +4,7 @@ import type { Contract } from '../contracts/wire.js';
 import { parseContract } from '../domain/validate.js';
 import { hashCanonicalJson } from '../lib/canonical-json.js';
 import type { EvidenceRepository, Scope } from '../persistence/repository.js';
-import type { TenantContext } from '../persistence/tenant-context.js';
+import { requireTenantContext, type TenantContext } from '../persistence/tenant-context.js';
 import {
   composeSearchChangeOutcomeCohort,
   type PreparedSearchChangeMeasurement,
@@ -522,6 +522,9 @@ export async function prepareDecisionCycle(
     context,
     request.serviceBriefRequest,
   );
+  if (requireTenantContext(context) !== brief.scope.tenantId) {
+    fail('scope_mismatch', 'Trusted tenant context does not own the recomputed Release 0.15 decision scope.');
+  }
   const selectedAttention = selectAttention(brief, request.selectedAttentionIds, request.policy);
   const decision = humanDecision(request, selectedAttention);
 
