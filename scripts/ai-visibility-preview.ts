@@ -4,10 +4,7 @@ import {
   adaptBingAiPerformanceEvidence,
   type BingAiAdapterConfig,
 } from '../src/adapters/bing-ai-performance.js';
-import {
-  projectValidatedZeroRankVisibility,
-  type ZeroRankAdapterConfig,
-} from '../src/adapters/zerorank.js';
+import type { ZeroRankAdapterConfig } from '../src/adapters/zerorank.js';
 import { analyzeAiVisibility } from '../src/analysis/ai-visibility.js';
 import { renderAiVisibilityHtml } from '../src/operator/ai-visibility.js';
 import type { Scope } from '../src/persistence/repository.js';
@@ -47,10 +44,9 @@ const zeroRankConfig:ZeroRankAdapterConfig={
   availability:{state:'available',reference:'synthetic-release-014-preview-zerorank'}
 };
 
-const projection=projectValidatedZeroRankVisibility(bytes(zeroRank),zeroRankConfig);
 const report=analyzeAiVisibility({
   bingCurrent:adaptBingAiPerformanceEvidence(bytes(bing),bingConfig),
-  zeroRankCurrent:projection,
+  zeroRankCurrent:{bytes:bytes(zeroRank),trustedConfig:zeroRankConfig},
   evaluatedAt:'2026-09-30T13:00:00.000Z',
   policy:{
     id:'release-014-preview-policy',
