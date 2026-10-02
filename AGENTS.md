@@ -126,3 +126,19 @@ Preserve these accepted-release rules:
 - add no canonical schema, table/migration, dependency, provider networking, credentials/OAuth, scheduler/worker, runtime AI, cloud, task/project manager, automated recommendation/action, customer/private evidence, paid service, Issue #49 implementation, or Release 1.0 implementation.
 
 See [Release 0.16 guide](docs/decision-cycle.md) and [ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md).
+
+## Release 0.17 candidate development boundary
+
+Release 0.17 is currently **CANDIDATE / NOT ACCEPTED** under Issue #60 / PR #62. Releases 0.1–0.16 remain the accepted baseline.
+
+During Release 0.17 development preserve these candidate rules:
+
+- recompute accepted Release 0.15 and Release 0.16 state; never trust browser-created service/dossier state;
+- browser UI and downloaded JSON are untrusted convenience data and never mint TenantContext or scope authority;
+- durable actions must revalidate workspace/brief/dossier identity before delegating to accepted Release 0.16/0.8 services;
+- do not copy readiness, current-cycle measurement, outcome-association, recommendation-lifecycle, or evidence semantics into UI code;
+- customer focus selection is explicitly human supplied and bounded to three, not automatic G.A.S. priority;
+- customer report body excludes internal provenance IDs by default;
+- add no runtime dependency/framework, canonical schema, table/migration, provider network, auth/session, cloud, scheduler, runtime AI, paid service, customer portal, Issue #49/#56 implementation, Release 0.18, or Release 1.0.
+
+See [candidate Release 0.17 guide](docs/operator-workspace.md) and [proposed ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).

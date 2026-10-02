@@ -1,6 +1,6 @@
 {
   "name": "@lowcountrydigitalworks/gas-engine",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -15,11 +15,12 @@
     "schemas:generate": "node dist/scripts/schemas.js",
     "schemas:check": "node dist/scripts/schemas.js --check",
     "preview:operator": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/operator-preview.js",
-    "check": "npm run typecheck && npm run build && npm test && npm run schemas:check && npm run preview:operator && npm run preview:discovery && npm run preview:ai-visibility && npm run preview:service-brief && npm run preview:decision-cycle",
+    "check": "npm run typecheck && npm run build && npm test && npm run schemas:check && npm run preview:operator && npm run preview:discovery && npm run preview:ai-visibility && npm run preview:service-brief && npm run preview:decision-cycle && npm run preview:workspace",
     "preview:discovery": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/discovery-diagnostics-preview.js",
     "preview:ai-visibility": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/ai-visibility-preview.js",
     "preview:service-brief": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/service-brief-preview.js",
-    "preview:decision-cycle": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/decision-cycle-preview.js"
+    "preview:decision-cycle": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/decision-cycle-preview.js",
+    "preview:workspace": "node --permission --allow-fs-read=. --allow-fs-write=local-artifacts --allow-fs-write=\"local-artifacts/*\" --import ./dist/tests/no-network.js dist/scripts/operator-workspace-preview.js"
   },
   "dependencies": {
     "zod": "4.6.2"

@@ -231,3 +231,23 @@ original accepted Release 0.15 producer input
 The accepted release adds no canonical wire contract, repository table/migration, decision/plan/task persistence, network/provider tier, scheduler, cloud resource, runtime AI, automatic recommendation/outcome direction, priority/severity/business-impact score, or production action path. Existing Release 0.8 persistence remains the sole storage for recommendation revisions, measurements, and outcomes.
 
 The dossier stores only application-local composition output. Its identity canonically binds emitted semantic state; rendered HTML/CSS/filesystem paths do not define semantic identity.
+
+## Release 0.17 candidate local operator-workspace seam
+
+Release 0.17 is **CANDIDATE / NOT ACCEPTED** under Issue #60 / PR #62.
+
+```text
+trusted host + existing repositories + TenantContext
+  -> assembleServiceBrief(...)
+  -> optional prepareDecisionCycle(...)
+  -> deterministic OperatorWorkspace
+  -> self-contained browser convenience layer
+  -> bounded downloaded request artifact
+  -> strict Node parse + authoritative recomputation + source-drift validation
+  -> accepted Release 0.16 / Release 0.8 service
+  -> regenerated authoritative workspace/report
+```
+
+The browser does not own tenant authority, persistence, evidence truth, recommendation lifecycle, measurement/outcome semantics, or current-cycle selection. Release 0.17 adds only application-local workspace/action/report models and renderers. It adds no canonical wire schema, migration/table, server/listener, cloud runtime, provider client, credential path, scheduler, runtime AI, or new durable report/service-run store.
+
+Customer-safe reporting is a separate deterministic projection. Internal provenance identifiers are absent from the customer body by default and can appear only in an explicitly separated optional LDW appendix.
