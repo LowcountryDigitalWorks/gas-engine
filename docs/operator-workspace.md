@@ -67,13 +67,16 @@ Node recomputes the workspace before any write. Stale workspace, brief, dossier,
 
 Release 0.17 does not implement a new decision/recommendation/measurement/outcome engine.
 
-Allowed action requests delegate to accepted services:
+Allowed browser request/action families include one non-durable preparation seam plus accepted durable services:
 
+- prepare/update human decision -> strict `prepare_decision` artifact -> `prepareOperatorWorkspaceDecision(...)` -> accepted `prepareDecisionCycle(...)` -> regenerated workspace + exact next trusted-host `OperatorWorkspaceRequest`;
 - commit prepared recommendation -> `commitDecisionRecommendation(...)`;
 - transition recommendation -> `transitionDecisionRecommendation(...)`;
 - revise recommendation -> `reviseDecisionRecommendation(...)`;
 - record one exact prepared baseline/follow-up -> `commitDecisionMeasurement(...)`;
 - record one human outcome -> `commitDecisionOutcome(...)`.
+
+Decision preparation copies the exact checked Release 0.15 Attention IDs plus bounded human decision fields into an untrusted artifact. Node recomputes current state, verifies workspace/brief/dossier identity, validates current attention membership, reuses the accepted Release 0.16 parser/schemas, preserves existing optional recommendation/search-plan input when safe, and performs no Release 0.8 write. The trusted host receives both the regenerated workspace and the exact next workspace request so later actions need no hand-authored decisionCycleInput.
 
 For measurement commits the downloaded request must name the exact current Release 0.11 prepared measurement ID for the selected role. The browser cannot supply or rewrite canonical measurement observations.
 
@@ -102,7 +105,7 @@ UI filters are presentation-only and never mutate the underlying workspace snaps
 
 1. **Overview** — exact site/scope context, source readiness, source periods/freshness, coverage context, deterministic evidence-state counts, bounded counts, and limitations. No universal health/business score.
 2. **Evidence / readiness** — bounded provider/module/state/text filtering over accepted Release 0.15 evidence/attention projection, preserving exact references and module-level accepted source-provider context.
-3. **Attention** — accepted unranked attention register with explicit human selection controls. Selection is not G.A.S. priority.
+3. **Attention** — accepted unranked attention register with explicit human selection controls plus bounded decision ID/disposition/summary/recordedAt fields and a **Prepare / update human decision request** control. Selection is not G.A.S. priority; the downloaded request remains untrusted until Node-side recomputation.
 4. **Decision cycle** — accepted Release 0.16 human decision, recommendation state/history, Search Change plan, exact current-cycle measurements, readiness, and human outcome.
 5. **History / timeline** — reverse-chronological projection of accepted immutable history; no second changelog table.
 6. **Reports** — human fields plus one-to-three explicit customer focus selections and optional internal appendix request.
@@ -124,7 +127,7 @@ Primary report content is deterministic and human-controlled:
 
 The customer body does not expose workspace/service-brief/dossier/attention IDs by default. An optional clearly marked LDW internal appendix may contain those provenance identifiers and is visually separated from the customer-safe body.
 
-The report does not auto-rank findings, create priority/severity/business-impact scores, infer causality, or generate prose with AI.
+The report does not auto-rank findings, create priority/severity/business-impact scores, infer causality, or generate prose with AI. Browser collection of observed-change lines fails closed above 12 non-empty lines; it never truncates human-authored input. Node-side strict max(12) validation remains the authoritative backstop.
 
 ## Bounds
 
@@ -149,7 +152,8 @@ Overflow fails closed.
 It supports:
 
 - workspace generation;
-- application of one downloaded action artifact;
+- non-durable human-decision preparation with returned trusted-host continuation state;
+- application of one downloaded durable action artifact;
 - authoritative workspace regeneration after accepted write;
 - customer-report generation from one strict report request.
 
@@ -185,7 +189,7 @@ Existing Release 0.8 review-ledger persistence remains the sole durable storage 
 - `release-0.17-customer-report-preview.json`;
 - `release-0.17-customer-report-preview.html`.
 
-The preview exercises recommendation creation/lifecycle, exact Release 0.11 baseline/follow-up commits, human outcome recording, authoritative workspace regeneration, and human-selected customer reporting.
+The preview begins from a workspace with no decision cycle, exercises the Release 0.17 human-decision preparation request/continuation seam, then continues through recommendation creation/lifecycle, exact Release 0.11 baseline/follow-up commits, human outcome recording, authoritative workspace regeneration, and human-selected customer reporting.
 
 ## Candidate limitations
 
