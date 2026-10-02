@@ -142,7 +142,7 @@ function sourceRows(workspace: OperatorWorkspace): readonly (readonly unknown[])
 
 function evidenceRows(workspace: OperatorWorkspace): string {
   if (workspace.evidenceRows.length === 0) {
-    return '<tr><td colspan="6">No evidence/attention rows are available.</td></tr>';
+    return '<tr><td colspan="7">No evidence/attention rows are available.</td></tr>';
   }
   return workspace.evidenceRows.map((row) => {
     const search = [
@@ -150,13 +150,15 @@ function evidenceRows(workspace: OperatorWorkspace): string {
       row.kind,
       row.state,
       row.evidenceIdentity,
+      row.providerIds.join(' '),
       row.url ?? '',
       row.query ?? '',
       row.promptId ?? '',
       row.cohortHash ?? '',
     ].join(' ').toLowerCase();
-    return `<tr class="evidence-row" data-module="${attr(row.moduleId)}" data-state="${attr(row.state)}" data-search="${attr(search)}">
+    return `<tr class="evidence-row" data-module="${attr(row.moduleId)}" data-state="${attr(row.state)}" data-providers="${attr('|' + row.providerIds.join('|') + '|')}" data-search="${attr(search)}">
       <td>${escapeHtml(row.moduleId.replaceAll('_', ' '))}</td>
+      <td>${escapeHtml(row.providerIds.length === 0 ? '—' : row.providerIds.join(', '))}</td>
       <td>${escapeHtml(row.kind)}</td>
       <td>${escapeHtml(row.state)}</td>
       <td>${escapeHtml(evidenceReference(row))}</td>
@@ -220,19 +222,26 @@ const qsa=(selector)=>Array.from(document.querySelectorAll(selector));
 function setMessage(id,message,isError=false){const node=qs(id);if(!node)return;node.textContent=message;node.classList.toggle('error',isError);}
 function downloadJson(value,name){const text=JSON.stringify(value,null,2)+'\\n';if(new TextEncoder().encode(text).byteLength>256000){throw new Error('Downloaded request exceeds the browser convenience bound.');}const blob=new Blob([text],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);}
 qsa('[data-nav]').forEach((button)=>button.addEventListener('click',()=>{const target=button.dataset.nav;qsa('[data-panel]').forEach((panel)=>{panel.hidden=panel.dataset.panel!==target;});qsa('[data-nav]').forEach((item)=>item.setAttribute('aria-pressed',String(item===button)));const heading=qs('#'+target+' h2');if(heading)heading.focus();}));
-function applyEvidenceFilter(){const moduleValue=qs('#evidence-module').value;const stateValue=qs('#evidence-state').value;const query=qs('#evidence-text').value.trim().toLowerCase();qsa('.evidence-row').forEach((row)=>{const show=(!moduleValue||row.dataset.module===moduleValue)&&(!stateValue||row.dataset.state===stateValue)&&(!query||(row.dataset.search||'').includes(query));row.hidden=!show;});}
-['#evidence-module','#evidence-state','#evidence-text'].forEach((selector)=>{const node=qs(selector);node.addEventListener(selector==='#evidence-text'?'input':'change',applyEvidenceFilter);});
-qs('#reset-evidence').addEventListener('click',()=>{qs('#evidence-module').value='';qs('#evidence-state').value='';qs('#evidence-text').value='';applyEvidenceFilter();});
+function applyEvidenceFilter(){const providerValue=qs('#evidence-provider').value;const moduleValue=qs('#evidence-module').value;const stateValue=qs('#evidence-state').value;const query=qs('#evidence-text').value.trim().toLowerCase();qsa('.evidence-row').forEach((row)=>{const providers=row.dataset.providers||'|';const show=(!providerValue||providers.includes('|'+providerValue+'|'))&&(!moduleValue||row.dataset.module===moduleValue)&&(!stateValue||row.dataset.state===stateValue)&&(!query||(row.dataset.search||'').includes(query));row.hidden=!show;});}
+['#evidence-provider','#evidence-module','#evidence-state','#evidence-text'].forEach((selector)=>{const node=qs(selector);node.addEventListener(selector==='#evidence-text'?'input':'change',applyEvidenceFilter);});
+qs('#reset-evidence').addEventListener('click',()=>{qs('#evidence-provider').value='';qs('#evidence-module').value='';qs('#evidence-state').value='';qs('#evidence-text').value='';applyEvidenceFilter();});
 qs('#download-action').addEventListener('click',()=>{try{const type=qs('#action-type').value;const actionId=qs('#action-id').value.trim();const createdAt=qs('#action-created-at').value.trim();if(!type||!actionId||!createdAt)throw new Error('Action type, stable action ID, and createdAt are required.');let action;if(type==='commit_recommendation'){action={type};}else if(type==='commit_measurement'){const select=qs('#measurement-role');const option=select.options[select.selectedIndex];if(!option||!option.dataset.id)throw new Error('Choose an exact current prepared measurement.');action={type,role:select.value,expectedMeasurementId:option.dataset.id};}else{const raw=qs('#action-payload').value.trim();if(!raw)throw new Error('This action requires a JSON payload.');const parsed=JSON.parse(raw);action=type==='commit_outcome'?{type,outcome:parsed}:{type,input:parsed};}const artifact={version:VERSION,actionId,createdAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,action};if(DOSSIER_ID!==null)artifact.sourceDossierId=DOSSIER_ID;downloadJson(artifact,'gas-operator-action.json');setMessage('#action-message','Action request downloaded. It is untrusted until Node-side recomputation succeeds.');}catch(error){setMessage('#action-message',error instanceof Error?error.message:'Unable to build action request.',true);}});
 qs('#download-report-request').addEventListener('click',()=>{try{const selected=qsa('.report-select:checked').map((node)=>node.value);if(selected.length<1||selected.length>3)throw new Error('Select between one and three customer focus items.');const requestId=qs('#report-request-id').value.trim();const createdAt=qs('#report-created-at').value.trim();const title=qs('#report-title').value.trim();const executiveSummary=qs('#report-summary').value.trim();const nextReview=qs('#report-next-review').value.trim();if(!requestId||!createdAt||!title||!executiveSummary||!nextReview)throw new Error('Report ID, createdAt, title, executive summary, and next review are required.');const observedChanges=qs('#report-changes').value.split('\\n').map((value)=>value.trim()).filter(Boolean).slice(0,12);const request={version:VERSION,requestId,createdAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,title,executiveSummary,selectedAttentionIds:selected,observedChanges,nextReview,includeInternalAppendix:qs('#report-internal').checked};if(DOSSIER_ID!==null)request.sourceDossierId=DOSSIER_ID;downloadJson(request,'gas-customer-report-request.json');setMessage('#report-message','Report request downloaded. Node-side recomputation will revalidate every selection.');}catch(error){setMessage('#report-message',error instanceof Error?error.message:'Unable to build report request.',true);}});
 qs('#print-workspace').addEventListener('click',()=>window.print());`;
 }
 
 export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace): string {
+  const providers = [...new Set(workspace.evidenceRows.flatMap((row) => row.providerIds))].sort();
   const modules = [...new Set(workspace.evidenceRows.map((row) => row.moduleId))].sort();
   const states = [...new Set(workspace.evidenceRows.map((row) => row.state))].sort();
   const script = buildScript(workspace);
   const scriptHash = createHash('sha256').update(script, 'utf8').digest('base64');
+  const stateCounts = table(
+    'Evidence / attention state counts',
+    ['State', 'Count'],
+    workspace.navigation.overview.evidenceStateCounts.map((entry) => [entry.state, entry.count]),
+    'No evidence/attention states are present.',
+  );
   const readiness = table(
     'Module/source readiness',
     ['Module', 'State', 'Reasons'],
@@ -325,6 +334,9 @@ textarea{min-height:110px}.report-grid{display:grid;grid-template-columns:1fr 1f
 </div>
 <h3>Readiness / freshness / coverage</h3>
 ${readiness}
+${sources}
+<h3>Evidence state counts</h3>
+${stateCounts}
 <h3>Authority / limitations</h3>
 <div class="notice"><strong>No universal health score.</strong> Readiness states remain source-specific and missing/zero/unavailable are not collapsed.</div>
 <ul>${workspace.limitations.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
@@ -333,13 +345,14 @@ ${readiness}
 <section id="evidence" data-panel="evidence" hidden>
 <h2 tabindex="-1">2. Evidence / readiness</h2>
 <div class="filters interactive-only">
+<label class="field">Provider<select id="evidence-provider"><option value="">All providers</option>${providers.map((value) => `<option value="${attr(value)}">${escapeHtml(value)}</option>`).join('')}</select></label>
 <label class="field">Module<select id="evidence-module"><option value="">All modules</option>${modules.map((value) => `<option value="${attr(value)}">${escapeHtml(value.replaceAll('_',' '))}</option>`).join('')}</select></label>
 <label class="field">State<select id="evidence-state"><option value="">All states</option>${states.map((value) => `<option value="${attr(value)}">${escapeHtml(value)}</option>`).join('')}</select></label>
 <label class="field">Text filter<input id="evidence-text" type="search" autocomplete="off" placeholder="URL, query, kind, identity"></label>
 <button type="button" class="secondary" id="reset-evidence">Reset filters</button>
 </div>
 ${sources}
-<div class="table-wrap"><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
+<div class="table-wrap"><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
 </section>
 
 <section id="attention" data-panel="attention" hidden>
