@@ -208,3 +208,26 @@ accepted repository reads + accepted Release 0.7–0.14 producer inputs
 ```
 
 The accepted release does not add a new wire contract, persistence layer, network tier, dashboard runtime, cloud resource, credential path, inference engine, recommendation engine, or execution path. Exact URL co-occurrence remains descriptive only. The application-local brief references accepted evidence/report identities and does not replace source evidence.
+
+
+## Release 0.16 candidate human decision/measurement seam
+
+Release 0.16 is a **candidate / not accepted** application-local layer under Issue #54.
+
+```text
+original accepted Release 0.15 producer input
+  -> recompute assembleServiceBrief(...)
+  -> exact human attention selection
+  -> human decision statement
+  -> optional explicit canonical Release 0.8 recommendation commit
+  -> optional accepted Release 0.11 Search Change measurement plan
+  -> explicit one-at-a-time Release 0.8 measurement commits
+  -> accepted-state follow-up readiness
+  -> explicit human Release 0.8 outcome commit
+  -> deterministic Decision Cycle Dossier JSON
+  -> escaped standalone printable HTML
+```
+
+The candidate adds no canonical wire contract, repository table/migration, decision/plan/task persistence, network/provider tier, scheduler, cloud resource, runtime AI, automatic recommendation/outcome direction, priority/severity/business-impact score, or production action path. Existing Release 0.8 persistence remains the sole storage for recommendation revisions, measurements, and outcomes.
+
+The dossier stores only application-local composition output. Its identity canonically binds emitted semantic state; rendered HTML/CSS/filesystem paths do not define semantic identity.

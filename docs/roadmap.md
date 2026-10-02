@@ -91,3 +91,24 @@ Release 0.15 is the **accepted Unified Operator Intelligence & Service Brief Pac
 Issue #51 records the accepted bounded composition release over accepted Release 0.7–0.14 capabilities. Release 0.15 owns only strict input validation, producer reuse, readiness presentation, unranked finding navigation, exact-string URL evidence indexing, bounded human-history reads, compact provenance, deterministic brief identity/JSON, and static printable HTML.
 
 It does not authorize generic correlation, causal inference, priority/severity/materiality/business-impact scoring, automatic recommendations, remediation/action, new persistence/schema, provider networking, credentials, runtime AI, cloud deployment, customer/private evidence, paid dependencies, Issue #49 implementation, or Release 1.0.
+
+
+## Release 0.16 — candidate Human Decision & Measurement Cycle Pack
+
+Issue #54 authorizes one large coherent candidate over the accepted Release 0.15 service brief and existing Release 0.8/0.11 seams.
+
+The candidate closes a bounded internal human loop:
+
+1. recompute the accepted Release 0.15 service brief;
+2. resolve exact human-selected attention;
+3. record one human decision statement;
+4. optionally prepare/explicitly create one canonical Release 0.8 recommendation;
+5. optionally compose one accepted Release 0.11 Search Change measurement plan;
+6. explicitly record prepared measurements one at a time through Release 0.8;
+7. project follow-up readiness without success/health scoring;
+8. explicitly record a human-declared Release 0.8 outcome;
+9. emit one deterministic bounded Decision Cycle Dossier JSON/static HTML.
+
+This remains internal service-delivery enabling infrastructure, not a task manager, statistical SEO test platform, generic changelog, marketing dashboard SaaS, action engine, or automated strategy system. Incremental recurring cash target remains $0.
+
+Issue #49 internal-link work and Release 1.0 remain separately gated.

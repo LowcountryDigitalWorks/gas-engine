@@ -138,3 +138,26 @@ Every repository-backed read remains enforced by accepted EvidenceRepository / R
 Release 0.15 creates no recommendation, action, mutation, remediation, publishing, provider write, schedule, webhook, report-delivery authority, or external execution permission. Human recommendation acceptance remains non-executing. Human-declared outcome direction and attribution remain recorded history rather than Release 0.15 inference.
 
 No customer/private evidence, credential, token, PHI, CUI, or production secret is authorized in this public repository.
+
+
+## Release 0.16 candidate authority boundary
+
+Issue #54 authorizes one **CANDIDATE / NOT ACCEPTED** internal Human Decision & Measurement Cycle Pack.
+
+Authorized candidate surfaces are limited to:
+
+- recomputing an accepted Release 0.15 brief from original bounded input;
+- exact bounded human selection from the recomputed attention register;
+- one strict human decision statement;
+- read-only preparation of one optional human-authored canonical Release 0.8 recommendation;
+- explicit call-through to accepted Release 0.8 recommendation creation/lifecycle/revision services;
+- one optional accepted Release 0.11 Search Change measurement plan;
+- explicit one-prepared-measurement-at-a-time call-through to accepted Release 0.8 recording;
+- deterministic readiness projection from accepted records/Release 0.11 state;
+- explicit human outcome call-through to accepted Release 0.8 validation;
+- deterministic bounded Decision Cycle Dossier JSON and static HTML;
+- synthetic/public-safe tests and preview.
+
+This authority does **not** authorize a decision/plan/task/experiment table, canonical schema change, multi-write transaction/rollback framework, provider/CMS/IndexNow write, provider networking, OAuth/credentials, scheduler/worker, generic task/project management, automated recommendation/rationale/outcome direction, severity/priority/business-impact scoring, generic correlation/causality, runtime AI/LLM/embeddings, cloud deployment, customer/private evidence, paid service, Issue #49 implementation, or Release 1.0.
+
+Recommendation acceptance, measurement state, and recorded human outcome create no production action authority.

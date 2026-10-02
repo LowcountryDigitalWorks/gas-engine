@@ -22,6 +22,8 @@ G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence fr
 
 **Release 0.15 is accepted and merged on `main` through PR #52.** It composes accepted Release 0.7–0.14 read/analysis surfaces into one bounded deterministic service brief: fixed module readiness, an unranked attention register, exact-string URL evidence indexing, bounded human service history, compact provenance, deterministic JSON identity/output, and a standalone printable static HTML report. Acceptance followed Product whole-pack review, one bounded service-history semantic-identity correction, final independent exact-head review, protected-main squash merge, and post-merge Contracts verification. It adds no canonical schema, persistence/migration, provider networking, runtime AI, cloud resource, scoring/prioritization, automatic recommendation/remediation/action, paid dependency, Issue #49 work, or Release 1.0 implementation. See the [Release 0.15 service-brief guide](docs/service-brief.md) and [ADR 0015](docs/decisions/0015-unified-operator-service-brief.md).
 
+**Release 0.16 is a CANDIDATE / NOT ACCEPTED under Issue #54.** It adds one application-local Human Decision & Measurement Cycle over accepted Release 0.15 selection, Release 0.8 recommendation/measurement/outcome services, and Release 0.11 Search Change planning. It recomputes the accepted service brief internally, preserves exact human selection and human-authored decision semantics, keeps writes explicit and one-record-at-a-time, and emits deterministic bounded JSON/static HTML dossiers. It adds no new wire schema, persistence/migration, generic task/experiment system, provider networking, runtime AI, cloud resource, automatic recommendation/outcome direction, production action, paid service, Issue #49 implementation, or Release 1.0 implementation. See the [Release 0.16 decision-cycle guide](docs/decision-cycle.md) and [ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md).
+
 The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
@@ -57,7 +59,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, and the accepted Release 0.15 JSON/HTML service-brief preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, and the accepted Release 0.15 JSON/HTML service-brief preview, and the candidate Release 0.16 full decision-cycle JSON/HTML preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -111,3 +113,6 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Release 0.14 Bing AI Performance adapter](docs/adapters/bing-ai-performance.md)
 - [Release 0.14 AI Visibility Intelligence guide](docs/ai-visibility-intelligence.md)
 - [ADR 0014 — provider-preserving AI visibility intelligence](docs/decisions/0014-ai-visibility-intelligence-pack.md)
+
+- [Release 0.16 decision cycle — candidate](docs/decision-cycle.md)
+- [Human decision & measurement cycle — candidate ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md)
