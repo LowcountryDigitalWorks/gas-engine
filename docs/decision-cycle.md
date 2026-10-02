@@ -1,8 +1,8 @@
 # Release 0.16 Human Decision & Measurement Cycle Pack
 
-**Status: CANDIDATE / NOT ACCEPTED**
+**Status: ACCEPTED AND MERGED through PR #55**
 
-Release 0.16 closes the next internal managed-service loop over the accepted Release 0.15 service brief while preserving human authorship and accepted Release 0.8/0.11 semantics. It is an application-local internal work-cycle layer. It adds no canonical wire schema, new persistence, provider networking, scheduler, task system, production action, runtime AI, cloud resource, customer portal, or paid service.
+Release 0.16, accepted and merged through PR #55, closes the next internal managed-service loop over the accepted Release 0.15 service brief while preserving human authorship and accepted Release 0.8/0.11 semantics. It is an application-local internal work-cycle layer. It adds no canonical wire schema, new persistence, provider networking, scheduler, task system, production action, runtime AI, cloud resource, customer portal, or paid service.
 
 ## Flow
 
