@@ -28,6 +28,22 @@ The intended long-term operating lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
+## Forward roadmap at a glance
+
+The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). The next phase is intentionally **UX and service operations**, not another isolated analysis module.
+
+- **0.17 — Operator Workspace & Service Reporting UX Pack:** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
+- **0.18 — Repeatable Managed-Service Run & Evidence Intake Pack:** standardize one recurring service run from sanitized provider/sensor handoff through freshness/readiness, prior-cycle comparison, follow-up state, and report-package assembly. Provider polling/scheduling remains outside G.A.S.
+- **0.19 — Internal Portfolio / Multi-Site Operations Console:** one internal LDW control plane for multiple managed engagements: evidence freshness, source failures, review-needed state, follow-up status, and report readiness.
+- **0.20 — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
+- **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
+
+**UX starts in 0.17.** Reporting exists today as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 is intended to turn those underlying semantics into a usable operator workspace and consistent service-report workflow.
+
+A customer portal or self-service SaaS is **not** committed in the 0.x roadmap. It is a post-1.0 possibility only if managed-service demand and Business Value & Strategy evidence justify the added auth, privacy, support, and product burden.
+
+Parallel research such as internal-link intelligence (#49), AI buyer-intent probing (#56), local/GBP evidence, and later conversion/AI-referral context may feed future releases when evidence is ready, but should not block the operator UX/service-delivery path.
+
 The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams, Release 0.6 deterministically maps an already-sanitized ZeroRank artifact into five endpoint-specific `zerorank` collection streams, and Release 0.7 deterministically compares compatible longitudinal collection snapshots while separating unchanged evidence from changed or coverage-uncertain evidence. Accepted Release 0.8 records human-authored recommendation revision history plus explicit measurements and human-declared outcomes. Accepted Release 0.9 adds only a standalone read-only local operator case/report preview over that accepted history. There is still no cross-provider correlation engine, automated prioritization policy, provider networking, production identity provider, network listener, customer portal, external execution, scheduler, runtime AI, or deployment.
 
 ## Initial proof and principles
