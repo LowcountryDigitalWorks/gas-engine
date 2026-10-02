@@ -1,6 +1,6 @@
 # ADR 0017 — Local Operator Workspace and Customer-Safe Reporting
 
-Status: **Proposed / Release 0.17 candidate — NOT ACCEPTED**
+Status: **Accepted**
 
 Date: 2026-10-01  
 Issue: #60  

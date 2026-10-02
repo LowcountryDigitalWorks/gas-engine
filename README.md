@@ -4,7 +4,7 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, compare longitudinal observations, support explicitly human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current accepted baseline: Releases 0.1–0.16 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
+**Current accepted baseline: Releases 0.1–0.17 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
 
 **Release 0.8 is accepted and merged on `main` through PR #16.** It adds provider-neutral, evidence-linked human review history plus an explicit measurement/outcome ledger. Recommendations are human/trusted-caller authored only, priority remains `unassessed`, measurements resolve selected canonical observations, outcome direction is human-declared, and accepted recommendations create no action authority. Canonical recommendation/measurement/outcome contracts remain schemaVersion `1.0`; Release 0.8 adds no dependency and keeps the $0 incremental recurring-cost proof boundary. See the [Release 0.8 review-ledger guide](docs/review-ledger.md) and [ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md).
 
@@ -32,13 +32,13 @@ The intended long-term operating lifecycle is:
 
 The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). The next phase is intentionally **UX and service operations**, not another isolated analysis module.
 
-- **0.17 — ACTIVE / PRODUCT-FROZEN — Operator Workspace & Service Reporting UX Pack (#60):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
+- **0.17 — ACCEPTED — Operator Workspace & Service Reporting UX Pack (#60 / PR #62):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
 - **0.18 — Repeatable Managed-Service Run & Evidence Intake Pack:** standardize one recurring service run from sanitized provider/sensor handoff through freshness/readiness, prior-cycle comparison, follow-up state, and report-package assembly. Provider polling/scheduling remains outside G.A.S.
 - **0.19 — Internal Portfolio / Multi-Site Operations Console:** one internal LDW control plane for multiple managed engagements: evidence freshness, source failures, review-needed state, follow-up status, and report readiness.
 - **0.20 — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
 - **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
 
-**UX starts in active Release 0.17 (#60).** Reporting exists today as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 is product-frozen to turn those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
+**UX begins with accepted Release 0.17 (#60 / PR #62).** Reporting existed previously as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 turns those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
 
 A customer portal or self-service SaaS is **not** committed in the 0.x roadmap. It is a post-1.0 possibility only if managed-service demand and Business Value & Strategy evidence justify the added auth, privacy, support, and product burden.
 
@@ -133,12 +133,12 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Release 0.16 decision cycle — accepted](docs/decision-cycle.md)
 - [Human decision & measurement cycle — accepted ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md)
 
-## Release 0.17 candidate — Operator Workspace & Service Reporting UX Pack
+## Release 0.17 — Operator Workspace & Service Reporting UX Pack — accepted
 
-Release 0.17 is **CANDIDATE / NOT ACCEPTED** under Issue #60 and PR #62.
+Release 0.17 is **accepted and merged on `main` through PR #62** at squash merge `52ea537e99a92b05a52c2e732a86104d65f2ea28`; post-merge Contracts `36968094314` succeeded.
 
-The candidate adds the first cohesive internal LDW workbench over accepted Release 0.15/0.16 semantics: deterministic OperatorWorkspace snapshots, a self-contained local browser workbench, strict downloaded request artifacts with authoritative Node-side recomputation, exact delegated Release 0.16/0.8 writes, and deterministic customer-safe reporting with one-to-three human-selected focus items.
+The accepted release adds the first cohesive internal LDW workbench over accepted Release 0.15/0.16 semantics: deterministic OperatorWorkspace snapshots, a self-contained local browser workbench, strict downloaded request artifacts with authoritative Node-side recomputation, exact delegated Release 0.16/0.8 writes, and deterministic customer-safe reporting with one-to-three human-selected focus items.
 
-The browser is an untrusted convenience layer. It cannot mint TenantContext, redefine evidence, write persistence directly, bypass current-cycle measurement/outcome guards, or authorize production action. The candidate adds no new runtime dependency, canonical schema, migration/table, server/listener, cloud resource, provider network, runtime AI, customer portal, or paid reporting SaaS.
+The browser is an untrusted convenience layer. It cannot mint TenantContext, redefine evidence, write persistence directly, bypass current-cycle measurement/outcome guards, or authorize production action. Release 0.17 adds no new runtime dependency, canonical schema, migration/table, server/listener, cloud resource, provider network, runtime AI, customer portal, or paid reporting SaaS.
 
-See [Release 0.17 operator workspace guide](docs/operator-workspace.md) and [proposed ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).
+See [Release 0.17 operator workspace guide](docs/operator-workspace.md) and [ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).
