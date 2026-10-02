@@ -50,6 +50,7 @@ export interface OperatorWorkspaceEvidenceRow {
   readonly kind: string;
   readonly state: string;
   readonly evidenceIdentity: string;
+  readonly providerIds: readonly string[];
   readonly url?: string;
   readonly query?: string;
   readonly promptId?: string;
@@ -71,6 +72,7 @@ export interface OperatorWorkspaceNavigation {
     exactUrlCount: number;
     readinessCount: number;
     limitationCount: number;
+    evidenceStateCounts: readonly Readonly<{ state: string; count: number }>[];
   }>;
   readonly evidence: Readonly<{
     rowCount: number;
@@ -149,6 +151,12 @@ function evidenceRows(brief: ServiceBrief, limit: number): OperatorWorkspaceEvid
   if (brief.attentionRegister.length > limit) {
     fail('bound_exceeded', 'Release 0.17 evidence rows exceed the configured workspace bound.');
   }
+  const providersByModule = new Map<string, Set<string>>();
+  for (const entry of brief.provenanceManifest) {
+    const providers = providersByModule.get(entry.moduleId) ?? new Set<string>();
+    for (const providerId of entry.providerIds) providers.add(providerId);
+    providersByModule.set(entry.moduleId, providers);
+  }
   return brief.attentionRegister
     .map((item) => ({
       id: item.id,
@@ -156,6 +164,7 @@ function evidenceRows(brief: ServiceBrief, limit: number): OperatorWorkspaceEvid
       kind: item.originalKind,
       state: item.originalState,
       evidenceIdentity: item.evidenceIdentity,
+      providerIds: [...(providersByModule.get(item.moduleId) ?? new Set<string>())].sort(asciiCompare),
       ...(item.identity.url === undefined ? {} : { url: item.identity.url }),
       ...(item.identity.query === undefined ? {} : { query: item.identity.query }),
       ...(item.identity.promptId === undefined ? {} : { promptId: item.identity.promptId }),
@@ -402,6 +411,12 @@ export async function prepareOperatorWorkspace(
         exactUrlCount: brief.exactUrlEvidenceIndex.length,
         readinessCount: brief.readiness.length,
         limitationCount: limitations.length,
+        evidenceStateCounts: [...rows.reduce((counts, row) => {
+          counts.set(row.state, (counts.get(row.state) ?? 0) + 1);
+          return counts;
+        }, new Map<string, number>()).entries()]
+          .map(([state, count]) => ({ state, count }))
+          .sort((left, right) => asciiCompare(left.state, right.state)),
       },
       evidence: {
         rowCount: rows.length,
