@@ -267,6 +267,7 @@ function buildWorkspaceId(
 ): string {
   const material = {
     version: OPERATOR_WORKSPACE_VERSION,
+    projectionVersion: 'operator-workspace-projection-v1',
     scope: brief.scope,
     trustedTarget: brief.trustedTarget,
     generatedAt,
@@ -274,14 +275,13 @@ function buildWorkspaceId(
     policy,
     sourceServiceBriefId: brief.id,
     sourceDecisionCycleDossierId: dossier?.id ?? null,
-    readiness: brief.readiness,
-    attentionIds: brief.attentionRegister.map((item) => item.id),
-    timeline: timeline.map((entry) => ({
-      kind: entry.kind,
-      at: entry.at,
-      state: entry.state,
-      referenceId: entry.referenceId ?? null,
-    })),
+    emittedCounts: {
+      readiness: brief.readiness.length,
+      attention: brief.attentionRegister.length,
+      exactUrlEvidence: brief.exactUrlEvidenceIndex.length,
+      sourceManifest: brief.provenanceManifest.length,
+      timeline: timeline.length,
+    },
   };
   return 'workspace:' + hashCanonicalJson(material);
 }
