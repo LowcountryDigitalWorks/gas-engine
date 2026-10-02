@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -313,6 +314,21 @@ async function generate(): Promise<void> {
       (total, file) => total + Buffer.byteLength(file.content, 'utf8'),
       Buffer.byteLength(pkg.manifestJson, 'utf8'),
     );
+    for (const entry of pkg.manifest.entries) {
+      console.log(
+        'Release 0.18 package entry: role=' + entry.role +
+        '; filename=' + entry.filename +
+        '; classification=' + entry.classification +
+        '; sha256=' + entry.sha256 +
+        '; bytes=' + String(entry.byteCount),
+      );
+    }
+    console.log(
+      'Release 0.18 package manifest: sha256=' +
+      createHash('sha256').update(pkg.manifestJson, 'utf8').digest('hex') +
+      '; bytes=' + String(Buffer.byteLength(pkg.manifestJson, 'utf8')),
+    );
+
     console.log(
       'Generated synthetic Release 0.18 service run: ' +
       'run=' + pkg.run.id + '; ' +
