@@ -99,22 +99,28 @@ export interface HumanDecisionStatement {
   readonly references: readonly HumanDecisionReference[];
 }
 
+export const DECISION_CYCLE_READINESS_STATES = [
+  'deferred_or_dismissed',
+  'recommendation_not_created',
+  'recommendation_proposed',
+  'recommendation_in_review',
+  'recommendation_accepted',
+  'recommendation_rejected',
+  'recommendation_superseded',
+  'measurement_not_planned',
+  'measurements_not_recorded',
+  'follow_up_not_due',
+  'follow_up_not_measured',
+  'follow_up_not_comparable',
+  'follow_up_not_ready',
+  'ready_for_human_assessment',
+  'outcome_recorded',
+] as const;
+
+export const decisionCycleReadinessStateSchema = z.enum(DECISION_CYCLE_READINESS_STATES);
+
 export type DecisionCycleReadinessState =
-  | 'deferred_or_dismissed'
-  | 'recommendation_not_created'
-  | 'recommendation_proposed'
-  | 'recommendation_in_review'
-  | 'recommendation_accepted'
-  | 'recommendation_rejected'
-  | 'recommendation_superseded'
-  | 'measurement_not_planned'
-  | 'measurements_not_recorded'
-  | 'follow_up_not_due'
-  | 'follow_up_not_measured'
-  | 'follow_up_not_comparable'
-  | 'follow_up_not_ready'
-  | 'ready_for_human_assessment'
-  | 'outcome_recorded';
+  typeof DECISION_CYCLE_READINESS_STATES[number];
 
 export interface DecisionCycleReadiness {
   readonly state: DecisionCycleReadinessState;
