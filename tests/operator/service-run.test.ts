@@ -299,6 +299,46 @@ test('Release 0.18 reuses the accepted Release 0.17 report model/renderer and pa
   assert.doesNotMatch(pkg.manifestJson, /\/tmp\/|[A-Z]:\\/i);
 });
 
+test('Release 0.18 report omission and internal appendix classification remain explicit', async (t) => {
+  const fixture = await decisionCycleFixture(t);
+  const noReport = await composeManagedServiceRunPackage(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    runRequest(fixture),
+  );
+  assert.deepEqual(noReport.run.customerReport, { state: 'not_requested' });
+  assert.equal(noReport.report, undefined);
+  assert.equal(noReport.files.some((file) => file.role.startsWith('customer_report')), false);
+
+  const workspace = await prepareOperatorWorkspace(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    workspaceRequest(fixture),
+  );
+  const withAppendixRequest = {
+    ...reportRequest(workspace),
+    includeInternalAppendix: true,
+  };
+  const withAppendix = await composeManagedServiceRunPackage(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    runRequest(fixture, { reportRequest: withAppendixRequest }),
+  );
+  assert.ok(withAppendix.report?.internalAppendix);
+  const reportFiles = withAppendix.files.filter((file) => file.role.startsWith('customer_report'));
+  assert.equal(reportFiles.length, 2);
+  assert.equal(reportFiles.every((file) => file.classification === 'ldw_internal'), true);
+  assert.equal(
+    withAppendix.manifest.entries
+      .filter((entry) => entry.role.startsWith('customer_report'))
+      .every((entry) => entry.classification === 'ldw_internal'),
+    true,
+  );
+});
+
 test('Release 0.18 run/package bounds fail closed with no receipt truncation', async (t) => {
   const fixture = await decisionCycleFixture(t);
   const request = runRequest(fixture);
