@@ -1,6 +1,6 @@
 # ADR 0016 — Human Decision & Measurement Cycle Pack
 
-- Status: Proposed / Candidate
+- Status: Accepted
 - Release: 0.16
 - Issue: #54
 
@@ -28,4 +28,4 @@ The human decision and dossier remain application-local and nonpersisted. Existi
 
 ## Status
 
-Candidate only until Product whole-pack review, at most one bounded integrated correction if required, final independent exact-head review, and Product-authorized merge.
+Accepted through PR #55 after Product review, independent re-review, merge, and successful post-merge Contracts verification.
