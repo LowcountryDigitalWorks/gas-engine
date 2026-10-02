@@ -18,16 +18,18 @@ import type { CollectionBatch, Scope } from '../persistence/repository.js';
 import { INGESTION_PART_BOUNDS, parseCollectionBatch } from '../persistence/validation.js';
 
 export const WQT_INPUT_SCHEMA_VERSION = 'ldw.website-quality.v1' as const;
-export const WQT_INPUT_SCHEMA_MINOR_VERSION = 2 as const;
+export const WQT_INPUT_SCHEMA_MINOR_VERSION = 3 as const;
 export const WQT_ADAPTER_ID = 'ldw-wqt-normalized' as const;
-export const WQT_ADAPTER_MAPPING_VERSION = '2.0.0' as const;
+export const WQT_ADAPTER_MAPPING_VERSION = '3.0.0' as const;
 export const WQT_SOURCE_SCHEMA_ID = 'ldw.website-quality' as const;
-export const WQT_SOURCE_SCHEMA_VERSION = 'v1.2' as const;
+export const WQT_SOURCE_SCHEMA_VERSION = 'v1.3' as const;
 
 const WQT_MINOR1_MAPPING_VERSION = '1.0.0' as const;
 const WQT_MINOR1_SOURCE_SCHEMA_VERSION = 'v1.1' as const;
-const WQT_MINOR2_MAPPING_VERSION = WQT_ADAPTER_MAPPING_VERSION;
-const WQT_MINOR2_SOURCE_SCHEMA_VERSION = WQT_SOURCE_SCHEMA_VERSION;
+const WQT_MINOR2_MAPPING_VERSION = '2.0.0' as const;
+const WQT_MINOR2_SOURCE_SCHEMA_VERSION = 'v1.2' as const;
+const WQT_MINOR3_MAPPING_VERSION = WQT_ADAPTER_MAPPING_VERSION;
+const WQT_MINOR3_SOURCE_SCHEMA_VERSION = WQT_SOURCE_SCHEMA_VERSION;
 export const MAX_WQT_NORMALIZED_BYTES = MAX_HASH_INPUT_BYTES;
 
 export type WqtProviderId = 'siteone' | 'lighthouse';
@@ -220,7 +222,17 @@ const artifactMinor2Schema = z.strictObject({
   sources: z.strictObject({ siteone: siteOneSourceMinor2Schema, lighthouse: lighthouseSourceSchema }),
   observations: z.array(z.discriminatedUnion('source', [siteOneObservationMinor2Schema, lighthouseObservationSchema])).max(4_096),
 });
-const artifactSchema = z.discriminatedUnion('schemaMinorVersion', [artifactMinor1Schema, artifactMinor2Schema]);
+const artifactMinor3Schema = z.strictObject({
+  ...artifactBase,
+  schemaMinorVersion: z.literal(3),
+  sources: z.strictObject({ siteone: siteOneSourceMinor2Schema, lighthouse: lighthouseSourceSchema }),
+  observations: z.array(z.discriminatedUnion('source', [siteOneObservationMinor2Schema, lighthouseObservationSchema])).max(4_096),
+});
+const artifactSchema = z.discriminatedUnion('schemaMinorVersion', [
+  artifactMinor1Schema,
+  artifactMinor2Schema,
+  artifactMinor3Schema,
+]);
 const configSchema = z.strictObject({
   scope: scopeSchema,
   expectedSiteId: wqtSiteId,
@@ -292,8 +304,10 @@ function parseInput(bytes: Uint8Array): { artifact: WqtArtifact; inputSha256: st
   }
   const envelope = decoded as Record<string, unknown>;
   if (envelope['schemaVersion'] !== WQT_INPUT_SCHEMA_VERSION
-      || (envelope['schemaMinorVersion'] !== 1 && envelope['schemaMinorVersion'] !== 2)) {
-    fail('unsupported_schema', `Only ${WQT_INPUT_SCHEMA_VERSION} minors 1 and 2 are supported.`);
+      || (envelope['schemaMinorVersion'] !== 1
+        && envelope['schemaMinorVersion'] !== 2
+        && envelope['schemaMinorVersion'] !== 3)) {
+    fail('unsupported_schema', `Only ${WQT_INPUT_SCHEMA_VERSION} minors 1, 2, and 3 are supported.`);
   }
 
   const parsed = artifactSchema.safeParse(decoded);
@@ -391,19 +405,28 @@ function asciiCompare(left: string, right: string): number {
 function mappingSemantics(artifact: WqtArtifact): {
   readonly mappingVersion: string;
   readonly sourceSchemaVersion: string;
-  readonly configurationRevision: 1 | 2;
+  readonly configurationRevision: 1 | 2 | 3;
 } {
-  return artifact.schemaMinorVersion === 1
-    ? {
+  switch (artifact.schemaMinorVersion) {
+    case 1:
+      return {
         mappingVersion: WQT_MINOR1_MAPPING_VERSION,
         sourceSchemaVersion: WQT_MINOR1_SOURCE_SCHEMA_VERSION,
         configurationRevision: 1,
-      }
-    : {
+      };
+    case 2:
+      return {
         mappingVersion: WQT_MINOR2_MAPPING_VERSION,
         sourceSchemaVersion: WQT_MINOR2_SOURCE_SCHEMA_VERSION,
         configurationRevision: 2,
       };
+    case 3:
+      return {
+        mappingVersion: WQT_MINOR3_MAPPING_VERSION,
+        sourceSchemaVersion: WQT_MINOR3_SOURCE_SCHEMA_VERSION,
+        configurationRevision: 3,
+      };
+  }
 }
 
 function sourceDigest(material: unknown): string {
@@ -725,6 +748,109 @@ function buildProviderCollection(
     }
   });
   return { providerId, collectionId, idempotencyKey, batches };
+}
+
+export interface WqtProviderSnapshot {
+  readonly providerId: WqtProviderId;
+  readonly collection: Contract<'collection'>;
+  readonly observations: readonly Contract<'observation'>[];
+}
+
+function resolveAdaptedProviderSnapshot(stream: WqtAdaptedCollection): WqtProviderSnapshot {
+  if (stream.batches.length === 0) {
+    fail('invalid_output', 'Adapted WQT provider stream contains no collection parts.');
+  }
+  const first = stream.batches[0]!;
+  const expectedParts = first.parts;
+  if (expectedParts < 1 || stream.batches.length !== expectedParts) {
+    fail('invalid_output', 'Adapted WQT provider stream is missing one or more multipart collection parts.');
+  }
+
+  const seenParts = new Set<number>();
+  const seenSources = new Set<string>();
+  const seenObservations = new Set<string>();
+  const observations: Contract<'observation'>[] = [];
+  let sourceCount = 0;
+  const canonicalCollection = canonicalJson(first.collection);
+
+  for (const raw of [...stream.batches].sort((left, right) => left.part - right.part)) {
+    let batch: CollectionBatch;
+    try {
+      batch = parseCollectionBatch(raw);
+    } catch {
+      fail('invalid_output', 'Adapted WQT multipart material failed current G.A.S. collection-part validation.');
+    }
+    if (batch.part < 1 || batch.part > expectedParts || seenParts.has(batch.part)) {
+      fail('invalid_output', 'Adapted WQT provider stream contains duplicate or invalid multipart sequence numbers.');
+    }
+    seenParts.add(batch.part);
+    if (batch.parts !== expectedParts
+        || batch.idempotencyKey !== stream.idempotencyKey
+        || batch.collection.id !== stream.collectionId
+        || batch.collection.providerId !== stream.providerId
+        || canonicalJson(batch.collection) !== canonicalCollection) {
+      fail('invalid_output', 'Adapted WQT multipart material has inconsistent collection identity or provider semantics.');
+    }
+
+    const partSources = new Set(batch.sources.map((item) => item.id));
+    for (const source of batch.sources) {
+      if (seenSources.has(source.id)) {
+        fail('invalid_output', 'Adapted WQT provider stream contains a duplicate source across multipart parts.');
+      }
+      seenSources.add(source.id);
+      sourceCount++;
+    }
+    for (const item of batch.observations) {
+      if (!partSources.has(item.sourceId)) {
+        fail('invalid_output', 'Adapted WQT observation is not colocated with its declared source part.');
+      }
+      if (seenObservations.has(item.record.id)) {
+        fail('invalid_output', 'Adapted WQT provider stream contains a duplicate observation across multipart parts.');
+      }
+      seenObservations.add(item.record.id);
+      observations.push(structuredClone(item.record));
+    }
+  }
+
+  for (let part = 1; part <= expectedParts; part++) {
+    if (!seenParts.has(part)) {
+      fail('invalid_output', 'Adapted WQT provider stream is missing one or more multipart sequence numbers.');
+    }
+  }
+  const collection = first.collection;
+  if (collection.completeness.state !== 'complete'
+      || collection.completeness.expectedCount !== sourceCount
+      || collection.completeness.receivedCount !== sourceCount) {
+    fail('invalid_output', 'Adapted WQT provider stream does not resolve to one exact complete collection snapshot.');
+  }
+
+  return {
+    providerId: stream.providerId,
+    collection: structuredClone(collection),
+    observations: observations.sort((left, right) => asciiCompare(left.id, right.id)),
+  };
+}
+
+/**
+ * Purely resolve the two accepted WQT provider streams into exact complete snapshots
+ * suitable for Release 0.7 compareEvidenceSnapshots(...). No persistence, tenant-context
+ * issuance, provider networking, or private-history write occurs here.
+ */
+export function resolveWqtProviderSnapshots(
+  adapted: WqtAdaptationResult,
+): readonly [WqtProviderSnapshot, WqtProviderSnapshot] {
+  if (adapted.collections.length !== 2) {
+    fail('invalid_output', 'Adapted WQT evidence must contain exactly SiteOne and Lighthouse provider streams.');
+  }
+  const siteone = adapted.collections.find((item) => item.providerId === 'siteone');
+  const lighthouse = adapted.collections.find((item) => item.providerId === 'lighthouse');
+  if (siteone === undefined || lighthouse === undefined || siteone === lighthouse) {
+    fail('invalid_output', 'Adapted WQT evidence must preserve separate SiteOne and Lighthouse streams.');
+  }
+  return [
+    resolveAdaptedProviderSnapshot(siteone),
+    resolveAdaptedProviderSnapshot(lighthouse),
+  ];
 }
 
 /**
