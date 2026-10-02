@@ -142,3 +142,22 @@ Preserve these accepted Release 0.17 rules:
 - add no runtime dependency/framework, canonical schema, table/migration, provider network, auth/session, cloud, scheduler, runtime AI, paid service, customer portal, Issue #49/#56 implementation, Release 0.18, or Release 1.0.
 
 See [accepted Release 0.17 guide](docs/operator-workspace.md) and [ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).
+
+## Release 0.18 candidate development boundary
+
+Release 0.18 is currently **CANDIDATE / NOT ACCEPTED** under Issue #65 / PR #67. Releases 0.1–0.17 remain the accepted baseline.
+
+During Release 0.18 development preserve these candidate rules:
+
+- minor1/minor2 WQT identities remain 1.0.0/v1.1/rev1 and 2.0.0/v1.2/rev2; candidate minor3 is 3.0.0/v1.3/rev3;
+- WQT minor3 facts must use the generic typed-fact path; do not special-case skipped-URL fact IDs;
+- WQT snapshot resolution is pure/local and must fail closed on broken multipart material;
+- managed service runs must recompute accepted Release 0.17 state rather than trust caller-created workspaces;
+- receipts/prior summaries are operational provenance only and never authority/readiness;
+- prior Attention comparison uses exact IDs and only carried_forward/new_in_current/not_present_in_current;
+- follow-up/readiness is the accepted Release 0.16 state, not a task/scheduler model;
+- customer reports reuse accepted Release 0.17 composition/rendering and explicit human <=3 focus selection;
+- package manifests hash exact emitted bytes and explicitly classify customer-safe versus LDW-internal files;
+- no DB/table/migration, canonical schema, provider network/credentials, server/listener, scheduler/worker, cloud, delivery, runtime AI, new dependency, paid service, private Issue #63 implementation, Issue #49/#56, Release 0.19, or Release 1.0.
+
+See [candidate Release 0.18 guide](docs/service-run.md) and [proposed ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md).
