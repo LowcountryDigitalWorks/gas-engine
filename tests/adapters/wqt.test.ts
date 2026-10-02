@@ -174,7 +174,7 @@ test('rejects oversized, malformed UTF-8/JSON, unsupported versions, and strict 
   wrongMajor.schemaVersion = 'ldw.website-quality.v2';
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(wrongMajor), trustedConfig), 'unsupported_schema');
   const wrongMinor = fixture();
-  wrongMinor.schemaMinorVersion = 3;
+  wrongMinor.schemaMinorVersion = 4;
   expectAdapterError(() => adaptWqtNormalizedEvidence(bytes(wrongMinor), trustedConfig), 'unsupported_schema');
   const extra = fixture();
   extra.sources.siteone.unexpected = true;
