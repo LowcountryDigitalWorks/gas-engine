@@ -1,10 +1,12 @@
 # Release 0.18 Managed-Service Run & Evidence Intake Pack
 
-Status: **CANDIDATE / NOT ACCEPTED**
+Status: **ACCEPTED / MERGED**
 
 Issue: #65  
-Candidate PR: #67  
-Package target: `0.18.0`
+Accepted PR: #67  
+Package: `0.18.0`  
+Accepted merge: `6a24d9fb428c1a62b9766f5baa5815329eab78b7`  
+Post-merge Contracts: `37056080706` — SUCCESS
 
 ## Purpose
 
@@ -173,4 +175,4 @@ The preview is included in `npm run check`.
 
 ## Boundaries
 
-Candidate Release 0.18 adds no new database/table/migration, canonical schema, provider network or credential path, server/listener, scheduler/worker, cloud resource, report delivery, runtime AI, new runtime dependency, paid service, private WQT runtime, Issue #49/#56 implementation, Release 0.19, or Release 1.0.
+Release 0.18 adds no new database/table/migration, canonical schema, provider network or credential path, server/listener, scheduler/worker, cloud resource, report delivery, runtime AI, new runtime dependency, paid service, private WQT runtime, Issue #49/#56 implementation, Release 0.19, or Release 1.0.
