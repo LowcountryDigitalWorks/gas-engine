@@ -49,6 +49,12 @@ Authoritative readiness continues to come from the recomputed Release 0.15/0.17 
 
 A prior run summary is history/provenance, not authority. Scope and target must match exactly.
 
+Keep the source managed-service run identity separate from one deterministic application-local compact-summary identity. The compact-summary identity canonically binds every field used by Release 0.18 prior-run comparison. Parsing recomputes and verifies that identity; stale identity plus mutated projection fails closed. The current run records both the source prior run ID and the exact compact-summary ID and binds that exact summary ID into current run semantics.
+
+Prior decision readiness reuses the single accepted Release 0.16 readiness schema from the decision-cycle seam rather than a Release 0.18 string/list copy.
+
+This identity is deterministic integrity/provenance only, not authentication. No signature, HMAC, secret, credential, or key-management layer is introduced. A deliberately changed valid projection is allowed only with its correspondingly different deterministic compact-summary identity.
+
 Comparison is exact and operational only. Attention continuity uses exact IDs and the neutral vocabulary `carried_forward`, `new_in_current`, and `not_present_in_current`. Absence in the current run is never relabeled as resolved, fixed, improved, or reduced business impact.
 
 Evidence-level longitudinal semantics remain owned by Release 0.7 and source-specific accepted modules.
