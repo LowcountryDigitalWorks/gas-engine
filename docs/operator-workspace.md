@@ -161,7 +161,7 @@ It does not prompt for credentials, authenticate users, issue TenantContext, ope
 
 ## Persistence / deployment boundary
 
-Release 0.17 candidate adds:
+Release 0.17 adds:
 
 - no database/table/migration;
 - no canonical wire schema;
