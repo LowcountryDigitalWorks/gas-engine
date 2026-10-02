@@ -79,6 +79,17 @@ A current run may accept zero or one strict `ManagedServiceRunSummary` from a pr
 
 The prior summary is provenance/history only, never authority. Exact scope and target must match the recomputed current workspace.
 
+The compact summary preserves two distinct identities:
+
+- `id` is the source `managed-service-run:<sha256>` identity;
+- `summaryId` is `managed-service-run-summary:<sha256>`, a deterministic application-local identity over the complete compact projection used for comparison.
+
+`summaryId` canonically binds version, source run ID, exact scope/target, workspace/ServiceBrief/optional dossier IDs, module readiness, source-manifest identities, exact Attention IDs, accepted Release 0.16 decision readiness, report state/ID, and receipt states. `parseManagedServiceRunSummary(...)` recomputes that identity and fails closed if the projection changed without a matching identity.
+
+This is integrity/provenance, not authentication: there are no signatures, secrets, HMACs, credentials, or keys. A caller may deliberately construct a different valid projection and recompute its `summaryId`; that projection is then explicitly different and the current run records both its source run ID and exact summary ID.
+
+Prior decision readiness is parsed using the single accepted Release 0.16 readiness schema exported by `decision-cycle.ts`; arbitrary strings are not accepted.
+
 Comparison is deliberately operational:
 
 - module readiness state;
