@@ -178,6 +178,8 @@ export interface ManagedServiceRun {
   readonly decisionCycleDossierId?: string;
   readonly receipts: readonly ServiceRunSourceReceipt[];
   readonly readiness: readonly ServiceBriefReadinessEntry[];
+  readonly sourceManifest: readonly Readonly<{ moduleId: string; identity: string }>[];
+  readonly attentionIds: readonly string[];
   readonly followUp: Readonly<{
     decisionCyclePresent: boolean;
     readiness?: DecisionCycleReadinessState;
@@ -467,6 +469,8 @@ function runIdentityMaterial(run: Omit<ManagedServiceRun, 'id'>): unknown {
     decisionCycleDossierId: run.decisionCycleDossierId ?? null,
     receiptDigests: run.receipts.map(receiptDigest),
     readinessDigest: digestEntryList(run.readiness),
+    sourceManifestDigest: digestEntryList(run.sourceManifest),
+    attentionDigest: digestEntryList(run.attentionIds),
     followUp: run.followUp,
     priorComparisonDigest: run.priorComparison === undefined
       ? null
@@ -548,6 +552,8 @@ async function composeRun(
       : { decisionCycleDossierId: workspace.source.decisionCycleDossierId }),
     receipts: receipts.map((receipt) => structuredClone(receipt)),
     readiness: structuredClone(workspace.readiness),
+    sourceManifest: sourceManifestSummary(workspace),
+    attentionIds: workspace.attention.map((item) => item.id),
     followUp: workspace.decisionCycle === undefined
       ? { decisionCyclePresent: false, reasons: [] }
       : {
@@ -605,42 +611,20 @@ export function summarizeManagedServiceRun(run: ManagedServiceRun): ManagedServi
     readiness: run.readiness
       .map((entry) => ({ moduleId: entry.moduleId, state: entry.state }))
       .sort((left, right) => asciiCompare(left.moduleId, right.moduleId)),
-    sourceManifest: [],
-    attentionIds: [],
+    sourceManifest: run.sourceManifest.map((entry) => structuredClone(entry)),
+    attentionIds: [...run.attentionIds],
     ...(run.followUp.readiness === undefined ? {} : { decisionReadiness: run.followUp.readiness }),
     reportState: run.customerReport.state,
     ...(run.customerReport.reportId === undefined ? {} : { reportId: run.customerReport.reportId }),
     receiptStates: receiptStateSummary(run.receipts),
   };
-  fail('invalid_output', 'summarizeManagedServiceRun requires authoritative workspace projection; use summarizeManagedServiceRunComposition(...).');
+  return parseManagedServiceRunSummary(summary);
 }
 
 export function summarizeManagedServiceRunComposition(
   composition: ManagedServiceRunComposition,
 ): ManagedServiceRunSummary {
-  const summary = {
-    version: MANAGED_SERVICE_RUN_VERSION,
-    id: composition.run.id,
-    scope: structuredClone(composition.run.scope),
-    trustedTarget: composition.run.trustedTarget,
-    workspaceId: composition.run.workspaceId,
-    serviceBriefId: composition.run.serviceBriefId,
-    ...(composition.run.decisionCycleDossierId === undefined
-      ? {}
-      : { decisionCycleDossierId: composition.run.decisionCycleDossierId }),
-    readiness: readinessSummary(composition.workspace),
-    sourceManifest: sourceManifestSummary(composition.workspace),
-    attentionIds: composition.workspace.attention.map((item) => item.id),
-    ...(composition.run.followUp.readiness === undefined
-      ? {}
-      : { decisionReadiness: composition.run.followUp.readiness }),
-    reportState: composition.run.customerReport.state,
-    ...(composition.run.customerReport.reportId === undefined
-      ? {}
-      : { reportId: composition.run.customerReport.reportId }),
-    receiptStates: receiptStateSummary(composition.run.receipts),
-  };
-  return parseManagedServiceRunSummary(summary);
+  return summarizeManagedServiceRun(composition.run);
 }
 
 export function serializeManagedServiceRunJson(run: ManagedServiceRun): string {
