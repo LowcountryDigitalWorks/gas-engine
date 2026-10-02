@@ -11,8 +11,10 @@ import {
 import {
   applyOperatorWorkspaceAction,
   createOperatorActionArtifact,
+  prepareOperatorWorkspaceDecision,
   serializeOperatorActionArtifact,
 } from '../src/operator/workspace-action.js';
+import { parseDecisionCycleRequest } from '../src/operator/decision-cycle.js';
 import { renderOperatorWorkspaceHtml } from '../src/operator/workspace-html.js';
 import {
   composeCustomerServiceReport,
@@ -124,31 +126,8 @@ async function generate(): Promise<void> {
       ?? firstBrief.attentionRegister[0];
     if (attention === undefined) throw new Error('Release 0.17 preview requires at least one attention item.');
 
-    const cycleInput = {
+    const initialWorkspaceRequest: OperatorWorkspaceRequest = {
       serviceBriefRequest,
-      selectedAttentionIds: [attention.id],
-      decision: {
-        id: 'synthetic-release-017-decision',
-        disposition: 'recommend' as const,
-        summary: 'Human selected an exact unranked attention item for bounded review.',
-        recordedAt: '2026-10-01T21:15:00.000Z',
-        references: attention.identity.url === undefined
-          ? []
-          : [{ kind: 'url' as const, value: attention.identity.url }],
-      },
-      recommendation: candidate,
-      searchChangePlan,
-      policy: {
-        id: 'release-017-decision-policy',
-        version: '1.0.0',
-        maxSelectedAttentionItems: 8,
-      },
-      generatedAt: '2026-10-01T21:20:00.000Z',
-      evaluatedAt: '2026-09-16T09:00:00.000Z',
-    };
-    const workspaceRequest: OperatorWorkspaceRequest = {
-      serviceBriefRequest,
-      decisionCycleInput: cycleInput,
       generatedAt: '2026-10-01T21:30:00.000Z',
       evaluatedAt: '2026-10-01T21:25:00.000Z',
       policy: {
@@ -160,15 +139,64 @@ async function generate(): Promise<void> {
       },
     };
 
+    const initialWorkspace = await prepareOperatorWorkspace(
+      evidence,
+      review,
+      alpha,
+      initialWorkspaceRequest,
+    );
+    const decisionAction = createOperatorActionArtifact(
+      initialWorkspace,
+      'synthetic-release-017-decision',
+      '2026-10-01T21:15:00.000Z',
+      {
+        type: 'prepare_decision',
+        selectedAttentionIds: [attention.id],
+        decision: {
+          id: 'synthetic-release-017-decision',
+          disposition: 'recommend',
+          summary: 'Human selected an exact unranked attention item for bounded review.',
+          recordedAt: '2026-10-01T21:15:00.000Z',
+        },
+        policy: {
+          id: 'release-017-decision-policy',
+          version: '1.0.0',
+          maxSelectedAttentionItems: 8,
+        },
+        generatedAt: '2026-10-01T21:20:00.000Z',
+        evaluatedAt: '2026-09-16T09:00:00.000Z',
+      },
+    );
+    writeFileSync(actionPath, serializeOperatorActionArtifact(decisionAction), { encoding: 'utf8', flag: 'wx' });
+
+    const preparedDecision = await prepareOperatorWorkspaceDecision(
+      evidence,
+      review,
+      alpha,
+      initialWorkspaceRequest,
+      decisionAction,
+    );
+    const preparedCycleInput = parseDecisionCycleRequest(
+      preparedDecision.nextWorkspaceRequest.decisionCycleInput,
+    );
+    const cycleInput = parseDecisionCycleRequest({
+      ...preparedCycleInput,
+      recommendation: candidate,
+      searchChangePlan,
+    });
+    const workspaceRequest: OperatorWorkspaceRequest = {
+      ...preparedDecision.nextWorkspaceRequest,
+      decisionCycleInput: cycleInput,
+    };
+
     let workspace = await prepareOperatorWorkspace(evidence, review, alpha, workspaceRequest);
-    const initialAction = createOperatorActionArtifact(
+    const recommendationAction = createOperatorActionArtifact(
       workspace,
       'release-017-preview-create-recommendation',
       '2026-10-01T21:31:00.000Z',
       { type: 'commit_recommendation' },
     );
-    writeFileSync(actionPath, serializeOperatorActionArtifact(initialAction), { encoding: 'utf8', flag: 'wx' });
-    workspace = await applyOperatorWorkspaceAction(evidence, review, alpha, workspaceRequest, initialAction);
+    workspace = await applyOperatorWorkspaceAction(evidence, review, alpha, workspaceRequest, recommendationAction);
 
     const proposed = workspace.decisionCycle?.recommendation?.current;
     if (proposed === undefined) throw new Error('Release 0.17 preview expected persisted recommendation.');
@@ -330,7 +358,7 @@ async function generate(): Promise<void> {
       'Generated synthetic Release 0.17 workspace: ' +
       'workspace JSON ' + String(Buffer.byteLength(workspaceJson, 'utf8')) + ' bytes; ' +
       'workspace HTML ' + String(Buffer.byteLength(workspaceHtml, 'utf8')) + ' bytes; ' +
-      'action JSON ' + String(Buffer.byteLength(serializeOperatorActionArtifact(initialAction), 'utf8')) + ' bytes; ' +
+      'action JSON ' + String(Buffer.byteLength(serializeOperatorActionArtifact(decisionAction), 'utf8')) + ' bytes; ' +
       'customer report JSON ' + String(Buffer.byteLength(reportJson, 'utf8')) + ' bytes; ' +
       'customer report HTML ' + String(Buffer.byteLength(reportHtml, 'utf8')) + ' bytes; ' +
       String(workspace.attention.length) + ' unranked attention item(s); ' +
