@@ -32,13 +32,13 @@ The intended long-term operating lifecycle is:
 
 The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). The next phase is intentionally **UX and service operations**, not another isolated analysis module.
 
-- **0.17 — Operator Workspace & Service Reporting UX Pack:** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
+- **0.17 — ACTIVE / PRODUCT-FROZEN — Operator Workspace & Service Reporting UX Pack (#60):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
 - **0.18 — Repeatable Managed-Service Run & Evidence Intake Pack:** standardize one recurring service run from sanitized provider/sensor handoff through freshness/readiness, prior-cycle comparison, follow-up state, and report-package assembly. Provider polling/scheduling remains outside G.A.S.
 - **0.19 — Internal Portfolio / Multi-Site Operations Console:** one internal LDW control plane for multiple managed engagements: evidence freshness, source failures, review-needed state, follow-up status, and report readiness.
 - **0.20 — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
 - **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
 
-**UX starts in 0.17.** Reporting exists today as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 is intended to turn those underlying semantics into a usable operator workspace and consistent service-report workflow.
+**UX starts in active Release 0.17 (#60).** Reporting exists today as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 is product-frozen to turn those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
 
 A customer portal or self-service SaaS is **not** committed in the 0.x roadmap. It is a post-1.0 possibility only if managed-service demand and Business Value & Strategy evidence justify the added auth, privacy, support, and product burden.
 
