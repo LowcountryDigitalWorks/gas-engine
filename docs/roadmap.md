@@ -21,7 +21,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.15 | **Accepted:** Unified Operator Intelligence & Service Brief Pack; strict read-only composition over accepted Release 0.7–0.14 surfaces, fixed readiness, unranked attention, exact-string URL index, bounded human history, provenance manifest, deterministic JSON/HTML outputs, no new schema/persistence/network/AI/action. See [service-brief guide](service-brief.md) and [ADR 0015](decisions/0015-unified-operator-service-brief.md). |
 | 0.16 | **Accepted:** Human Decision & Measurement Cycle Pack; exact human attention selection over recomputed Release 0.15 evidence, explicit human decision, optional Release 0.8 recommendation/measurement/outcome call-through, optional Release 0.11 Search Change plan, exact current-cycle measurement/outcome isolation, deterministic JSON/HTML decision dossier. See [decision-cycle guide](decision-cycle.md) and [ADR 0016](decisions/0016-human-decision-measurement-cycle.md). |
 | 0.17 | **Accepted via Issue #60 / PR #62:** Operator Workspace & Service Reporting UX Pack. First cohesive internal LDW operator experience over accepted 0.15/0.16 semantics: site/case navigation, evidence freshness/readiness, attention review, decision/recommendation/measurement/outcome workflow, history/timeline, and customer-safe report composition/export. No provider networking, customer portal, cloud deployment, runtime AI, or production action authority. |
-| 0.18 | **Directional:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
+| 0.18 | **ACTIVE / PRODUCT-FROZEN under Issue #65:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
 | 0.19 | **Directional:** Internal Portfolio / Multi-Site Operations Console. Give LDW one internal control plane across managed sites for evidence freshness, source failures, unresolved attention, decision-cycle state, due follow-up, and report status. Internal operations only; not customer SaaS or a customer portal. |
 | 0.20 | **Directional:** Private-Runtime Packaging & Portability Readiness. Prove configuration/import-export/backup/retention/deletion/rollback boundaries, private evidence placement, and deployment portability before any cloud/customer runtime. No production deployment is authorized by 0.20 itself. |
 | 1.0 | **Separately gated:** bounded private/cloud deployment proof; candidate Workers, D1, and static operator assets only after identity/auth, retention/deletion, workload/cost, rollback/decommission, and service-demand gates are satisfied. No customer portal/SaaS is authorized by this roadmap. |
@@ -54,22 +54,23 @@ This should be a **large coherent UX release**, not a cosmetic dashboard skin. T
 
 **Service milestone after 0.17:** LDW should be able to operate G.A.S. internally as a guided workbench on LDW-owned/public-safe evidence and produce a consistent human-reviewed customer-safe report package. It is still not a customer portal.
 
-### 0.18 — Repeatable Managed-Service Run & Evidence Intake Pack
+### 0.18 — Repeatable Managed-Service Run & Evidence Intake Pack — ACTIVE / PRODUCT-FROZEN (#65)
 
-**Primary goal:** turn one operator session into a reproducible service run.
+**Primary goal:** turn one operator session into a reproducible service run. Issue #65 is the authoritative frozen implementation contract; this roadmap section remains directional context.
 
 Expected capability themes:
 
+- deliberate WQT v1 minor-3 compatibility plus a pure/local WQT provider-snapshot resolution seam for later private consumers;
 - bounded provider/sensor artifact handoff manifest;
 - run identity and source/freshness/readiness checklist;
 - previous-run / current-run comparison;
 - unresolved attention and accepted decision carry-forward;
-- follow-up-due / not-due / not-measured states;
+- projection of accepted Release 0.16 follow-up/readiness states rather than a second scheduler/task engine;
 - report-package assembly from accepted evidence + human decisions + outcomes;
-- durable service-run audit/provenance bundle;
+- deterministic file-based service-run audit/provenance package with exact hashes/byte counts;
 - explicit handoff boundary to Automation & Agent Operations for provider reads, cadence, schedules, and transport.
 
-G.A.S. should still not become the provider poller, scheduler, workflow engine, or credential store.
+G.A.S. should still not become the provider poller, scheduler, workflow engine, credential store, private WQT runtime, or REPORT-AUTO delivery mechanism. Design Issue #63 remains separate and private-runtime implementation requires a later gate.
 
 **Service milestone after 0.18:** LDW should be able to execute a repeatable managed visibility engagement with substantially less manual reconciliation. Commercial packaging/pricing/claims remain governed by business-operations #280.
 
