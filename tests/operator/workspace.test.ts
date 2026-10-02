@@ -77,6 +77,14 @@ test('Release 0.17 workspace recomputes accepted sources and has deterministic s
   assert.equal(first.source.decisionCycleDossierId, fixture.dossier.id);
   assert.deepEqual(first.scope, serviceBriefScope);
   assert.equal(first.navigation.attention.semantics, 'human_review_selection_not_priority');
+  assert.equal(
+    first.navigation.overview.evidenceStateCounts.reduce((total, entry) => total + entry.count, 0),
+    first.evidenceRows.length,
+  );
+  assert.equal(
+    first.evidenceRows.every((row) => Array.isArray(row.providerIds)),
+    true,
+  );
   assert.equal(first.decisionCycle?.recordedMeasurements.length, 0);
   assert.equal(Buffer.byteLength(serializeOperatorWorkspaceJson(first), 'utf8') <= MAX_OPERATOR_WORKSPACE_JSON_BYTES, true);
 
@@ -421,6 +429,9 @@ test('Release 0.17 browser workbench escapes dynamic content and exposes no netw
   assert.match(html, /script-src 'sha256-/);
   assert.match(html, /focus-visible/);
   assert.match(html, /<nav aria-label="Workspace sections">/);
+  assert.match(html, /id="evidence-provider"/);
+  assert.match(html, /Evidence state counts/);
+  assert.match(html, /Source \/ method manifest/);
   assert.match(html, /<th scope="col">/);
   assert.match(html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html, /<img\s+src=x/i);
