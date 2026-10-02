@@ -299,6 +299,12 @@ function validatePlainOutput(workspace: OperatorWorkspace): void {
   }
 }
 
+export function parseOperatorWorkspaceRequest(input: unknown): OperatorWorkspaceRequest {
+  const parsed = requestSchema.safeParse(input);
+  if (!parsed.success) fail('invalid_request', 'Release 0.17 workspace request is invalid.');
+  return parsed.data;
+}
+
 export function serializeOperatorWorkspaceJson(workspace: OperatorWorkspace): string {
   const json = JSON.stringify(workspace, null, 2) + '\n';
   if (Buffer.byteLength(json, 'utf8') > MAX_OPERATOR_WORKSPACE_JSON_BYTES) {
@@ -317,9 +323,7 @@ export async function prepareOperatorWorkspace(
   context: TenantContext,
   input: unknown,
 ): Promise<OperatorWorkspace> {
-  const parsed = requestSchema.safeParse(input);
-  if (!parsed.success) fail('invalid_request', 'Release 0.17 workspace request is invalid.');
-  const request = parsed.data;
+  const request = parseOperatorWorkspaceRequest(input);
 
   const brief = await assembleServiceBrief(
     evidenceRepository,
