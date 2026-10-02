@@ -1,6 +1,6 @@
 # Release 0.17 Operator Workspace & Service Reporting UX Pack
 
-Status: **CANDIDATE / NOT ACCEPTED**
+Status: **Accepted**
 
 Issue: #60  
 Candidate PR: #62  
