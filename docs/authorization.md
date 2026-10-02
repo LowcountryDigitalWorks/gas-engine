@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.15 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.16 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.15 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.15 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.16 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.16 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -140,11 +140,11 @@ Release 0.15 creates no recommendation, action, mutation, remediation, publishin
 No customer/private evidence, credential, token, PHI, CUI, or production secret is authorized in this public repository.
 
 
-## Release 0.16 candidate authority boundary
+## Release 0.16 accepted authority boundary
 
-Issue #54 authorizes one **CANDIDATE / NOT ACCEPTED** internal Human Decision & Measurement Cycle Pack.
+Issue #54 records the **accepted Human Decision & Measurement Cycle Pack**, merged through PR #55 after Product whole-pack review, bounded semantic-integrity corrections, final independent re-review, protected-main squash merge, and post-merge Contracts verification.
 
-Authorized candidate surfaces are limited to:
+Accepted Release 0.16 surfaces are limited to:
 
 - recomputing an accepted Release 0.15 brief from original bounded input;
 - exact bounded human selection from the recomputed attention register;
