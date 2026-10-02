@@ -7,10 +7,16 @@ import { DecisionCycleError } from './decision-cycle.js';
 import { ServiceBriefError } from './service-brief.js';
 import {
   OperatorWorkspaceError,
+  parseOperatorWorkspaceRequest,
   prepareOperatorWorkspace,
   type OperatorWorkspace,
+  type OperatorWorkspaceRequest,
 } from './workspace.js';
-import { applyOperatorWorkspaceAction } from './workspace-action.js';
+import {
+  applyOperatorWorkspaceAction,
+  parseOperatorActionArtifact,
+  prepareOperatorWorkspaceDecision,
+} from './workspace-action.js';
 import {
   composeCustomerServiceReport,
   type CustomerServiceReport,
@@ -36,7 +42,11 @@ const commandSchema = z.discriminatedUnion('type', [
 export type OperatorWorkspaceCommand = z.infer<typeof commandSchema>;
 
 export type OperatorWorkspaceCommandResult =
-  | Readonly<{ type: 'workspace'; workspace: OperatorWorkspace }>
+  | Readonly<{
+      type: 'workspace';
+      workspace: OperatorWorkspace;
+      nextWorkspaceRequest: OperatorWorkspaceRequest;
+    }>
   | Readonly<{ type: 'report'; report: CustomerServiceReport }>;
 
 export type OperatorRuntimeErrorCode =
@@ -98,27 +108,48 @@ export async function executeOperatorWorkspaceCommand(
     throw new OperatorWorkspaceError('invalid_request', 'Release 0.17 operator command is invalid.');
   }
   switch (parsed.data.type) {
-    case 'generate_workspace':
+    case 'generate_workspace': {
+      const nextWorkspaceRequest = parseOperatorWorkspaceRequest(parsed.data.workspaceRequest);
       return {
         type: 'workspace',
         workspace: await prepareOperatorWorkspace(
           evidenceRepository,
           reviewRepository,
           context,
-          parsed.data.workspaceRequest,
+          nextWorkspaceRequest,
         ),
+        nextWorkspaceRequest,
       };
-    case 'apply_action':
+    }
+    case 'apply_action': {
+      const artifact = parseOperatorActionArtifact(parsed.data.actionArtifact);
+      if (artifact.action.type === 'prepare_decision') {
+        const continuation = await prepareOperatorWorkspaceDecision(
+          evidenceRepository,
+          reviewRepository,
+          context,
+          parsed.data.workspaceRequest,
+          artifact,
+        );
+        return {
+          type: 'workspace',
+          workspace: continuation.workspace,
+          nextWorkspaceRequest: continuation.nextWorkspaceRequest,
+        };
+      }
+      const nextWorkspaceRequest = parseOperatorWorkspaceRequest(parsed.data.workspaceRequest);
       return {
         type: 'workspace',
         workspace: await applyOperatorWorkspaceAction(
           evidenceRepository,
           reviewRepository,
           context,
-          parsed.data.workspaceRequest,
-          parsed.data.actionArtifact,
+          nextWorkspaceRequest,
+          artifact,
         ),
+        nextWorkspaceRequest,
       };
+    }
     case 'generate_report':
       return {
         type: 'report',
