@@ -132,3 +132,13 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 
 - [Release 0.16 decision cycle — accepted](docs/decision-cycle.md)
 - [Human decision & measurement cycle — accepted ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md)
+
+## Release 0.17 candidate — Operator Workspace & Service Reporting UX Pack
+
+Release 0.17 is **CANDIDATE / NOT ACCEPTED** under Issue #60 and PR #62.
+
+The candidate adds the first cohesive internal LDW workbench over accepted Release 0.15/0.16 semantics: deterministic OperatorWorkspace snapshots, a self-contained local browser workbench, strict downloaded request artifacts with authoritative Node-side recomputation, exact delegated Release 0.16/0.8 writes, and deterministic customer-safe reporting with one-to-three human-selected focus items.
+
+The browser is an untrusted convenience layer. It cannot mint TenantContext, redefine evidence, write persistence directly, bypass current-cycle measurement/outcome guards, or authorize production action. The candidate adds no new runtime dependency, canonical schema, migration/table, server/listener, cloud resource, provider network, runtime AI, customer portal, or paid reporting SaaS.
+
+See [Release 0.17 operator workspace guide](docs/operator-workspace.md) and [proposed ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).
