@@ -161,3 +161,22 @@ Accepted Release 0.16 surfaces are limited to:
 This authority does **not** authorize a decision/plan/task/experiment table, canonical schema change, multi-write transaction/rollback framework, provider/CMS/IndexNow write, provider networking, OAuth/credentials, scheduler/worker, generic task/project management, automated recommendation/rationale/outcome direction, severity/priority/business-impact scoring, generic correlation/causality, runtime AI/LLM/embeddings, cloud deployment, customer/private evidence, paid service, Issue #49 implementation, or Release 1.0.
 
 Recommendation acceptance, measurement state, and recorded human outcome create no production action authority.
+
+## Release 0.17 candidate authority boundary
+
+Issue #60 authorizes the **CANDIDATE / NOT ACCEPTED** Release 0.17 Operator Workspace & Service Reporting UX Pack on PR #62.
+
+Candidate authority is limited to:
+
+- deterministic recomposition of accepted Release 0.15 and optional Release 0.16 state;
+- bounded local OperatorWorkspace JSON;
+- self-contained local browser presentation/filter/selection;
+- strict application-local action/report request artifacts;
+- authoritative Node-side source-identity drift checks;
+- call-through to already accepted Release 0.16/0.8 write services;
+- deterministic customer-safe report JSON/static HTML;
+- public-safe synthetic example.test preview/test material.
+
+Browser data remains untrusted and creates no TenantContext/site/scope authority. Recommendation, lifecycle, measurement, outcome, readiness, evidence, and persistence semantics remain owned by accepted releases.
+
+This authority does not include a new canonical schema/table/migration, report/service-run persistence, production auth/session, server/listener, provider network/OAuth, cloud resource, scheduler/worker, report delivery, customer portal, runtime AI, paid service, automated ranking/recommendation/action, Issue #49/#56 implementation, Release 0.18, or Release 1.0.
