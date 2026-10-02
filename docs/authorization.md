@@ -180,3 +180,23 @@ Accepted Release 0.17 authority is limited to:
 Browser data remains untrusted and creates no TenantContext/site/scope authority. Recommendation, lifecycle, measurement, outcome, readiness, evidence, and persistence semantics remain owned by accepted releases.
 
 This authority does not include a new canonical schema/table/migration, report/service-run persistence, production auth/session, server/listener, provider network/OAuth, cloud resource, scheduler/worker, report delivery, customer portal, runtime AI, paid service, automated ranking/recommendation/action, Issue #49/#56 implementation, Release 0.18, or Release 1.0.
+
+## Release 0.18 candidate authority boundary
+
+Issue #65 authorizes the **CANDIDATE / NOT ACCEPTED** Release 0.18 Repeatable Managed-Service Run & Evidence Intake Pack on PR #67.
+
+Candidate authority is limited to:
+
+- deliberate WQT v1 minor3 adaptation using the existing generic typed-fact machinery;
+- pure exact WQT provider-snapshot reconstruction from accepted adapter output;
+- strict application-local operational source receipts;
+- authoritative recomputation of accepted Release 0.17 workspace state;
+- exact application-local comparison against zero or one prior Release 0.18 run summary;
+- direct projection of accepted Release 0.16 readiness;
+- optional accepted Release 0.17 report composition/rendering;
+- deterministic bounded local service-run/package files and manifest;
+- synthetic/public-safe example.test tests and previews.
+
+Receipts, run summaries, filenames, hashes, and prior-run IDs do not create TenantContext/site/scope/provider authority or production action authority.
+
+This authority does not include a canonical schema/table/migration, durable service-run/history database, private wqt-operations history/retention, WQT recurrence/scheduling, provider/GitHub artifact retrieval, credentials/OAuth, server/listener, scheduler/worker, Activepieces invocation, email/SuiteDash/REPORT-AUTO delivery, cloud resource, runtime AI, paid service, Issue #49/#56, Release 0.19, or Release 1.0.

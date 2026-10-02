@@ -142,3 +142,13 @@ The accepted release adds the first cohesive internal LDW workbench over accepte
 The browser is an untrusted convenience layer. It cannot mint TenantContext, redefine evidence, write persistence directly, bypass current-cycle measurement/outcome guards, or authorize production action. Release 0.17 adds no new runtime dependency, canonical schema, migration/table, server/listener, cloud resource, provider network, runtime AI, customer portal, or paid reporting SaaS.
 
 See [Release 0.17 operator workspace guide](docs/operator-workspace.md) and [ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md).
+
+## Release 0.18 — Repeatable Managed-Service Run & Evidence Intake Pack — candidate
+
+Release 0.18 is **CANDIDATE / NOT ACCEPTED** under Issue #65 and draft PR #67.
+
+The candidate makes one engagement reproducible without adding a hosted workflow platform: deliberate WQT v1 minor3 adaptation, exact SiteOne/Lighthouse snapshot reconstruction, strict non-authoritative source receipts, authoritative Release 0.17 workspace recomputation, exact prior-run operational continuity, direct Release 0.16 readiness projection, optional reuse of the accepted Release 0.17 customer report, and deterministic local service-run/package files with exact SHA-256/byte-count classification.
+
+No new canonical schema, database/table/migration, provider polling/credentials, server/listener, scheduler/worker, cloud resource, report delivery, runtime AI, paid service, or runtime dependency is part of this candidate. Issue #63 private WQT history/runtime and REPORT-AUTO delivery remain separately governed.
+
+See [Release 0.18 managed-service run guide](docs/service-run.md), [proposed ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md), and the [WQT adapter guide](docs/adapters/wqt.md).

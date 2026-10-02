@@ -263,3 +263,20 @@ Accepted flow:
 8. regenerate authoritative workspace/customer report state.
 
 Customer reporting remains human-reviewed and bounded to one-to-three explicit focus selections. There is no automatic top-three ranking, health/business score, AI-written report, new persistence, hosted dashboard, customer portal, provider sensing, scheduled delivery, Issue #49/#56 implementation, Release 0.18 implementation, or Release 1.0 implementation.
+
+## Release 0.18 — candidate Repeatable Managed-Service Run & Evidence Intake Pack
+
+Issue #65 authorizes one large coherent **CANDIDATE / NOT ACCEPTED** public release over accepted Releases 0.1–0.17.
+
+Candidate flow:
+
+1. deliberately accept WQT v1 minor3 while preserving minor1/minor2 semantic identities;
+2. reconstruct exact complete WQT provider snapshots for accepted Release 0.7 comparison;
+3. recompute the authoritative Release 0.17 workspace;
+4. attach strict operational source receipts that create no authority/readiness;
+5. optionally compare one exact prior Release 0.18 run summary;
+6. project accepted Release 0.16 readiness unchanged;
+7. optionally reuse the accepted human-authored Release 0.17 customer report;
+8. emit deterministic file-based run/package outputs with exact hashes, byte counts, and explicit classifications.
+
+This candidate does not authorize service-run persistence, private WQT retention/history, recurrence/scheduling, provider polling/downloads, REPORT-AUTO/SuiteDash delivery, AI narrative generation, customer SaaS, Issue #49/#56, Release 0.19, or Release 1.0.

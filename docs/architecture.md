@@ -251,3 +251,26 @@ trusted host + existing repositories + TenantContext
 The browser does not own tenant authority, persistence, evidence truth, recommendation lifecycle, measurement/outcome semantics, or current-cycle selection. Release 0.17 adds only application-local workspace/action/report models and renderers. It adds no canonical wire schema, migration/table, server/listener, cloud runtime, provider client, credential path, scheduler, runtime AI, or new durable report/service-run store.
 
 Customer-safe reporting is a separate deterministic projection. Internal provenance identifiers are absent from the customer body by default and can appear only in an explicitly separated optional LDW appendix.
+
+## Release 0.18 candidate managed-service run seam
+
+Release 0.18 is **CANDIDATE / NOT ACCEPTED** under Issue #65 / PR #67.
+
+```text
+trusted evidence + accepted adapters
+  -> accepted WQT minor3 / exact provider snapshots where applicable
+  -> existing repositories + TenantContext + original Release 0.17 request
+  -> recompute authoritative OperatorWorkspace
+  -> strict operational source receipts
+  -> optional exact prior-run summary comparison
+  -> accepted Release 0.16 readiness projection
+  -> optional accepted Release 0.17 customer report
+  -> deterministic service-run.json + workspace/report files
+  -> deterministic package-manifest.json with exact SHA-256 / byte counts
+```
+
+Source receipts and prior-run summaries are application-local provenance only. They cannot mint tenant/site/scope authority or override accepted evidence readiness. Prior Attention comparison uses exact IDs only and never converts absence into "resolved", "fixed", or "improved".
+
+The candidate adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, queue/scheduler/worker, cloud runtime, report delivery, runtime AI, or new persistent service-run/history layer.
+
+The public WQT snapshot resolver is pure/local. Issue #63's private semantic-history/retention/runtime work remains outside this release.

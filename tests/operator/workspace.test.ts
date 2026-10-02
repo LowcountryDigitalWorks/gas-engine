@@ -447,13 +447,13 @@ test('Release 0.17 browser workbench escapes dynamic content and exposes no netw
   assert.match(script, /new Blob/);
 });
 
-test('Release 0.17 adds no canonical schema, migration, runtime dependency, provider network, AI, Issue #49/#56, 0.18 or 1.0 path', () => {
+test('Release 0.17 surfaces retain no schema, migration, runtime dependency, provider network, AI, Issue #49/#56 or 1.0 path under the 0.18 package', () => {
   const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as {
     version: string;
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
-  assert.equal(packageJson.version, '0.17.0');
+  assert.equal(packageJson.version, '0.18.0');
   assert.deepEqual(packageJson.dependencies, { zod: '4.6.2' });
   assert.deepEqual(packageJson.devDependencies, {
     '@types/node': '24.13.4',
@@ -473,7 +473,7 @@ test('Release 0.17 adds no canonical schema, migration, runtime dependency, prov
   assert.doesNotMatch(sources, /\b(?:OpenAI|Anthropic|embedding|BYOK)\b/i);
   assert.doesNotMatch(sources, /from ['"](?:node:http|node:https|node:net|undici|axios)/i);
   assert.doesNotMatch(sources, /\bfetch\s*\(/);
-  assert.doesNotMatch(sources, /Issue\s*#(?:49|56)|Release\s+0\.18|Release\s+1\.0/i);
+  assert.doesNotMatch(sources, /Issue\s*#(?:49|56)|Release\s+1\.0/i);
 });
 
 test('Release 0.17 report request with optional internal appendix stays explicitly separated', async (t) => {
