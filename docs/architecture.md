@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.16 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.17 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -232,9 +232,9 @@ The accepted release adds no canonical wire contract, repository table/migration
 
 The dossier stores only application-local composition output. Its identity canonically binds emitted semantic state; rendered HTML/CSS/filesystem paths do not define semantic identity.
 
-## Release 0.17 candidate local operator-workspace seam
+## Release 0.17 accepted local operator-workspace seam
 
-Release 0.17 is **CANDIDATE / NOT ACCEPTED** under Issue #60 / PR #62.
+Release 0.17 is **accepted and merged through PR #62** at squash merge `52ea537e99a92b05a52c2e732a86104d65f2ea28`, with post-merge Contracts `36968094314` SUCCESS.
 
 ```text
 trusted host + existing repositories + TenantContext
