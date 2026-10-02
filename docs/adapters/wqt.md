@@ -1,6 +1,6 @@
 # WQT normalized-evidence adapter
 
-Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 added accepted WQT v1 minor2/minor3 typed facts. Release 0.18 now adds **CANDIDATE / NOT ACCEPTED** deliberate WQT v1 minor3 compatibility and exact provider-snapshot reconstruction without changing that runtime boundary. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
+Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 added accepted WQT v1 minor2/minor3 typed facts. Release 0.18 adds accepted deliberate WQT v1 minor3 compatibility and exact provider-snapshot reconstruction without changing that runtime boundary. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
 
 The adapter was designed against accepted WQT main commit `3b6205f3fd3208e6ec9d896da0be4b35a2c1c26e` (tree `6526dd029ddd19cc31afa4712b0912281bca5373`). That commit is design evidence only, not a runtime pin or dependency.
 
@@ -8,11 +8,11 @@ The adapter was designed against accepted WQT main commit `3b6205f3fd3208e6ec9d8
 
 [`src/adapters/wqt.ts`](../../src/adapters/wqt.ts) exports `adaptWqtNormalizedEvidence(bytes, trustedConfig)` plus its bounded config/result/error types and version constants. Input is exact UTF-8 bytes, capped at **1 MiB** before decoding.
 
-Two source contracts remain accepted and one is a Release 0.18 candidate:
+Three source contracts are now accepted:
 
 - `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 1` — accepted historical Release 0.5 semantics;
 - `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 2` — accepted GAS-SEM-001 typed-fact semantics;
-- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 3` — **Release 0.18 CANDIDATE / NOT ACCEPTED**, additive typed-fact semantics.
+- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 3` — **accepted Release 0.18**, additive typed-fact semantics.
 
 Unknown future minor versions still fail closed until deliberately reviewed. Minor1 remains strict and does not accept a `facts` field. Minors 2 and 3 use the same bounded generic SiteOne `facts[]` contract; Lighthouse remains strict and does not accept `facts`. The normalized artifact must also retain `evidenceOnly: true`, `qualityThresholdsApplied: false`, `siteOneCiModeEnabled: false`, the expected `SiteOne Crawler` / `Lighthouse` tool identities, and strict recognized fields.
 
@@ -45,9 +45,9 @@ Adapter identity remains `ldw-wqt-normalized`, but mapping/source semantics are 
 | --- | --- | --- | ---: |
 | v1 minor1 | `1.0.0` | `v1.1` | 1 |
 | v1 minor2 | `2.0.0` | `v1.2` | 2 |
-| v1 minor3 — candidate | `3.0.0` | `v1.3` | 3 |
+| v1 minor3 — accepted | `3.0.0` | `v1.3` | 3 |
 
-The mapping change is semantic, not a package-release claim. Minor1, minor2, and candidate minor3 therefore cannot pass Release 0.7 collection compatibility across minor boundaries as though they were the same longitudinal stream. Cross-minor comparison fails as an ordinary collection discontinuity; the generic comparator contains no WQT/SiteOne special case.
+The mapping change is semantic, not a package-release claim. Minor1, minor2, and accepted minor3 therefore cannot pass Release 0.7 collection compatibility across minor boundaries as though they were the same longitudinal stream. Cross-minor comparison fails as an ordinary collection discontinuity; the generic comparator contains no WQT/SiteOne special case.
 
 Source-record external IDs prefer readable provider/kind/key material when it fits the existing opaque identifier contract; otherwise the complete key is represented by a full SHA-256-derived ID. Storage-row, observation, collection, and idempotency IDs are deterministic SHA-256-derived identifiers and are never collision-prone truncations.
 
@@ -139,7 +139,7 @@ Release 0.5 and GAS-SEM-001 add no network/provider client, crawler, server/list
 No dependency is added and no SQLite schema changes. Incremental recurring cost remains **$0**. The package remains private with no software license grant, tag, or npm publication.
 
 
-## Release 0.18 candidate — exact provider snapshots
+## Release 0.18 accepted — exact provider snapshots
 
 Release 0.18 adds `resolveWqtProviderSnapshots(...)`, a pure/local resolver over accepted `adaptWqtNormalizedEvidence(...)` output.
 

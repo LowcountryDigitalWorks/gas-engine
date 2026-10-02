@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.17 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.18 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -252,9 +252,9 @@ The browser does not own tenant authority, persistence, evidence truth, recommen
 
 Customer-safe reporting is a separate deterministic projection. Internal provenance identifiers are absent from the customer body by default and can appear only in an explicitly separated optional LDW appendix.
 
-## Release 0.18 candidate managed-service run seam
+## Release 0.18 accepted managed-service run seam
 
-Release 0.18 is **CANDIDATE / NOT ACCEPTED** under Issue #65 / PR #67.
+Release 0.18 is **accepted and merged through PR #67** at squash merge `6a24d9fb428c1a62b9766f5baa5815329eab78b7`, with post-merge Contracts `37056080706` SUCCESS.
 
 ```text
 trusted evidence + accepted adapters
@@ -271,6 +271,6 @@ trusted evidence + accepted adapters
 
 Source receipts and prior-run summaries are application-local provenance only. They cannot mint tenant/site/scope authority or override accepted evidence readiness. Prior Attention comparison uses exact IDs only and never converts absence into "resolved", "fixed", or "improved".
 
-The candidate adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, queue/scheduler/worker, cloud runtime, report delivery, runtime AI, or new persistent service-run/history layer.
+Release 0.18 adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, queue/scheduler/worker, cloud runtime, report delivery, runtime AI, or new persistent service-run/history layer.
 
 The public WQT snapshot resolver is pure/local. Issue #63's private semantic-history/retention/runtime work remains outside this release.
