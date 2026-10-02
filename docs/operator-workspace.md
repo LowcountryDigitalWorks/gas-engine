@@ -100,8 +100,8 @@ UI filters are presentation-only and never mutate the underlying workspace snaps
 
 ## Operator navigation
 
-1. **Overview** — exact site/scope context, source readiness, coverage/freshness context, bounded counts, limitations. No universal health/business score.
-2. **Evidence / readiness** — bounded module/state/text filtering over accepted Release 0.15 evidence/attention projection.
+1. **Overview** — exact site/scope context, source readiness, source periods/freshness, coverage context, deterministic evidence-state counts, bounded counts, and limitations. No universal health/business score.
+2. **Evidence / readiness** — bounded provider/module/state/text filtering over accepted Release 0.15 evidence/attention projection, preserving exact references and module-level accepted source-provider context.
 3. **Attention** — accepted unranked attention register with explicit human selection controls. Selection is not G.A.S. priority.
 4. **Decision cycle** — accepted Release 0.16 human decision, recommendation state/history, Search Change plan, exact current-cycle measurements, readiness, and human outcome.
 5. **History / timeline** — reverse-chronological projection of accepted immutable history; no second changelog table.
