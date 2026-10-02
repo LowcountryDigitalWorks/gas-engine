@@ -1,10 +1,12 @@
 # ADR 0018 — Repeatable Managed-Service Run & Evidence Intake
 
-Status: **Proposed / Release 0.18 candidate — NOT ACCEPTED**
+Status: **Accepted**
 
 Date: 2026-10-02  
 Issue: #65  
-Candidate PR: #67
+Accepted PR: #67  
+Accepted merge: `6a24d9fb428c1a62b9766f5baa5815329eab78b7`  
+Post-merge Contracts: `37056080706` — SUCCESS
 
 ## Context
 
@@ -74,7 +76,7 @@ Benefits:
 - previous-run context can be carried without a new history database;
 - file classifications and exact hashes support controlled downstream handling;
 - the public WQT seam can later be reused by a separately authorized private consumer;
-- incremental recurring cash remains $0 for the bounded candidate.
+- incremental recurring cash remains $0 for this accepted bounded release.
 
 Constraints:
 
