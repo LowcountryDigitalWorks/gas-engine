@@ -17,8 +17,9 @@ import {
   type CustomerServiceReport,
 } from './customer-report.js';
 import { renderCustomerServiceReportHtml } from './customer-report-html.js';
-import type {
-  DecisionCycleReadinessState,
+import {
+  decisionCycleReadinessStateSchema,
+  type DecisionCycleReadinessState,
 } from './decision-cycle.js';
 import type {
   ServiceBriefReadinessEntry,
@@ -91,6 +92,7 @@ const receiptStateSummarySchema = z.strictObject({
 const priorSummarySchema = z.strictObject({
   version: z.literal(MANAGED_SERVICE_RUN_VERSION),
   id: z.string().regex(/^managed-service-run:[a-f0-9]{64}$/),
+  summaryId: z.string().regex(/^managed-service-run-summary:[a-f0-9]{64}$/),
   scope: scopeSchema,
   trustedTarget: z.string().min(1).max(2_048).regex(/\S/),
   workspaceId: z.string().regex(/^workspace:[a-f0-9]{64}$/),
@@ -99,7 +101,7 @@ const priorSummarySchema = z.strictObject({
   readiness: z.array(readinessSummarySchema).max(MANAGED_SERVICE_RUN_LIMITS.priorReadinessEntries),
   sourceManifest: z.array(manifestSummarySchema).max(MANAGED_SERVICE_RUN_LIMITS.priorManifestEntries),
   attentionIds: z.array(z.string().min(1).max(256)).max(MANAGED_SERVICE_RUN_LIMITS.priorAttentionIds),
-  decisionReadiness: z.string().min(1).max(128).optional(),
+  decisionReadiness: decisionCycleReadinessStateSchema.optional(),
   reportState: reportStateSchema,
   reportId: z.string().min(1).max(256).optional(),
   receiptStates: z.array(receiptStateSummarySchema).max(MANAGED_SERVICE_RUN_LIMITS.receipts),
@@ -120,6 +122,8 @@ export type ServiceRunSourceReceipt = z.infer<typeof receiptSchema>;
 export type ManagedServiceRunPolicy = z.infer<typeof policySchema>;
 export type ManagedServiceRunSummary = z.infer<typeof priorSummarySchema>;
 export type ManagedServiceRunRequest = z.infer<typeof requestSchema>;
+export type ManagedServiceRunSummaryIdentityMaterial =
+  Omit<ManagedServiceRunSummary, 'summaryId'>;
 
 export type AttentionContinuityState =
   | 'carried_forward'
@@ -128,6 +132,7 @@ export type AttentionContinuityState =
 
 export interface ManagedServiceRunOperationalComparison {
   readonly priorRunId: string;
+  readonly priorSummaryId: string;
   readonly readiness: readonly Readonly<{
     moduleId: string;
     priorState: ServiceBriefReadinessState | null;
@@ -145,8 +150,8 @@ export interface ManagedServiceRunOperationalComparison {
     state: AttentionContinuityState;
   }>[];
   readonly decisionReadiness: Readonly<{
-    prior: string | null;
-    current: string | null;
+    prior: DecisionCycleReadinessState | null;
+    current: DecisionCycleReadinessState | null;
     changed: boolean;
   }>;
   readonly report: Readonly<{
@@ -193,6 +198,7 @@ export interface ManagedServiceRun {
     serviceBriefId: string;
     decisionCycleDossierId?: string;
     priorRunId?: string;
+    priorSummaryId?: string;
     receiptIds: readonly string[];
     reportId?: string;
   }>;
@@ -296,6 +302,37 @@ export function parseServiceRunSourceReceipt(input: unknown): ServiceRunSourceRe
   return parseReceipt(input);
 }
 
+function managedServiceRunSummaryIdentityMaterial(
+  summary: ManagedServiceRunSummary,
+): ManagedServiceRunSummaryIdentityMaterial {
+  return {
+    version: summary.version,
+    id: summary.id,
+    scope: structuredClone(summary.scope),
+    trustedTarget: summary.trustedTarget,
+    workspaceId: summary.workspaceId,
+    serviceBriefId: summary.serviceBriefId,
+    ...(summary.decisionCycleDossierId === undefined
+      ? {}
+      : { decisionCycleDossierId: summary.decisionCycleDossierId }),
+    readiness: summary.readiness.map((entry) => structuredClone(entry)),
+    sourceManifest: summary.sourceManifest.map((entry) => structuredClone(entry)),
+    attentionIds: [...summary.attentionIds],
+    ...(summary.decisionReadiness === undefined
+      ? {}
+      : { decisionReadiness: summary.decisionReadiness }),
+    reportState: summary.reportState,
+    ...(summary.reportId === undefined ? {} : { reportId: summary.reportId }),
+    receiptStates: summary.receiptStates.map((entry) => structuredClone(entry)),
+  };
+}
+
+export function computeManagedServiceRunSummaryId(
+  material: ManagedServiceRunSummaryIdentityMaterial,
+): string {
+  return 'managed-service-run-summary:' + hashCanonicalJson(material);
+}
+
 export function parseManagedServiceRunSummary(input: unknown): ManagedServiceRunSummary {
   const parsed = priorSummarySchema.safeParse(input);
   if (!parsed.success) fail('invalid_request', 'Release 0.18 prior-run summary is invalid or contains unsupported fields.');
@@ -316,6 +353,12 @@ export function parseManagedServiceRunSummary(input: unknown): ManagedServiceRun
   }
   if (parsed.data.reportState === 'present' && parsed.data.reportId === undefined) {
     fail('invalid_request', 'A present prior report must carry its exact report ID.');
+  }
+  const expectedSummaryId = computeManagedServiceRunSummaryId(
+    managedServiceRunSummaryIdentityMaterial(parsed.data),
+  );
+  if (parsed.data.summaryId !== expectedSummaryId) {
+    fail('invalid_request', 'Release 0.18 prior-run summary identity does not match its exact compact semantic projection.');
   }
   return parsed.data;
 }
@@ -436,6 +479,7 @@ function compareOperationalState(
 
   return {
     priorRunId: prior.id,
+    priorSummaryId: prior.summaryId,
     readiness,
     sourceManifest,
     attention,
@@ -474,6 +518,7 @@ function runIdentityMaterial(run: Omit<ManagedServiceRun, 'id'>): unknown {
       ? null
       : hashCanonicalJson({
           priorRunId: run.priorComparison.priorRunId,
+          priorSummaryId: run.priorComparison.priorSummaryId,
           readiness: digestEntryList(run.priorComparison.readiness),
           sourceManifest: digestEntryList(run.priorComparison.sourceManifest),
           attention: digestEntryList(run.priorComparison.attention),
@@ -569,7 +614,9 @@ async function composeRun(
       ...(workspace.source.decisionCycleDossierId === undefined
         ? {}
         : { decisionCycleDossierId: workspace.source.decisionCycleDossierId }),
-      ...(prior === undefined ? {} : { priorRunId: prior.id }),
+      ...(prior === undefined
+        ? {}
+        : { priorRunId: prior.id, priorSummaryId: prior.summaryId }),
       receiptIds: receipts.map((receipt) => receipt.id),
       ...(report === undefined ? {} : { reportId: report.id }),
     },
@@ -598,25 +645,34 @@ export async function prepareManagedServiceRun(
 }
 
 export function summarizeManagedServiceRun(run: ManagedServiceRun): ManagedServiceRunSummary {
-  const summary = {
+  const material: ManagedServiceRunSummaryIdentityMaterial = {
     version: MANAGED_SERVICE_RUN_VERSION,
     id: run.id,
     scope: structuredClone(run.scope),
     trustedTarget: run.trustedTarget,
     workspaceId: run.workspaceId,
     serviceBriefId: run.serviceBriefId,
-    ...(run.decisionCycleDossierId === undefined ? {} : { decisionCycleDossierId: run.decisionCycleDossierId }),
+    ...(run.decisionCycleDossierId === undefined
+      ? {}
+      : { decisionCycleDossierId: run.decisionCycleDossierId }),
     readiness: run.readiness
       .map((entry) => ({ moduleId: entry.moduleId, state: entry.state }))
       .sort((left, right) => asciiCompare(left.moduleId, right.moduleId)),
     sourceManifest: run.sourceManifest.map((entry) => structuredClone(entry)),
     attentionIds: [...run.attentionIds],
-    ...(run.followUp.readiness === undefined ? {} : { decisionReadiness: run.followUp.readiness }),
+    ...(run.followUp.readiness === undefined
+      ? {}
+      : { decisionReadiness: run.followUp.readiness }),
     reportState: run.customerReport.state,
-    ...(run.customerReport.reportId === undefined ? {} : { reportId: run.customerReport.reportId }),
+    ...(run.customerReport.reportId === undefined
+      ? {}
+      : { reportId: run.customerReport.reportId }),
     receiptStates: receiptStateSummary(run.receipts),
   };
-  return parseManagedServiceRunSummary(summary);
+  return parseManagedServiceRunSummary({
+    ...material,
+    summaryId: computeManagedServiceRunSummaryId(material),
+  });
 }
 
 export function summarizeManagedServiceRunComposition(
