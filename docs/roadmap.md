@@ -19,7 +19,140 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.13 | Accepted: Discovery Diagnostics Pack over sanitized Google/Bing/Yandex/IndexNow-style evidence; provider-preserving canonical adaptation, exact-URL readiness, deterministic multi-finding diagnostics, IndexNow submission context, optional Release 0.10 search context, deterministic site rollup, and static operator preview. No provider networking, implicit URL equivalence, universal score, automatic remediation, new persistence, or runtime AI. See [discovery guide](discovery-diagnostics.md) and [ADR 0013](decisions/0013-discovery-diagnostics-pack.md). |
 | 0.14 | Accepted: AI Visibility Intelligence Pack over sanitized Bing AI Performance evidence plus accepted Release 0.6 ZeroRank validation/projection; provider-specific readiness/change/concentration, bounded cross-source divergence, optional accepted context, deterministic report and static HTML. See [AI Visibility guide](ai-visibility-intelligence.md) and [ADR 0014](decisions/0014-ai-visibility-intelligence-pack.md). |
 | 0.15 | **Accepted:** Unified Operator Intelligence & Service Brief Pack; strict read-only composition over accepted Release 0.7–0.14 surfaces, fixed readiness, unranked attention, exact-string URL index, bounded human history, provenance manifest, deterministic JSON/HTML outputs, no new schema/persistence/network/AI/action. See [service-brief guide](service-brief.md) and [ADR 0015](decisions/0015-unified-operator-service-brief.md). |
-| 1.0 | Separately gated bounded cloud proof; candidate Workers, D1, and static operator assets. No deployment is authorized by this roadmap. |
+| 0.16 | **Accepted:** Human Decision & Measurement Cycle Pack; exact human attention selection over recomputed Release 0.15 evidence, explicit human decision, optional Release 0.8 recommendation/measurement/outcome call-through, optional Release 0.11 Search Change plan, exact current-cycle measurement/outcome isolation, deterministic JSON/HTML decision dossier. See [decision-cycle guide](decision-cycle.md) and [ADR 0016](decisions/0016-human-decision-measurement-cycle.md). |
+| 0.17 | **Directional next:** Operator Workspace & Service Reporting UX Pack. First cohesive internal LDW operator experience over accepted 0.15/0.16 semantics: site/case navigation, evidence freshness/readiness, attention review, decision/recommendation/measurement/outcome workflow, history/timeline, and customer-safe report composition/export. No provider networking, customer portal, cloud deployment, runtime AI, or production action authority. |
+| 0.18 | **Directional:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
+| 0.19 | **Directional:** Internal Portfolio / Multi-Site Operations Console. Give LDW one internal control plane across managed sites for evidence freshness, source failures, unresolved attention, decision-cycle state, due follow-up, and report status. Internal operations only; not customer SaaS or a customer portal. |
+| 0.20 | **Directional:** Private-Runtime Packaging & Portability Readiness. Prove configuration/import-export/backup/retention/deletion/rollback boundaries, private evidence placement, and deployment portability before any cloud/customer runtime. No production deployment is authorized by 0.20 itself. |
+| 1.0 | **Separately gated:** bounded private/cloud deployment proof; candidate Workers, D1, and static operator assets only after identity/auth, retention/deletion, workload/cost, rollback/decommission, and service-demand gates are satisfied. No customer portal/SaaS is authorized by this roadmap. |
+
+
+## Forward roadmap — UX, reporting, and service maturity
+
+The accepted 0.1–0.16 baseline now contains enough evidence, review, measurement, outcome, and deterministic report semantics to stop treating UX as premature. The next phase should turn those accepted semantics into a repeatable **LDW operator product** before adding more commodity sensing.
+
+### 0.17 — Operator Workspace & Service Reporting UX Pack — next target
+
+**Primary goal:** make G.A.S. usable by an LDW operator without reconstructing a service run from JSON files, CLI output, and separate static reports.
+
+Expected capability themes:
+
+- internal site/case selector over trusted scope;
+- evidence-source freshness, coverage, missingness, and readiness summary;
+- unified Release 0.15 service brief navigation;
+- attention-item review and exact evidence drill-down;
+- Release 0.16 human decision workflow;
+- current recommendation/lifecycle/history view;
+- Search Change measurement-plan state;
+- exact current-cycle baseline/follow-up/outcome timeline;
+- customer-safe report composer that separates operator detail from customer-facing summary;
+- print/export-friendly deterministic report output;
+- preserve a maximum-small-set summary model for customer delivery rather than dumping every finding;
+- no new provider execution or autonomous recommendation/action semantics merely to make the UI convenient.
+
+This should be a **large coherent UX release**, not a cosmetic dashboard skin. The UI must consume accepted service-brief / decision-cycle semantics directly so fixes remain baked into the engine instead of duplicated in presentation code.
+
+**Service milestone after 0.17:** LDW should be able to operate G.A.S. internally as a guided workbench on LDW-owned/public-safe evidence and produce a consistent human-reviewed customer-safe report package. It is still not a customer portal.
+
+### 0.18 — Repeatable Managed-Service Run & Evidence Intake Pack
+
+**Primary goal:** turn one operator session into a reproducible service run.
+
+Expected capability themes:
+
+- bounded provider/sensor artifact handoff manifest;
+- run identity and source/freshness/readiness checklist;
+- previous-run / current-run comparison;
+- unresolved attention and accepted decision carry-forward;
+- follow-up-due / not-due / not-measured states;
+- report-package assembly from accepted evidence + human decisions + outcomes;
+- durable service-run audit/provenance bundle;
+- explicit handoff boundary to Automation & Agent Operations for provider reads, cadence, schedules, and transport.
+
+G.A.S. should still not become the provider poller, scheduler, workflow engine, or credential store.
+
+**Service milestone after 0.18:** LDW should be able to execute a repeatable managed visibility engagement with substantially less manual reconciliation. Commercial packaging/pricing/claims remain governed by business-operations #280.
+
+### 0.19 — Internal Portfolio / Multi-Site Operations Console
+
+**Primary goal:** manage several service engagements without opening each case independently.
+
+Expected capability themes:
+
+- internal LDW site/engagement inventory;
+- evidence freshness and source-failure exceptions;
+- unread/review-needed attention counts without universal scoring;
+- recommendation / measurement / outcome state;
+- upcoming or overdue follow-up state;
+- report-generation / delivery readiness state;
+- bounded cross-site operational summaries that preserve each site's tenant/scope boundary.
+
+This is an **internal control plane**, not external customer SaaS. Cross-customer semantic data must remain isolated; portfolio views should expose operational metadata needed to run the service, not flatten private customer evidence into one shared dataset.
+
+**Service milestone after 0.19:** LDW can manage a small portfolio of recurring visibility engagements from one internal workspace.
+
+### 0.20 — Private-Runtime Packaging & Portability Readiness
+
+**Primary goal:** prove G.A.S. can be packaged and moved safely before authorizing a deployed runtime.
+
+Expected capability themes:
+
+- explicit runtime/config bundle;
+- private evidence location and separation from the public repository;
+- import/export and backup/restore proof;
+- retention/deletion semantics;
+- environment/config validation;
+- deployment portability;
+- rollback/decommission package;
+- representative workload and storage measurements;
+- exact identity/auth requirements documented before deployment.
+
+0.20 itself should not silently become production cloud deployment.
+
+### 1.0 — Bounded private/cloud deployment proof
+
+Release 1.0 remains a **separate consequential gate**, not the next automatic engineering step.
+
+A 1.0 proof should happen only after the internal operator/service workflow is useful enough to justify deployment and after the required gate covers:
+
+- identity/auth;
+- customer/private-data boundary;
+- exact resources;
+- retention/deletion;
+- measured workload and cost;
+- backup/recovery;
+- rollback/decommission;
+- customer ownership / LDW scoped-access model;
+- support burden;
+- service demand.
+
+Candidate architecture remains low-cost and portable; Workers/D1/static assets are candidates, not commitments.
+
+A **customer-facing portal or self-service SaaS is not part of the committed 0.x roadmap**. It should be considered only after 1.0/private-runtime proof plus separate Business Value & Strategy evidence that customers actually need it.
+
+## Parallel research/module lanes
+
+These research tracks may feed a future large release when evidence is ready, but they should not block 0.17 UX/reporting work:
+
+- **Issue #49 — Internal-Link Coverage Intelligence:** wait for upstream SiteOne evidence before implementation; prefer upstream/general graph support over an LDW-only fork.
+- **Issue #56 — AI Buyer-Intent Recommendation Probe Evidence:** preserve exact non-branded prompts, provider availability, model-surfaced alternatives, citation/source evidence, and repeatability before implementation; do not copy proprietary vendor scores.
+- **Local/GBP visibility:** integrate only when a low-cost authoritative source proves useful; do not build a local rank-grid crawler.
+- **GA4/conversion/AI-referral context:** add only when it materially improves outcome interpretation; do not require it for every engagement.
+- **Alerts/cadence/provider transport:** Automation & Agent Operations owns schedules, provider reads, transport, and operational observability; G.A.S. owns semantics, decision support, reports, and outcome history.
+- **Execution/remediation:** any CMS/provider/site mutation remains separately authorized; accepted recommendations never become automatic production action.
+
+## Service-use maturity map
+
+| Maturity point | What is realistically usable |
+| --- | --- |
+| **Now — accepted 0.16** | Engine semantics are strong enough for internal proofs: deterministic service brief, decision cycle, recommendation/measurement/outcome history, and printable static reports. Operation is still developer/operator-heavy rather than a polished product UX. |
+| **After 0.17** | First real internal operator UX and report-building experience. Suitable for LDW-controlled service delivery/pilot operation on properly authorized evidence; still no customer portal or autonomous action. |
+| **After 0.18** | Repeatable managed-service run method with evidence intake, follow-up state, and report-package assembly. This is the point where technical delivery should feel like a standardized service rather than an engineering proof. |
+| **After 0.19** | Internal multi-site/portfolio operations become practical for several recurring engagements. |
+| **After 0.20** | Runtime is packaged/portable enough to evaluate a real private/cloud deployment safely. |
+| **1.0 gate** | Bounded deployed private/cloud proof only after service value, auth/data boundaries, cost, and rollback are proven. |
+| **Post-1.0 only if demand exists** | Customer portal, self-service, customer-facing SaaS, or broader automated action surfaces. |
+
 
 ## Release 0.7 narrowing decision
 
