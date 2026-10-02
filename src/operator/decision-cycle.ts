@@ -178,7 +178,7 @@ export class DecisionCycleError extends Error {
   }
 }
 
-interface ParsedRequest {
+export interface DecisionCycleRequest {
   readonly serviceBriefRequest: unknown;
   readonly selectedAttentionIds: readonly string[];
   readonly decision: z.infer<typeof decisionInputSchema>;
@@ -225,7 +225,7 @@ function pageMatchesTarget(page: string, target: string): boolean {
   }
 }
 
-function parseRequest(input: unknown): ParsedRequest {
+export function parseDecisionCycleRequest(input: unknown): DecisionCycleRequest {
   const parsed = requestSchema.safeParse(input);
   if (!parsed.success) {
     fail('invalid_request', 'Release 0.16 decision-cycle request is invalid or contains unsupported fields.');
@@ -562,7 +562,7 @@ export async function prepareDecisionCycle(
   context: TenantContext,
   input: unknown,
 ): Promise<DecisionCycleDossier> {
-  const request = parseRequest(input);
+  const request = parseDecisionCycleRequest(input);
   const brief = await assembleServiceBrief(
     evidenceRepository,
     reviewRepository,
