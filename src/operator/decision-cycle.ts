@@ -46,7 +46,7 @@ const decisionReferenceSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('cohort_hash'), value: z.string().min(1).max(256).regex(/\S/) }),
 ]);
 
-const decisionInputSchema = z.strictObject({
+export const humanDecisionInputSchema = z.strictObject({
   id: identifier,
   disposition: z.enum(['investigate', 'recommend', 'defer', 'dismiss']),
   summary: boundedText,
@@ -54,7 +54,7 @@ const decisionInputSchema = z.strictObject({
   references: z.array(decisionReferenceSchema).max(DECISION_CYCLE_HARD_LIMITS.decisionReferences).optional(),
 });
 
-const policySchema = z.strictObject({
+export const decisionCyclePolicySchema = z.strictObject({
   id: identifier,
   version: versionSchema,
   maxSelectedAttentionItems: z.number().int().min(1).max(DECISION_CYCLE_HARD_LIMITS.selectedAttentionItems),
@@ -63,11 +63,11 @@ const policySchema = z.strictObject({
 const requestSchema = z.strictObject({
   serviceBriefRequest: z.unknown(),
   selectedAttentionIds: z.array(identifier).min(1).max(DECISION_CYCLE_HARD_LIMITS.selectedAttentionItems),
-  decision: decisionInputSchema,
+  decision: humanDecisionInputSchema,
   recommendation: z.unknown().optional(),
   existingRecommendationId: identifier.optional(),
   searchChangePlan: z.unknown().optional(),
-  policy: policySchema,
+  policy: decisionCyclePolicySchema,
   generatedAt: timestamp,
   evaluatedAt: timestamp,
 });
@@ -86,9 +86,9 @@ const revisionSchema = z.strictObject({
   recommendation: z.unknown(),
 });
 
-export type DecisionCyclePolicy = z.infer<typeof policySchema>;
+export type DecisionCyclePolicy = z.infer<typeof decisionCyclePolicySchema>;
 export type HumanDecisionReference = z.infer<typeof decisionReferenceSchema>;
-export type HumanDecisionDisposition = z.infer<typeof decisionInputSchema>['disposition'];
+export type HumanDecisionDisposition = z.infer<typeof humanDecisionInputSchema>['disposition'];
 
 export interface HumanDecisionStatement {
   readonly id: string;
@@ -181,7 +181,7 @@ export class DecisionCycleError extends Error {
 export interface DecisionCycleRequest {
   readonly serviceBriefRequest: unknown;
   readonly selectedAttentionIds: readonly string[];
-  readonly decision: z.infer<typeof decisionInputSchema>;
+  readonly decision: z.infer<typeof humanDecisionInputSchema>;
   readonly recommendation?: unknown;
   readonly existingRecommendationId?: string;
   readonly searchChangePlan?: unknown;
