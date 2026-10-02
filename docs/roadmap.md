@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.15 are accepted and merged. Release 1.0 remains separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.16 are accepted and merged. Release 1.0 remains separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -48,7 +48,7 @@ This sequence is not self-executing. Each functional release still requires exac
 
 ## Gates and evaluation
 
-Releases 0.1–0.15 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 0.15 was accepted after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge via PR #52, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.16 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 0.15 was accepted after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge via PR #52, and post-merge Contracts verification. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Future functional releases require adversarial synthetic second-tenant testing for every newly implemented owned surface. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
@@ -93,11 +93,11 @@ Issue #51 records the accepted bounded composition release over accepted Release
 It does not authorize generic correlation, causal inference, priority/severity/materiality/business-impact scoring, automatic recommendations, remediation/action, new persistence/schema, provider networking, credentials, runtime AI, cloud deployment, customer/private evidence, paid dependencies, Issue #49 implementation, or Release 1.0.
 
 
-## Release 0.16 — candidate Human Decision & Measurement Cycle Pack
+## Release 0.16 — accepted Human Decision & Measurement Cycle Pack
 
-Issue #54 authorizes one large coherent candidate over the accepted Release 0.15 service brief and existing Release 0.8/0.11 seams.
+Issue #54 records one large coherent accepted release over the accepted Release 0.15 service brief and existing Release 0.8/0.11 seams.
 
-The candidate closes a bounded internal human loop:
+The accepted release closes a bounded internal human loop:
 
 1. recompute the accepted Release 0.15 service brief;
 2. resolve exact human-selected attention;
