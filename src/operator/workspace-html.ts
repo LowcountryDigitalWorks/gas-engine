@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { Contract } from '../contracts/wire.js';
+import { DECISION_CYCLE_HARD_LIMITS } from './decision-cycle.js';
 import {
   OPERATOR_WORKSPACE_VERSION,
   type OperatorWorkspace,
@@ -209,6 +210,14 @@ function measurementOptions(workspace: OperatorWorkspace): string {
 function buildScript(workspace: OperatorWorkspace): string {
   const workspaceId = JSON.stringify(workspace.id);
   const briefId = JSON.stringify(workspace.source.serviceBriefId);
+  const decisionPolicy = workspace.decisionCycle?.policy ?? {
+    id: 'release-017-browser-decision-policy',
+    version: '1.0.0',
+    maxSelectedAttentionItems: Math.min(
+      DECISION_CYCLE_HARD_LIMITS.selectedAttentionItems,
+      workspace.policy.maxAttentionRows,
+    ),
+  };
   const dossierId = workspace.source.decisionCycleDossierId === undefined
     ? 'null'
     : JSON.stringify(workspace.source.decisionCycleDossierId);
@@ -217,6 +226,8 @@ const VERSION=${JSON.stringify(OPERATOR_WORKSPACE_VERSION)};
 const WORKSPACE_ID=${workspaceId};
 const BRIEF_ID=${briefId};
 const DOSSIER_ID=${dossierId};
+const DECISION_POLICY=${JSON.stringify(decisionPolicy)};
+const WORKSPACE_EVALUATED_AT=${JSON.stringify(workspace.evaluatedAt)};
 const qs=(selector)=>document.querySelector(selector);
 const qsa=(selector)=>Array.from(document.querySelectorAll(selector));
 function setMessage(id,message,isError=false){const node=qs(id);if(!node)return;node.textContent=message;node.classList.toggle('error',isError);}
@@ -225,8 +236,10 @@ qsa('[data-nav]').forEach((button)=>button.addEventListener('click',()=>{const t
 function applyEvidenceFilter(){const providerValue=qs('#evidence-provider').value;const moduleValue=qs('#evidence-module').value;const stateValue=qs('#evidence-state').value;const query=qs('#evidence-text').value.trim().toLowerCase();qsa('.evidence-row').forEach((row)=>{const providers=row.dataset.providers||'|';const show=(!providerValue||providers.includes('|'+providerValue+'|'))&&(!moduleValue||row.dataset.module===moduleValue)&&(!stateValue||row.dataset.state===stateValue)&&(!query||(row.dataset.search||'').includes(query));row.hidden=!show;});}
 ['#evidence-provider','#evidence-module','#evidence-state','#evidence-text'].forEach((selector)=>{const node=qs(selector);node.addEventListener(selector==='#evidence-text'?'input':'change',applyEvidenceFilter);});
 qs('#reset-evidence').addEventListener('click',()=>{qs('#evidence-provider').value='';qs('#evidence-module').value='';qs('#evidence-state').value='';qs('#evidence-text').value='';applyEvidenceFilter();});
+function collectObservedChanges(raw){const values=raw.split('\\n').map((value)=>value.trim()).filter(Boolean);if(values.length>12)throw new Error('Observed changes may contain at most 12 non-empty lines. Nothing was downloaded.');return values;}
+qs('#download-decision-request').addEventListener('click',()=>{try{const selected=qsa('.attention-select:checked').map((node)=>node.value);const decisionId=qs('#decision-id').value.trim();const disposition=qs('#decision-disposition').value;const summary=qs('#decision-summary').value.trim();const recordedAt=qs('#decision-recorded-at').value.trim();if(selected.length<1)throw new Error('Select at least one Attention item for human review.');if(selected.length>DECISION_POLICY.maxSelectedAttentionItems)throw new Error('Selected Attention exceeds the current Release 0.16 policy bound.');if(!decisionId||!disposition||!summary||!recordedAt)throw new Error('Decision ID, disposition, human summary, and recordedAt are required.');const action={type:'prepare_decision',selectedAttentionIds:selected,decision:{id:decisionId,disposition,summary,recordedAt},policy:DECISION_POLICY,generatedAt:recordedAt,evaluatedAt:WORKSPACE_EVALUATED_AT};const artifact={version:VERSION,actionId:decisionId,createdAt:recordedAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,action};if(DOSSIER_ID!==null)artifact.sourceDossierId=DOSSIER_ID;downloadJson(artifact,'gas-prepare-human-decision.json');setMessage('#decision-message','Human decision request downloaded. It remains untrusted until Node-side authoritative recomputation succeeds; preparation itself persists no recommendation, measurement, outcome, or action.');}catch(error){setMessage('#decision-message',error instanceof Error?error.message:'Unable to build human decision request.',true);}});
 qs('#download-action').addEventListener('click',()=>{try{const type=qs('#action-type').value;const actionId=qs('#action-id').value.trim();const createdAt=qs('#action-created-at').value.trim();if(!type||!actionId||!createdAt)throw new Error('Action type, stable action ID, and createdAt are required.');let action;if(type==='commit_recommendation'){action={type};}else if(type==='commit_measurement'){const select=qs('#measurement-role');const option=select.options[select.selectedIndex];if(!option||!option.dataset.id)throw new Error('Choose an exact current prepared measurement.');action={type,role:select.value,expectedMeasurementId:option.dataset.id};}else{const raw=qs('#action-payload').value.trim();if(!raw)throw new Error('This action requires a JSON payload.');const parsed=JSON.parse(raw);action=type==='commit_outcome'?{type,outcome:parsed}:{type,input:parsed};}const artifact={version:VERSION,actionId,createdAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,action};if(DOSSIER_ID!==null)artifact.sourceDossierId=DOSSIER_ID;downloadJson(artifact,'gas-operator-action.json');setMessage('#action-message','Action request downloaded. It is untrusted until Node-side recomputation succeeds.');}catch(error){setMessage('#action-message',error instanceof Error?error.message:'Unable to build action request.',true);}});
-qs('#download-report-request').addEventListener('click',()=>{try{const selected=qsa('.report-select:checked').map((node)=>node.value);if(selected.length<1||selected.length>3)throw new Error('Select between one and three customer focus items.');const requestId=qs('#report-request-id').value.trim();const createdAt=qs('#report-created-at').value.trim();const title=qs('#report-title').value.trim();const executiveSummary=qs('#report-summary').value.trim();const nextReview=qs('#report-next-review').value.trim();if(!requestId||!createdAt||!title||!executiveSummary||!nextReview)throw new Error('Report ID, createdAt, title, executive summary, and next review are required.');const observedChanges=qs('#report-changes').value.split('\\n').map((value)=>value.trim()).filter(Boolean).slice(0,12);const request={version:VERSION,requestId,createdAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,title,executiveSummary,selectedAttentionIds:selected,observedChanges,nextReview,includeInternalAppendix:qs('#report-internal').checked};if(DOSSIER_ID!==null)request.sourceDossierId=DOSSIER_ID;downloadJson(request,'gas-customer-report-request.json');setMessage('#report-message','Report request downloaded. Node-side recomputation will revalidate every selection.');}catch(error){setMessage('#report-message',error instanceof Error?error.message:'Unable to build report request.',true);}});
+qs('#download-report-request').addEventListener('click',()=>{try{const selected=qsa('.report-select:checked').map((node)=>node.value);if(selected.length<1||selected.length>3)throw new Error('Select between one and three customer focus items.');const requestId=qs('#report-request-id').value.trim();const createdAt=qs('#report-created-at').value.trim();const title=qs('#report-title').value.trim();const executiveSummary=qs('#report-summary').value.trim();const nextReview=qs('#report-next-review').value.trim();if(!requestId||!createdAt||!title||!executiveSummary||!nextReview)throw new Error('Report ID, createdAt, title, executive summary, and next review are required.');const observedChanges=collectObservedChanges(qs('#report-changes').value);const request={version:VERSION,requestId,createdAt,workspaceId:WORKSPACE_ID,sourceBriefId:BRIEF_ID,title,executiveSummary,selectedAttentionIds:selected,observedChanges,nextReview,includeInternalAppendix:qs('#report-internal').checked};if(DOSSIER_ID!==null)request.sourceDossierId=DOSSIER_ID;downloadJson(request,'gas-customer-report-request.json');setMessage('#report-message','Report request downloaded. Node-side recomputation will revalidate every selection.');}catch(error){setMessage('#report-message',error instanceof Error?error.message:'Unable to build report request.',true);}});
 qs('#print-workspace').addEventListener('click',()=>window.print());`;
 }
 
@@ -359,6 +372,23 @@ ${sources}
 <h2 tabindex="-1">3. Attention</h2>
 <div class="notice warning"><strong>Human review choice — not G.A.S. priority.</strong> Checkbox selection is presentation state only and never changes the accepted Release 0.15 attention register.</div>
 <div class="check-list">${attentionRows(workspace,'attention-select')}</div>
+<div class="form-card interactive-only">
+<h3>Prepare / update human decision request</h3>
+<p>The checked Attention IDs are copied exactly into an untrusted application-local request. The trusted Node host must recompute the current Release 0.15/0.16 state before accepting them. Preparation is non-durable and does not itself create a recommendation, measurement, outcome, or production action.</p>
+<div class="report-grid">
+<label class="field">Stable decision ID<input id="decision-id" type="text" maxlength="128" value="${attr(workspace.decisionCycle?.decision.id ?? 'human-decision-001')}"></label>
+<label class="field">Disposition<select id="decision-disposition">
+<option value="investigate"${workspace.decisionCycle?.decision.disposition === 'investigate' || workspace.decisionCycle === undefined ? ' selected' : ''}>Investigate</option>
+<option value="recommend"${workspace.decisionCycle?.decision.disposition === 'recommend' ? ' selected' : ''}>Recommend</option>
+<option value="defer"${workspace.decisionCycle?.decision.disposition === 'defer' ? ' selected' : ''}>Defer</option>
+<option value="dismiss"${workspace.decisionCycle?.decision.disposition === 'dismiss' ? ' selected' : ''}>Dismiss</option>
+</select></label>
+<label class="field full">Human summary<textarea id="decision-summary" maxlength="2048" placeholder="Human-authored decision summary.">${escapeHtml(workspace.decisionCycle?.decision.summary ?? '')}</textarea></label>
+<label class="field">Recorded at<input id="decision-recorded-at" type="text" value="${attr(workspace.decisionCycle?.decision.recordedAt ?? workspace.generatedAt)}"></label>
+</div>
+<div class="actions"><button type="button" class="primary" id="download-decision-request">Prepare / update human decision request</button></div>
+<p class="message" id="decision-message" role="status" aria-live="polite"></p>
+</div>
 </section>
 
 <section id="decision" data-panel="decision" hidden>
