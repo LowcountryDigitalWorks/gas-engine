@@ -286,7 +286,7 @@ function selectAttention(
 }
 
 function humanDecision(
-  parsed: ParsedRequest,
+  parsed: DecisionCycleRequest,
   selected: readonly ServiceBriefAttentionItem[],
 ): HumanDecisionStatement {
   const allowed = allowedReferenceKeys(selected);
