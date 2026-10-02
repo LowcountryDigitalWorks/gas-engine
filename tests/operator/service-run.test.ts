@@ -164,6 +164,13 @@ test('Release 0.18 recomputes authoritative Release 0.17 workspace and semantic 
     alpha,
     workspaceRequest(fixture),
   );
+  const repeated = await prepareManagedServiceRun(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    request,
+  );
+  assert.equal(repeated.run.id, first.run.id, 'same semantic run input must repeat the exact run ID');
   assert.equal(first.run.workspaceId, directWorkspace.id);
   assert.deepEqual(first.run.readiness, directWorkspace.readiness);
   assert.equal(first.run.followUp.readiness, directWorkspace.decisionCycle?.readiness.state);
@@ -172,6 +179,13 @@ test('Release 0.18 recomputes authoritative Release 0.17 workspace and semantic 
     () => parseManagedServiceRunRequest({ ...request, workspace: directWorkspace }),
     (error: unknown) => error instanceof ManagedServiceRunError && error.code === 'invalid_request',
   );
+  assert.throws(
+    () => parseManagedServiceRunRequest({ ...request, outputDirectory: '/tmp/format-only' }),
+    (error: unknown) => error instanceof ManagedServiceRunError && error.code === 'invalid_request',
+  );
+  assert.notEqual(JSON.stringify(first.run), JSON.stringify(first.run, null, 2));
+  assert.equal(first.run.id, repeated.run.id, 'pretty formatting is outside semantic run identity');
+
 
   await commitDecisionRecommendation(
     fixture.prepared.evidence,
@@ -195,6 +209,11 @@ test('Release 0.18 recomputes authoritative Release 0.17 workspace and semantic 
     runRequest(fixture, { receiptState: 'not_supplied' }),
   );
   assert.notEqual(changedReceipt.run.id, second.run.id);
+  assert.deepEqual(
+    changedReceipt.run.readiness,
+    second.run.readiness,
+    'operational receipt state must not override authoritative ServiceBrief/workspace readiness',
+  );
   assert.match(serializeManagedServiceRunJson(changedReceipt.run), /managed-service-run:/);
 });
 
