@@ -14,7 +14,6 @@ import type { ReviewLedgerRepository } from '../review/repository.js';
 import {
   composeCustomerServiceReport,
   serializeCustomerServiceReportJson,
-  type CustomerReportRequest,
   type CustomerServiceReport,
 } from './customer-report.js';
 import { renderCustomerServiceReportHtml } from './customer-report-html.js';
@@ -30,7 +29,6 @@ import {
   prepareOperatorWorkspace,
   serializeOperatorWorkspaceJson,
   type OperatorWorkspace,
-  type OperatorWorkspaceRequest,
 } from './workspace.js';
 import { renderOperatorWorkspaceHtml } from './workspace-html.js';
 
