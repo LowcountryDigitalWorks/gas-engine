@@ -7,9 +7,9 @@ import type { ReviewLedgerRepository } from '../review/repository.js';
 import {
   OPERATOR_WORKSPACE_VERSION,
   OperatorWorkspaceError,
+  parseOperatorWorkspaceRequest,
   prepareOperatorWorkspace,
   type OperatorWorkspace,
-  type OperatorWorkspaceRequest,
 } from './workspace.js';
 import type { ServiceBriefAttentionItem, ServiceBriefManifestEntry } from './service-brief.js';
 
@@ -234,10 +234,11 @@ export async function composeCustomerServiceReport(
   evidenceRepository: EvidenceRepository,
   reviewRepository: ReviewLedgerRepository,
   context: TenantContext,
-  workspaceRequest: OperatorWorkspaceRequest,
+  workspaceRequestInput: unknown,
   requestInput: unknown,
 ): Promise<CustomerServiceReport> {
   const request = parseCustomerReportRequest(requestInput);
+  const workspaceRequest = parseOperatorWorkspaceRequest(workspaceRequestInput);
   const workspace = await prepareOperatorWorkspace(
     evidenceRepository,
     reviewRepository,
