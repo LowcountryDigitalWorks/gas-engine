@@ -5,7 +5,6 @@ import type { EvidenceRepository } from '../persistence/repository.js';
 import type { TenantContext } from '../persistence/tenant-context.js';
 import type { ReviewLedgerRepository } from '../review/repository.js';
 import {
-  OPERATOR_WORKSPACE_VERSION,
   OperatorWorkspaceError,
   parseOperatorWorkspaceRequest,
   prepareOperatorWorkspace,
@@ -255,6 +254,7 @@ export async function composeCustomerServiceReport(
     }
     return item;
   });
+  const decision = decisionProjection(workspace);
 
   const body: Omit<CustomerServiceReport, 'id'> = {
     version: CUSTOMER_REPORT_VERSION,
@@ -284,7 +284,7 @@ export async function composeCustomerServiceReport(
       label: customerLabel(item),
       readinessContext: [...item.readinessContext],
     })),
-    ...(workspace.decisionCycle === undefined ? {} : { decision: decisionProjection(workspace) }),
+    ...(decision === undefined ? {} : { decision }),
     nextReview: request.nextReview,
     sourceNotes: workspace.sourceManifest.map(sourceNote),
     ...(request.includeInternalAppendix ? {
