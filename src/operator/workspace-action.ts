@@ -13,9 +13,9 @@ import {
 import {
   OPERATOR_WORKSPACE_VERSION,
   OperatorWorkspaceError,
+  parseOperatorWorkspaceRequest,
   prepareOperatorWorkspace,
   type OperatorWorkspace,
-  type OperatorWorkspaceRequest,
 } from './workspace.js';
 
 export const MAX_OPERATOR_ACTION_BYTES = 256_000;
@@ -145,10 +145,11 @@ export async function applyOperatorWorkspaceAction(
   evidenceRepository: EvidenceRepository,
   reviewRepository: ReviewLedgerRepository,
   context: TenantContext,
-  workspaceRequest: OperatorWorkspaceRequest,
+  workspaceRequestInput: unknown,
   artifactInput: unknown,
 ): Promise<OperatorWorkspace> {
   const artifact = parseOperatorActionArtifact(artifactInput);
+  const workspaceRequest = parseOperatorWorkspaceRequest(workspaceRequestInput);
   const current = await prepareOperatorWorkspace(
     evidenceRepository,
     reviewRepository,
