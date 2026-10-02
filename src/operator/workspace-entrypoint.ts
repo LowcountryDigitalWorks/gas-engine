@@ -115,7 +115,7 @@ export async function executeOperatorWorkspaceCommand(
           evidenceRepository,
           reviewRepository,
           context,
-          parsed.data.workspaceRequest as never,
+          parsed.data.workspaceRequest,
           parsed.data.actionArtifact,
         ),
       };
@@ -126,7 +126,7 @@ export async function executeOperatorWorkspaceCommand(
           evidenceRepository,
           reviewRepository,
           context,
-          parsed.data.workspaceRequest as never,
+          parsed.data.workspaceRequest,
           parsed.data.reportRequest,
         ),
       };
