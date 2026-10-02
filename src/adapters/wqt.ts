@@ -792,23 +792,45 @@ function resolveAdaptedProviderSnapshot(stream: WqtAdaptedCollection): WqtProvid
       fail('invalid_output', 'Adapted WQT multipart material has inconsistent collection identity or provider semantics.');
     }
 
-    const partSources = new Set(batch.sources.map((item) => item.id));
+    const partSources = new Map(batch.sources.map((item) => [item.id, item.record] as const));
     for (const source of batch.sources) {
       if (seenSources.has(source.id)) {
         fail('invalid_output', 'Adapted WQT provider stream contains a duplicate source across multipart parts.');
+      }
+      const identity = source.record.identity;
+      if (canonicalJson(identity.scope) !== canonicalJson(collection.scope)
+          || identity.providerId !== collection.providerId
+          || identity.providerConnectionId !== collection.providerConnectionId) {
+        fail('invalid_output', 'Adapted WQT source identity is inconsistent with its provider collection.');
       }
       seenSources.add(source.id);
       sourceCount++;
     }
     for (const item of batch.observations) {
-      if (!partSources.has(item.sourceId)) {
+      const source = partSources.get(item.sourceId);
+      if (source === undefined) {
         fail('invalid_output', 'Adapted WQT observation is not colocated with its declared source part.');
       }
-      if (seenObservations.has(item.record.id)) {
+      const observation = item.record;
+      const provenance = observation.provenance;
+      const belongs = provenance.runId === collection.id
+        && canonicalJson(provenance.source) === canonicalJson(source.identity)
+        && canonicalJson(observation.cohort.context.scope) === canonicalJson(collection.scope)
+        && canonicalJson(observation.cohort.context.method) === canonicalJson(collection.method)
+        && canonicalJson(provenance.adapter) === canonicalJson(collection.adapter)
+        && canonicalJson(provenance.sourceSchema) === canonicalJson(collection.sourceSchema)
+        && canonicalJson(provenance.sourceTime) === canonicalJson(collection.sourceTime)
+        && provenance.collectedAt === collection.collectedAt
+        && provenance.receivedAt === collection.receivedAt
+        && canonicalJson(provenance.completeness) === canonicalJson(collection.completeness);
+      if (!belongs) {
+        fail('invalid_output', 'Adapted WQT observation provenance is inconsistent with its exact provider collection/source.');
+      }
+      if (seenObservations.has(observation.id)) {
         fail('invalid_output', 'Adapted WQT provider stream contains a duplicate observation across multipart parts.');
       }
-      seenObservations.add(item.record.id);
-      observations.push(structuredClone(item.record));
+      seenObservations.add(observation.id);
+      observations.push(structuredClone(observation));
     }
   }
 
