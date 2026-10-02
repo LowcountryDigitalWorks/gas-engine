@@ -6,12 +6,15 @@ import {
   composeManagedServiceRunPackage,
   ManagedServiceRunError,
   MANAGED_SERVICE_RUN_VERSION,
+  computeManagedServiceRunSummaryId,
   parseManagedServiceRunRequest,
+  parseManagedServiceRunSummary,
   parseServiceRunSourceReceipt,
   prepareManagedServiceRun,
   serializeManagedServiceRunJson,
   summarizeManagedServiceRun,
   type ManagedServiceRunSummary,
+  type ManagedServiceRunSummaryIdentityMaterial,
 } from '../../src/operator/service-run.js';
 import {
   prepareOperatorWorkspace,
@@ -22,7 +25,10 @@ import {
   serializeCustomerServiceReportJson,
 } from '../../src/operator/customer-report.js';
 import { renderCustomerServiceReportHtml } from '../../src/operator/customer-report-html.js';
-import { commitDecisionRecommendation } from '../../src/operator/decision-cycle.js';
+import {
+  commitDecisionRecommendation,
+  DECISION_CYCLE_READINESS_STATES,
+} from '../../src/operator/decision-cycle.js';
 import { alpha } from '../persistence/helpers.js';
 import { decisionCycleFixture } from './decision-cycle-support.js';
 
@@ -101,6 +107,26 @@ function reportRequest(workspace: OperatorWorkspace) {
     nextReview: 'Review the next exact same-source evidence window when available.',
     includeInternalAppendix: false,
   };
+}
+
+function recomputeSummaryIdentity(
+  summary: ManagedServiceRunSummary,
+): ManagedServiceRunSummary {
+  const material = structuredClone(summary) as unknown as ManagedServiceRunSummaryIdentityMaterial & {
+    summaryId?: string;
+  };
+  delete material.summaryId;
+  return {
+    ...material,
+    summaryId: computeManagedServiceRunSummaryId(material),
+  };
+}
+
+function expectInvalidSummary(summary: unknown): void {
+  assert.throws(
+    () => parseManagedServiceRunSummary(summary),
+    (error: unknown) => error instanceof ManagedServiceRunError && error.code === 'invalid_request',
+  );
 }
 
 function runRequest(
@@ -217,7 +243,7 @@ test('Release 0.18 recomputes authoritative Release 0.17 workspace and semantic 
   assert.match(serializeManagedServiceRunJson(changedReceipt.run), /managed-service-run:/);
 });
 
-test('Release 0.18 prior-run comparison is exact, neutral, and fails closed on scope/target mismatch', async (t) => {
+test('Release 0.18 prior summaries are strictly typed and bound to exact compact projection identity', async (t) => {
   const fixture = await decisionCycleFixture(t);
   const first = await prepareManagedServiceRun(
     fixture.prepared.evidence,
@@ -227,18 +253,76 @@ test('Release 0.18 prior-run comparison is exact, neutral, and fails closed on s
   );
   const baseSummary = summarizeManagedServiceRun(first.run);
   assert.equal(baseSummary.version, MANAGED_SERVICE_RUN_VERSION);
+  assert.match(baseSummary.summaryId, /^managed-service-run-summary:[a-f0-9]{64}$/);
+  assert.deepEqual(parseManagedServiceRunSummary(baseSummary), baseSummary);
 
-  const prior = structuredClone(baseSummary);
-  const removed = prior.attentionIds.shift();
+  for (const state of DECISION_CYCLE_READINESS_STATES) {
+    const candidate = recomputeSummaryIdentity({
+      ...structuredClone(baseSummary),
+      decisionReadiness: state,
+    });
+    assert.equal(parseManagedServiceRunSummary(candidate).decisionReadiness, state);
+  }
+  for (const state of ['resolved', 'fixed', 'healthy']) {
+    expectInvalidSummary({
+      ...structuredClone(baseSummary),
+      decisionReadiness: state,
+    });
+  }
+
+  const mutateWithoutIdentity = (mutate: (summary: any) => void): void => {
+    const candidate: any = structuredClone(baseSummary);
+    mutate(candidate);
+    expectInvalidSummary(candidate);
+  };
+
+  mutateWithoutIdentity((summary) => {
+    summary.attentionIds = [...summary.attentionIds, 'synthetic-prior-only-attention'];
+  });
+  mutateWithoutIdentity((summary) => {
+    const firstReadiness = summary.readiness[0];
+    assert.ok(firstReadiness);
+    firstReadiness.state = firstReadiness.state === 'ready' ? 'limited' : 'ready';
+  });
+  mutateWithoutIdentity((summary) => {
+    const firstManifest = summary.sourceManifest[0];
+    assert.ok(firstManifest);
+    firstManifest.identity += ':changed';
+  });
+  mutateWithoutIdentity((summary) => {
+    summary.decisionReadiness = summary.decisionReadiness === 'outcome_recorded'
+      ? 'measurement_not_planned'
+      : 'outcome_recorded';
+  });
+  mutateWithoutIdentity((summary) => {
+    summary.reportState = 'present';
+    summary.reportId = 'customer-report:' + 'a'.repeat(64);
+  });
+  mutateWithoutIdentity((summary) => {
+    const firstReceipt = summary.receiptStates[0];
+    assert.ok(firstReceipt);
+    firstReceipt.state = firstReceipt.state === 'supplied' ? 'unavailable' : 'supplied';
+  });
+
+  const continuityProjection = structuredClone(baseSummary);
+  const removed = continuityProjection.attentionIds.shift();
   assert.ok(removed);
-  prior.attentionIds.push('synthetic-prior-only-attention');
+  continuityProjection.attentionIds.push('synthetic-prior-only-attention');
+  const validContinuityProjection = recomputeSummaryIdentity(continuityProjection);
+  assert.notEqual(validContinuityProjection.summaryId, baseSummary.summaryId);
+  assert.deepEqual(parseManagedServiceRunSummary(validContinuityProjection), validContinuityProjection);
 
   const current = await prepareManagedServiceRun(
     fixture.prepared.evidence,
     fixture.prepared.review,
     alpha,
-    runRequest(fixture, { priorRun: prior, receiptState: 'not_supplied' }),
+    runRequest(fixture, { priorRun: validContinuityProjection, receiptState: 'not_supplied' }),
   );
+  assert.equal(current.run.priorComparison?.priorRunId, baseSummary.id);
+  assert.equal(current.run.priorComparison?.priorSummaryId, validContinuityProjection.summaryId);
+  assert.equal(current.run.provenance.priorRunId, baseSummary.id);
+  assert.equal(current.run.provenance.priorSummaryId, validContinuityProjection.summaryId);
+
   const continuity = current.run.priorComparison?.attention;
   assert.ok(continuity);
   assert.ok(continuity.some((entry) =>
@@ -250,8 +334,35 @@ test('Release 0.18 prior-run comparison is exact, neutral, and fails closed on s
   assert.ok(current.run.priorComparison?.receipts.some((entry) =>
     entry.receiptId === 'wqt-normalized' && entry.changed));
 
-  const wrongScope = structuredClone(baseSummary);
-  wrongScope.scope.siteId = 'other-site';
+  const alternateProjection = recomputeSummaryIdentity({
+    ...structuredClone(baseSummary),
+    workspaceId: 'workspace:' + 'b'.repeat(64),
+  });
+  assert.notEqual(alternateProjection.summaryId, baseSummary.summaryId);
+  const currentFromBase = await prepareManagedServiceRun(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    runRequest(fixture, { priorRun: baseSummary }),
+  );
+  const currentFromAlternate = await prepareManagedServiceRun(
+    fixture.prepared.evidence,
+    fixture.prepared.review,
+    alpha,
+    runRequest(fixture, { priorRun: alternateProjection }),
+  );
+  assert.equal(currentFromBase.run.priorComparison?.priorRunId, baseSummary.id);
+  assert.equal(currentFromAlternate.run.priorComparison?.priorRunId, baseSummary.id);
+  assert.notEqual(
+    currentFromBase.run.priorComparison?.priorSummaryId,
+    currentFromAlternate.run.priorComparison?.priorSummaryId,
+  );
+  assert.notEqual(currentFromBase.run.id, currentFromAlternate.run.id);
+
+  const wrongScope = recomputeSummaryIdentity({
+    ...structuredClone(baseSummary),
+    scope: { ...baseSummary.scope, siteId: 'other-site' },
+  });
   await assert.rejects(
     prepareManagedServiceRun(
       fixture.prepared.evidence,
@@ -262,8 +373,10 @@ test('Release 0.18 prior-run comparison is exact, neutral, and fails closed on s
     (error: unknown) => error instanceof ManagedServiceRunError && error.code === 'scope_mismatch',
   );
 
-  const wrongTarget = structuredClone(baseSummary);
-  wrongTarget.trustedTarget = 'https://other.example.test';
+  const wrongTarget = recomputeSummaryIdentity({
+    ...structuredClone(baseSummary),
+    trustedTarget: 'https://other.example.test',
+  });
   await assert.rejects(
     prepareManagedServiceRun(
       fixture.prepared.evidence,
