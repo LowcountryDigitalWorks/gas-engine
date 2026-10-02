@@ -245,3 +245,20 @@ The accepted release closes a bounded internal human loop:
 This remains internal service-delivery enabling infrastructure, not a task manager, statistical SEO test platform, generic changelog, marketing dashboard SaaS, action engine, or automated strategy system. Incremental recurring cash target remains $0.
 
 Issue #49 internal-link work and Release 1.0 remain separately gated.
+
+## Release 0.17 — candidate Operator Workspace & Service Reporting UX Pack
+
+Issue #60 authorizes one large coherent **CANDIDATE / NOT ACCEPTED** release over accepted Releases 0.15 and 0.16.
+
+Candidate flow:
+
+1. recompute accepted Release 0.15 service state;
+2. optionally recompute accepted Release 0.16 decision-cycle state;
+3. emit one deterministic OperatorWorkspace;
+4. use a self-contained local browser for bounded review/filter/selection;
+5. download strict untrusted action/report requests;
+6. authoritatively recompute and fail on stale source identity;
+7. delegate durable writes only to accepted Release 0.16/0.8 services;
+8. regenerate authoritative workspace/customer report state.
+
+Customer reporting remains human-reviewed and bounded to one-to-three explicit focus selections. There is no automatic top-three ranking, health/business score, AI-written report, new persistence, hosted dashboard, customer portal, provider sensing, scheduled delivery, Issue #49/#56 implementation, Release 0.18 implementation, or Release 1.0 implementation.
