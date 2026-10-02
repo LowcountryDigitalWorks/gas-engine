@@ -771,7 +771,8 @@ function resolveAdaptedProviderSnapshot(stream: WqtAdaptedCollection): WqtProvid
   const seenObservations = new Set<string>();
   const observations: Contract<'observation'>[] = [];
   let sourceCount = 0;
-  const canonicalCollection = canonicalJson(first.collection);
+  const collection = first.collection;
+  const canonicalCollection = canonicalJson(collection);
 
   for (const raw of [...stream.batches].sort((left, right) => left.part - right.part)) {
     let batch: CollectionBatch;
@@ -839,7 +840,6 @@ function resolveAdaptedProviderSnapshot(stream: WqtAdaptedCollection): WqtProvid
       fail('invalid_output', 'Adapted WQT provider stream is missing one or more multipart sequence numbers.');
     }
   }
-  const collection = first.collection;
   if (collection.completeness.state !== 'complete'
       || collection.completeness.expectedCount !== sourceCount
       || collection.completeness.receivedCount !== sourceCount) {
