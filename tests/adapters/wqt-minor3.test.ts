@@ -119,6 +119,34 @@ test('Release 0.18 deliberately accepts WQT minor 3 through generic typed-fact m
   );
 });
 
+test('Release 0.18 minor 3 malformed and unrepresentable generic facts fail closed', () => {
+  const malformed = minor3();
+  malformed.sources.siteone.observations.at(-1).facts[0] = {
+    id: 'skipped-url-count',
+    valueType: 'number',
+    value: -1,
+    unit: 'count',
+  };
+  refreshFlattened(malformed);
+  assert.throws(
+    () => adaptWqtNormalizedEvidence(bytes(malformed), trustedConfig),
+    (error: unknown) => error instanceof WqtAdapterError && error.code === 'invalid_source',
+  );
+
+  const unrepresentable = minor3();
+  unrepresentable.sources.siteone.observations.at(-1).facts[0] = {
+    id: 'skipped-url-count',
+    valueType: 'number',
+    value: 1_000_000_000_000_001,
+    unit: 'synthetic-unit',
+  };
+  refreshFlattened(unrepresentable);
+  assert.throws(
+    () => adaptWqtNormalizedEvidence(bytes(unrepresentable), trustedConfig),
+    (error: unknown) => error instanceof WqtAdapterError && error.code === 'policy_violation',
+  );
+});
+
 test('Release 0.18 preserves exact minor1/minor2 identities and future minors fail closed', () => {
   const one = provider(adaptWqtNormalizedEvidence(bytes(minor1()), trustedConfig), 'siteone').batches[0]!.collection;
   const two = provider(adaptWqtNormalizedEvidence(bytes(minor2()), trustedConfig), 'siteone').batches[0]!.collection;
