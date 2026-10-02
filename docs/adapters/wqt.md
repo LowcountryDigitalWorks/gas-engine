@@ -1,6 +1,6 @@
 # WQT normalized-evidence adapter
 
-Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 adds deliberate support for accepted WQT v1 minor2 typed facts without changing that runtime boundary. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
+Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 added accepted WQT v1 minor2/minor3 typed facts. Release 0.18 now adds **CANDIDATE / NOT ACCEPTED** deliberate WQT v1 minor3 compatibility and exact provider-snapshot reconstruction without changing that runtime boundary. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
 
 The adapter was designed against accepted WQT main commit `3b6205f3fd3208e6ec9d896da0be4b35a2c1c26e` (tree `6526dd029ddd19cc31afa4712b0912281bca5373`). That commit is design evidence only, not a runtime pin or dependency.
 
@@ -8,12 +8,13 @@ The adapter was designed against accepted WQT main commit `3b6205f3fd3208e6ec9d8
 
 [`src/adapters/wqt.ts`](../../src/adapters/wqt.ts) exports `adaptWqtNormalizedEvidence(bytes, trustedConfig)` plus its bounded config/result/error types and version constants. Input is exact UTF-8 bytes, capped at **1 MiB** before decoding.
 
-Two deliberately reviewed source contracts are accepted:
+Two source contracts remain accepted and one is a Release 0.18 candidate:
 
-- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 1` — historical Release 0.5 semantics;
-- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 2` — GAS-SEM-001 typed-fact semantics.
+- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 1` — accepted historical Release 0.5 semantics;
+- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 2` — accepted GAS-SEM-001 typed-fact semantics;
+- `schemaVersion === "ldw.website-quality.v1"`, `schemaMinorVersion === 3` — **Release 0.18 CANDIDATE / NOT ACCEPTED**, additive typed-fact semantics.
 
-Unknown future minor versions fail closed until deliberately reviewed. Minor1 remains strict and does not accept a `facts` field. Minor2 permits the accepted bounded SiteOne `facts[]` contract only; Lighthouse remains strict and does not accept `facts`. The normalized artifact must also retain `evidenceOnly: true`, `qualityThresholdsApplied: false`, `siteOneCiModeEnabled: false`, the expected `SiteOne Crawler` / `Lighthouse` tool identities, and strict recognized fields.
+Unknown future minor versions still fail closed until deliberately reviewed. Minor1 remains strict and does not accept a `facts` field. Minors 2 and 3 use the same bounded generic SiteOne `facts[]` contract; Lighthouse remains strict and does not accept `facts`. The normalized artifact must also retain `evidenceOnly: true`, `qualityThresholdsApplied: false`, `siteOneCiModeEnabled: false`, the expected `SiteOne Crawler` / `Lighthouse` tool identities, and strict recognized fields.
 
 The top-level flattened `observations` array must exactly equal the deterministic merged/sorted copies under `sources.siteone.observations` and `sources.lighthouse.observations`. Contradictory duplicate representations fail instead of choosing one.
 
@@ -44,8 +45,9 @@ Adapter identity remains `ldw-wqt-normalized`, but mapping/source semantics are 
 | --- | --- | --- | ---: |
 | v1 minor1 | `1.0.0` | `v1.1` | 1 |
 | v1 minor2 | `2.0.0` | `v1.2` | 2 |
+| v1 minor3 — candidate | `3.0.0` | `v1.3` | 3 |
 
-The mapping change is semantic, not a package-release claim. Minor1 and minor2 therefore cannot pass Release 0.7 collection compatibility as though they were the same longitudinal stream. Cross-minor comparison fails as an ordinary collection discontinuity; the generic comparator contains no WQT/SiteOne special case.
+The mapping change is semantic, not a package-release claim. Minor1, minor2, and candidate minor3 therefore cannot pass Release 0.7 collection compatibility across minor boundaries as though they were the same longitudinal stream. Cross-minor comparison fails as an ordinary collection discontinuity; the generic comparator contains no WQT/SiteOne special case.
 
 Source-record external IDs prefer readable provider/kind/key material when it fits the existing opaque identifier contract; otherwise the complete key is represented by a full SHA-256-derived ID. Storage-row, observation, collection, and idempotency IDs are deterministic SHA-256-derived identifiers and are never collision-prone truncations.
 
@@ -62,17 +64,17 @@ Every source unit carries SHA-256 `canonical_json_v1` integrity over the relevan
 | overall score | numeric `wqt-siteone-overall-score`; null becomes explicit `unknown` |
 | each unique category score | numeric `wqt-siteone-category-score`; null becomes explicit `unknown` |
 | each unique finding/summary item | text `wqt-siteone-source-status`; null becomes explicit `unknown` |
-| each valid minor2 typed fact on a finding | one ordinary typed observation `wqt-siteone-fact-<fact-id>` |
+| each valid minor2/minor3 typed fact on a finding | one ordinary typed observation `wqt-siteone-fact-<fact-id>` |
 
-For a minor2 fact, cohort identity uses the same finding surface plus deterministic suffix `fact:<fact-id>`. Number, text, and boolean map to the existing canonical observed value types. Explicit `null` maps to canonical `unknown` with a deterministic normalized-fact missingness reason. A supplied fact unit is preserved as the canonical metric unit.
+For a minor2/minor3 fact, cohort identity uses the same finding surface plus deterministic suffix `fact:<fact-id>`. Number, text, and boolean map to the existing canonical observed value types. Explicit `null` maps to canonical `unknown` with a deterministic normalized-fact missingness reason. A supplied fact unit is preserved as the canonical metric unit.
 
 Facts are sorted by ASCII fact ID before source hashing and observation construction, so fact input order and JSON formatting do not change semantic collection/observation output. The complete normalized finding slice, including facts and display message, remains covered by ordinary source integrity. A wording-only message change can therefore change provenance/source identity while canonical status/fact values remain mechanically unchanged.
 
-The G.A.S. adapter is a defensive consumer of the accepted minor2 fact contract: at most 8 facts, bounded/patterned IDs and units, closed objects, number/text/boolean type matching, safe finite numeric bounds, 256-code-unit text bound, duplicate-ID rejection, and strict unknown keys. Unit `count` remains a numeric count semantic and accepts only explicit null or a non-negative safe integer. No finding code is special-cased in the mapping.
+The G.A.S. adapter is a defensive consumer of the accepted minor2/minor3 fact contract: at most 8 facts, bounded/patterned IDs and units, closed objects, number/text/boolean type matching, safe finite numeric bounds, 256-code-unit text bound, duplicate-ID rejection, and strict unknown keys. Unit `count` remains a numeric count semantic and accepts only explicit null or a non-negative safe integer. No finding code is special-cased in the mapping.
 
 ### Canonical-representable subset policy
 
-The valid WQT minor2 fact domain is broader than the accepted G.A.S. canonical observed-value domain. G.A.S. therefore supports the **canonical-representable subset** of otherwise-valid minor2 facts.
+The valid WQT minor2/minor3 fact domain is broader than the accepted G.A.S. canonical observed-value domain. G.A.S. therefore supports the **canonical-representable subset** of otherwise-valid minor2/minor3 facts.
 
 After WQT shape/type validation succeeds:
 
@@ -135,3 +137,26 @@ The adapter fails explicitly when one unit cannot fit, more than 64 parts would 
 Release 0.5 and GAS-SEM-001 add no network/provider client, crawler, server/listener, cloud resource, credential handling, WQT runtime dependency, AI/BYOK path, recommendation/priority logic, quality gate, external action, ZeroRank, Search Console, or content-generation work. Tests use only a repository-owned synthetic `example-site` / `https://example.test` fixture.
 
 No dependency is added and no SQLite schema changes. Incremental recurring cost remains **$0**. The package remains private with no software license grant, tag, or npm publication.
+
+
+## Release 0.18 candidate — exact provider snapshots
+
+Release 0.18 adds `resolveWqtProviderSnapshots(...)`, a pure/local resolver over accepted `adaptWqtNormalizedEvidence(...)` output.
+
+The helper verifies:
+
+- exactly separate SiteOne and Lighthouse streams;
+- complete multipart part count and sequence;
+- repeated collection identity and provider semantics;
+- identical idempotency identity across parts;
+- no duplicate sources or observations;
+- every observation remains colocated with its declared source part;
+- canonical collection completeness source counts equal the reconstructed source set.
+
+It returns one exact canonical collection plus complete deterministic observation set per provider, directly usable by accepted Release 0.7 `compareEvidenceSnapshots(...)`.
+
+This helper performs no persistence, TenantContext issuance, provider networking, private-history writing, artifact downloading, or WQT scheduling.
+
+The four new WQT minor3 skipped-URL count fact IDs are intentionally **not** named in production adapter logic. They pass through the same generic fact-ID/valueType/unit/count validation and representability policy already used by minor2.
+
+Issue #63 remains design-only private runtime/history work. Public Release 0.18 does not modify or operate `wqt-operations`.
