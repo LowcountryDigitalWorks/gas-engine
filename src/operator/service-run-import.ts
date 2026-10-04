@@ -241,8 +241,12 @@ function validateComparison(run: ManagedServiceRun): void {
     fail('Report comparison changed flag is inconsistent.');
   }
 
-  const currentReadiness = new Map(run.readiness.map((entry) => [entry.moduleId, entry.state] as const));
-  const comparedReadiness = new Map(comparison.readiness.map((entry) => [entry.moduleId, entry.currentState] as const));
+  const currentReadiness = new Map<string, string>(
+    run.readiness.map((entry) => [entry.moduleId, entry.state]),
+  );
+  const comparedReadiness = new Map<string, string | null>(
+    comparison.readiness.map((entry) => [entry.moduleId, entry.currentState]),
+  );
   for (const [moduleId, state] of currentReadiness) {
     if (comparedReadiness.get(moduleId) !== state) fail('Prior comparison must carry exact current readiness.');
   }
