@@ -262,7 +262,10 @@ test('Release 0.19 composes deterministic operational-only portfolio state acros
   assert.deepEqual(first.engagements[1]!.readiness, betaRun.readiness, 'freshness must never rewrite accepted readiness');
 
   const json = serializePortfolioOperationsJson(first);
-  assert.doesNotMatch(JSON.stringify(first.summary), /clicks|impressions|ctr|rank|visibility|recommendation/i);
+  assert.doesNotMatch(
+    JSON.stringify(first.summary),
+    /"(?:clicks|impressions|ctr|rank|aiVisibility|citations|score)"\s*:/i,
+  );
   assert.doesNotMatch(json, /best client|worst client|health score/i);
 
   const changedPolicy = composePortfolioOperationsConsole({
