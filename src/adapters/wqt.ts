@@ -450,7 +450,6 @@ function derivedIdentifier(prefix: string, material: unknown): string {
 function makeSiteOneUnits(artifact: WqtArtifact): SourceUnit[] {
   const source = artifact.sources.siteone;
   requireUniqueKeys(source.categoryScores, (item) => item.code, 'SiteOne category');
-  requireUniqueKeys(source.observations, (item) => item.code, 'SiteOne finding');
   const metadata = {
     tool: source.tool,
     version: source.version,
@@ -479,12 +478,53 @@ function makeSiteOneUnits(artifact: WqtArtifact): SourceUnit[] {
       unit: 'siteone_source_score', value: numericValue(item.score, 'SiteOne category source score is missing.'),
     }]);
   }
-  for (const item of [...source.observations].sort((left, right) => left.code.localeCompare(right.code))) {
+
+  const findingCounts = new Map<string, number>();
+  for (const item of source.observations) {
+    findingCounts.set(item.code, (findingCounts.get(item.code) ?? 0) + 1);
+  }
+  const findings = source.observations.map((item) => {
     const facts = 'facts' in item && item.facts !== undefined
       ? [...item.facts].sort((left, right) => asciiCompare(left.id, right.id))
       : [];
     const normalizedSlice = facts.length === 0 ? item : { ...item, facts };
-    const factObservations: ObservationSpec[] = facts.map((fact) => ({
+    const duplicateCode = (findingCounts.get(item.code) ?? 0) > 1;
+    const variantDigest = duplicateCode
+      ? hashCanonicalJson({
+          code: item.code,
+          message: item.message,
+          factDescriptors: facts.map((fact) => ({
+            id: fact.id,
+            valueType: fact.valueType,
+            ...(fact.unit === undefined ? {} : { unit: fact.unit }),
+          })),
+        })
+      : null;
+    return {
+      item,
+      facts,
+      normalizedSlice,
+      variantDigest,
+      findingKey: variantDigest === null ? item.code : `${item.code}:variant:${variantDigest}`,
+    };
+  });
+  const duplicateVariants = new Set<string>();
+  for (const finding of findings) {
+    if (finding.variantDigest === null) continue;
+    const exactVariant = `${finding.item.code}:${finding.variantDigest}`;
+    if (duplicateVariants.has(exactVariant)) {
+      fail('duplicate_source_key', 'Duplicate normalized WQT SiteOne finding stable variant descriptor.');
+    }
+    duplicateVariants.add(exactVariant);
+  }
+  findings.sort((left, right) => {
+    const codeOrder = asciiCompare(left.item.code, right.item.code);
+    if (codeOrder !== 0) return codeOrder;
+    return asciiCompare(left.variantDigest ?? '', right.variantDigest ?? '');
+  });
+
+  for (const finding of findings) {
+    const factObservations: ObservationSpec[] = finding.facts.map((fact) => ({
       suffix: `fact:${fact.id}`,
       metricId: `wqt-siteone-fact-${fact.id}`,
       meaningVersion: '1.0.0',
@@ -492,9 +532,9 @@ function makeSiteOneUnits(artifact: WqtArtifact): SourceUnit[] {
       ...(fact.unit === undefined ? {} : { unit: fact.unit }),
       value: factValue(fact),
     }));
-    add('finding', item.code, normalizedSlice, [{
+    add('finding', finding.findingKey, finding.normalizedSlice, [{
       suffix: 'status', metricId: 'wqt-siteone-source-status', meaningVersion: '1.0.0', valueType: 'text',
-      value: textValue(item.sourceStatus, 'SiteOne finding source status is missing.'),
+      value: textValue(finding.item.sourceStatus, 'SiteOne finding source status is missing.'),
     }, ...factObservations]);
   }
   return units;
