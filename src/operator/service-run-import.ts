@@ -18,7 +18,6 @@ import {
   ManagedServiceRunError,
   parseServiceRunSourceReceipt,
   type ManagedServiceRun,
-  type ServiceRunSourceState,
 } from './service-run.js';
 
 const serviceBriefModuleSchema = z.enum([
@@ -201,10 +200,9 @@ function runIdentityMaterial(run: Omit<ManagedServiceRun, 'id'>): unknown {
 }
 
 function expectedRunId(run: ManagedServiceRun): string {
-  const body = structuredClone(run) as ManagedServiceRun & { id?: string };
-  delete body.id;
+  const { id: _id, ...body } = structuredClone(run);
   return 'managed-service-run:' + hashCanonicalJson(
-    runIdentityMaterial(body as Omit<ManagedServiceRun, 'id'>),
+    runIdentityMaterial(body),
   );
 }
 
@@ -252,8 +250,12 @@ function validateComparison(run: ManagedServiceRun): void {
     if (state !== null && currentReadiness.get(moduleId) !== state) fail('Prior comparison contains unsupported current readiness.');
   }
 
-  const currentManifest = new Map(run.sourceManifest.map((entry) => [entry.moduleId, entry.identity] as const));
-  const comparedManifest = new Map(comparison.sourceManifest.map((entry) => [entry.moduleId, entry.currentIdentity] as const));
+  const currentManifest = new Map<string, string>(
+    run.sourceManifest.map((entry) => [entry.moduleId, entry.identity]),
+  );
+  const comparedManifest = new Map<string, string | null>(
+    comparison.sourceManifest.map((entry) => [entry.moduleId, entry.currentIdentity]),
+  );
   for (const [moduleId, identity] of currentManifest) {
     if (comparedManifest.get(moduleId) !== identity) fail('Prior comparison must carry exact current source-manifest identity.');
   }
