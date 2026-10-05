@@ -518,8 +518,9 @@ function makeSiteOneUnits(artifact: WqtArtifact): SourceUnit[] {
     duplicateVariants.add(exactVariant);
   }
   findings.sort((left, right) => {
-    const codeOrder = asciiCompare(left.item.code, right.item.code);
-    if (codeOrder !== 0) return codeOrder;
+    if (left.item.code !== right.item.code) {
+      return left.item.code.localeCompare(right.item.code);
+    }
     return asciiCompare(left.variantDigest ?? '', right.variantDigest ?? '');
   });
 
