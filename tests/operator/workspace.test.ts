@@ -447,13 +447,13 @@ test('Release 0.17 browser workbench escapes dynamic content and exposes no netw
   assert.match(script, /new Blob/);
 });
 
-test('Release 0.17 surfaces retain no schema, migration, runtime dependency, provider network, AI, Issue #49/#56 or 1.0 path under the 0.18 package', () => {
+test('Release 0.17 surfaces retain no schema, migration, runtime dependency, provider network, AI, Issue #49/#56 or 1.0 path under the current package', () => {
   const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as {
     version: string;
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
-  assert.equal(packageJson.version, '0.18.1');
+  assert.equal(packageJson.version, '0.19.0');
   assert.deepEqual(packageJson.dependencies, { zod: '4.6.2' });
   assert.deepEqual(packageJson.devDependencies, {
     '@types/node': '24.13.4',

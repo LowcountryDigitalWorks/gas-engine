@@ -532,6 +532,12 @@ function runIdentityMaterial(run: Omit<ManagedServiceRun, 'id'>): unknown {
   };
 }
 
+export function computeManagedServiceRunId(
+  run: Omit<ManagedServiceRun, 'id'>,
+): string {
+  return 'managed-service-run:' + hashCanonicalJson(runIdentityMaterial(run));
+}
+
 function validateRunOutput(run: ManagedServiceRun): void {
   let json: string;
   try {
@@ -624,7 +630,7 @@ async function composeRun(
   };
   const run: ManagedServiceRun = {
     ...body,
-    id: 'managed-service-run:' + hashCanonicalJson(runIdentityMaterial(body)),
+    id: computeManagedServiceRunId(body),
   };
   validateRunOutput(run);
   return {
