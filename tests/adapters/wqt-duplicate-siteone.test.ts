@@ -8,6 +8,7 @@ import {
   type WqtAdapterConfig,
   type WqtAdaptationResult,
 } from '../../src/adapters/wqt.js';
+import { hashCanonicalJson, sha256Bytes } from '../../src/lib/canonical-json.js';
 
 type MutableJson = Record<string, any>;
 
@@ -301,6 +302,124 @@ test('Maintenance 0.18.1 preserves existing unique finding/category/audit semant
   const duplicateAudit = minor2();
   duplicateAudit.sources.lighthouse.observations.push(structuredClone(duplicateAudit.sources.lighthouse.observations[0]));
   expectDuplicateSourceKey(duplicateAudit);
+});
+
+test('Maintenance 0.18.1 preserves accepted 0.18.0 localeCompare ordering across full unique-code SiteOne output', () => {
+  const value = minor2();
+  value.sources.siteone.categoryScores = [];
+  const codes = [
+    'Zeta',
+    'alpha',
+    ...Array.from({ length: 16 }, (_, index) => `code-${String(index).padStart(2, '0')}`),
+  ];
+  const localeOrderedCodes = [...codes].sort((left, right) => left.localeCompare(right));
+  const asciiOrderedCodes = [...codes].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  assert.notDeepEqual(
+    localeOrderedCodes,
+    asciiOrderedCodes,
+    'synthetic fixture must expose accepted localeCompare ordering distinct from raw code-unit ordering',
+  );
+
+  value.sources.siteone.observations = codes.map((code, index) => ({
+    source: 'siteone',
+    code,
+    sourceStatus: `SYNTHETIC_STATUS_${index}`,
+    message: `Synthetic unique finding ${code}.`,
+  }));
+  refreshFlattened(value);
+
+  const adapted = adaptWqtNormalizedEvidence(bytes(value), trustedConfig);
+  const siteone = provider(adapted, 'siteone');
+  const expectedSourceRecordIds = [
+    'wqt.siteone.overall:overall',
+    ...localeOrderedCodes.map((code) => `wqt.siteone.finding:${code}`),
+  ];
+  const sourceRows = siteone.batches.flatMap((batch) => batch.sources);
+  assert.deepEqual(
+    sourceRows.map((row) => row.record.identity.sourceRecordId),
+    expectedSourceRecordIds,
+    'source-unit and multipart ordering must retain exact accepted 0.18.0 localeCompare semantics',
+  );
+
+  const digestBySourceRecordId = new Map<string, string>();
+  for (const row of sourceRows) {
+    assert.equal(row.record.integrity.state, 'hashed');
+    digestBySourceRecordId.set(row.record.identity.sourceRecordId, row.record.integrity.digest);
+  }
+  const expectedUnitDigests = expectedSourceRecordIds.map((id) => {
+    const digest = digestBySourceRecordId.get(id);
+    assert.ok(digest, `expected source digest for ${id}`);
+    return digest;
+  });
+  const method = {
+    id: 'ldw-wqt-siteone',
+    version: '2.0.0',
+    configurationId: 'wqt-siteone-normalized-v1',
+    configurationRevision: 2,
+  };
+  const seedDigest = hashCanonicalJson({
+    algorithm: 'gas-wqt-provider-seed-v1',
+    adapter: { id: 'ldw-wqt-normalized', version: '2.0.0' },
+    sourceSchema: { id: 'ldw.website-quality', version: 'v1.2' },
+    scope: trustedConfig.scope,
+    siteId: value.siteId,
+    target: value.target,
+    providerId: 'siteone',
+    providerConnectionId: trustedConfig.providerConnectionIds.siteone,
+    providerVersion: value.sources.siteone.version ?? 'unknown',
+    timing: trustedConfig.timing,
+    availability: trustedConfig.availability.siteone,
+    method,
+  });
+  const expectedRunDigest = sha256Bytes(Buffer.from([
+    'gas-wqt-provider-collection-v1',
+    seedDigest,
+    ...expectedUnitDigests,
+  ].join('\n'), 'utf8'));
+  const expectedCollectionId = `wqt.collection.siteone:${expectedRunDigest}`;
+  const expectedIdempotencyKey = `wqt.idempotency.siteone:${expectedRunDigest}`;
+
+  assert.equal(siteone.collectionId, expectedCollectionId);
+  assert.equal(siteone.idempotencyKey, expectedIdempotencyKey);
+  assert.equal(siteone.batches.length, 2, '19 small source units must preserve the accepted two-part grouping');
+  assert.deepEqual(siteone.batches.map((batch) => batch.part), [1, 2]);
+  assert.equal(siteone.batches.every((batch) => batch.parts === 2), true);
+  assert.equal(siteone.batches.every((batch) => batch.collection.id === expectedCollectionId), true);
+  assert.equal(siteone.batches.every((batch) => batch.idempotencyKey === expectedIdempotencyKey), true);
+  assert.deepEqual(
+    siteone.batches[0]!.sources.map((row) => row.record.identity.sourceRecordId),
+    expectedSourceRecordIds.slice(0, 16),
+  );
+  assert.deepEqual(
+    siteone.batches[1]!.sources.map((row) => row.record.identity.sourceRecordId),
+    expectedSourceRecordIds.slice(16),
+  );
+
+  const statusRows = siteOneObservationRows(adapted).filter((row) =>
+    row.record.cohort.context.metric.id === 'wqt-siteone-source-status');
+  assert.deepEqual(
+    statusRows.map((row) => row.record.provenance.source.sourceRecordId),
+    expectedSourceRecordIds.slice(1),
+  );
+  for (const code of localeOrderedCodes) {
+    const sourceRecordId = `wqt.siteone.finding:${code}`;
+    const row = statusRows.find((candidate) => candidate.record.provenance.source.sourceRecordId === sourceRecordId);
+    assert.ok(row, `expected unique finding output for ${code}`);
+    assert.equal(row.record.cohort.id, `wqt.cohort.siteone.finding:${code}:status`);
+    assert.equal(row.record.cohort.context.dimensions.surface, `wqt.surface:finding:${code}`);
+    assert.equal(row.record.provenance.runId, expectedCollectionId);
+  }
+
+  const acceptedOrderInput = structuredClone(value);
+  acceptedOrderInput.sources.siteone.observations.sort((left: MutableJson, right: MutableJson) =>
+    left.code.localeCompare(right.code));
+  refreshFlattened(acceptedOrderInput);
+  const acceptedOrderReplay = adaptWqtNormalizedEvidence(bytes(acceptedOrderInput), trustedConfig);
+  assert.deepEqual(
+    provider(acceptedOrderReplay, 'siteone'),
+    siteone,
+    'full adapted SiteOne semantic output must be canonical-equivalent to exact accepted 0.18.0 ordering',
+  );
 });
 
 test('Maintenance 0.18.1 provider snapshot reconstruction retains repeated-code SiteOne streams', () => {
