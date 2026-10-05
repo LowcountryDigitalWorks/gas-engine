@@ -1,10 +1,10 @@
 # Release 0.20 — Private-Runtime Packaging & Portability Readiness
 
-Release 0.20 is a **CANDIDATE / NOT ACCEPTED** portability and recovery-readiness proof under Issue #74 / PR #75. It remains pure/local and administrative. It does not deploy G.A.S., create a customer runtime, or authorize Release 1.0.
+Release 0.20 is **ACCEPTED** on `main` through Issue #74 / PR #75 at squash merge `9e529669020e6d833b5f5ef7afdac48ab67e30bf`, with independent whole-pack ACCEPT and post-merge Contracts `37385826289` SUCCESS. It remains pure/local and administrative. It does not deploy G.A.S., create a customer runtime, or authorize Release 1.0.
 
 ## Purpose
 
-The candidate proves that accepted local G.A.S. state can be backed up safely, packaged deterministically, integrity verified, moved to a different filesystem root, reopened under the accepted SQLite migration/schema guards, and read again under newly issued trusted authority.
+The accepted release proves that accepted local G.A.S. state can be backed up safely, packaged deterministically, integrity verified, moved to a different filesystem root, reopened under the accepted SQLite migration/schema guards, and read again under newly issued trusted authority.
 
 The owning implementation is `src/runtime/portable-runtime.ts`. The profile and manifest are application-local Release 0.20 models, not new canonical public wire schemas.
 
@@ -51,13 +51,13 @@ The top-level identity is `portable-runtime-bundle:<sha256>`. It binds package c
 
 Generated artifacts are supplied explicitly. Release 0.20 does not recursively crawl a repository or artifact directory to decide what belongs in a bundle.
 
-The candidate proof includes one strict accepted Release 0.18 managed-service-run artifact and preserves its semantic run identity. The same bounded seam may carry accepted Release 0.18/0.19 outputs under their explicit roles when separately supplied.
+The accepted proof includes one strict accepted Release 0.18 managed-service-run artifact and preserves its semantic run identity. The same bounded seam may carry accepted Release 0.18/0.19 outputs under their explicit roles when separately supplied.
 
 Raw provider payloads, credentials, `.git`, source-repository contents, caches, logs, unrelated files, and unknown roles are never auto-included. The strict verifier rejects unowned files in the final bundle directory.
 
 ## Verification and relocation
 
-Verification strict-parses the profile and manifest, validates logical paths before filesystem resolution, constrains all paths to the bundle root, rejects symlinked manifest-owned paths, recomputes hashes/byte counts, rejects missing required files, validates the deterministic bundle identity, and reopens SQLite through the accepted schema guards.
+Verification strict-parses the profile and manifest, validates logical paths before filesystem resolution, constrains all paths to the bundle root, rejects symlinked manifest-owned paths, recomputes hashes/byte counts, rejects missing required files, and validates the deterministic bundle identity. Imported verification also re-enforces the profile's generated-artifact role/classification allowlists, exact profile/manifest build-identity presence and value, exactly one required runtime-profile entry with recomputed semantic identity, exactly one required SQLite-backup entry matching the profile database configuration, canonical recovery database path, and matching retention-policy identity before SQLite is reopened through the accepted schema guards.
 
 The synthetic proof physically copies the exact bundle from root A to root B and verifies the same bundle identity at both roots. Representative Alpha/Beta evidence and review-ledger state are then read using newly issued trusted test authority. No tenant authority or authenticated session is deserialized from bundle bytes.
 
@@ -94,7 +94,7 @@ Issue #63 remains separate. Release 0.20 does not create `gas-operations`, imple
 
 ## Bounds
 
-The candidate fails closed above these Product-frozen ceilings:
+The accepted portability seam fails closed above these Product-frozen ceilings:
 
 - manifest-owned files: 128;
 - single non-database artifact: 8,000,000 bytes;
@@ -114,8 +114,14 @@ npm run preview:portability
 
 The preview uses only synthetic/example.test state under ignored `local-artifacts/`. It proves two isolated synthetic tenants, accepted SQLite evidence/review state, a strict Release 0.18 run artifact, online backup, deterministic bundle/profile identity, root-A/root-B relocation, schema reopen, newly issued authority, representative reads, storage measurements, retention planning, and recovery/decommission metadata.
 
+## Validation and Node permission-mode boundary
+
+The accepted Releases 0.1–0.19 suites continue to run under the bounded Node `--permission` envelope. Release 0.20 runtime tests currently execute in a separate Node process outside `--permission`; the preloaded `tests/no-network.ts` module remains an accidental-network tripwire, not an OS sandbox.
+
+This is an accepted non-blocking test-harness limitation, not a production permission expansion. Under Node 24.19, the adversarial symlink fixture's `fs.symlink` call fails under the otherwise bounded permission command with `ERR_ACCESS_DENIED` because that API requires unrestricted filesystem read/write permission. Development refused to grant unrestricted filesystem access merely to make the fixture execute. Issue #76 tracks a future bounded test/CI isolation improvement. Release 0.20 production portability code does not receive broader filesystem, child-process, worker, network, or deployment authority from this limitation.
+
 ## Explicit exclusions
 
 Release 0.20 adds no production/customer deployment, cloud resource, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credential/secret store, identity provider, scheduler/background worker, database migration/table, canonical public wire schema, destructive production retention, customer portal/SaaS, private WQT implementation, REPORT-AUTO delivery, paid service, DNS/domain/email/billing mutation, or Release 1.0 implementation.
 
-Incremental recurring cash target remains `$0`.
+Incremental recurring cash impact for the accepted proof remains `$0`.

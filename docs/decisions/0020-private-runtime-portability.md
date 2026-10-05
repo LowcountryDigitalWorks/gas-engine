@@ -1,9 +1,12 @@
 # ADR 0020 — Private-Runtime Packaging & Portability Readiness
 
-- Status: Proposed for Release 0.20 Product review
+- Status: Accepted
 - Date: 2026-10-05
 - Issue: #74
-- Candidate PR: #75
+- Accepted PR: #75
+- Accepted squash merge: `9e529669020e6d833b5f5ef7afdac48ab67e30bf`
+- Independent whole-pack review: ACCEPT
+- Post-merge Contracts: `37385826289` — SUCCESS
 
 ## Context
 
@@ -68,7 +71,7 @@ Issue #63 remains separate and WQT continues to use private `LowcountryDigitalWo
 
 The public preview uses synthetic/example.test state only. Release 0.20 adds no provider networking, scheduler/background worker, runtime AI, cloud resource, customer portal/SaaS, REPORT-AUTO delivery, new dependency, or paid service.
 
-Incremental recurring cash target: `$0`.
+Incremental recurring cash impact for the accepted release: `$0`.
 
 ## Consequences
 

@@ -219,11 +219,11 @@ Accepted Release 0.19 authority is limited to:
 
 This authority does not include provider polling/networking, scheduler/background workers, persistent unread/task state, report-delivery state or transport, database/table/migration, new canonical wire schema, runtime AI, cloud deployment, customer portal/SaaS, cross-customer performance benchmarking, universal scores, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, paid service, Release 0.20, or Release 1.0.
 
-## Release 0.20 candidate authority boundary
+## Release 0.20 accepted authority boundary
 
-Issue #74 authorizes the **CANDIDATE / NOT ACCEPTED** Release 0.20 Private-Runtime Packaging & Portability Readiness proof on PR #75.
+Release 0.20 Private-Runtime Packaging & Portability Readiness is **accepted and merged on `main` through Issue #74 / PR #75** at squash merge `9e529669020e6d833b5f5ef7afdac48ab67e30bf`, with independent whole-pack ACCEPT and post-merge Contracts `37385826289` SUCCESS.
 
-Candidate authority is limited to:
+Accepted Release 0.20 authority is limited to:
 
 - one strict non-secret application-local runtime profile;
 - administrative Node 24.19 `node:sqlite` online backup of accepted local SQLite state;
@@ -237,4 +237,4 @@ Candidate authority is limited to:
 - public-safe synthetic tests and `preview:portability`;
 - package version `0.20.0` with no dependency addition and a $0 incremental recurring cash target.
 
-This candidate authority does not include production/customer deployment, cloud resources, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credentials/secrets, identity-provider implementation, scheduler/background worker, new migration/table, new canonical public wire schema, destructive production retention, customer/private proof data, private WQT consumer/history/retention/recurrence, REPORT-AUTO delivery, paid service, DNS/domain/email/billing/account mutation, Release 1.0, or authority to mark Release 0.20 accepted.
+This accepted authority does not include production/customer deployment, cloud resources, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credentials/secrets, identity-provider implementation, scheduler/background worker, new migration/table, new canonical public wire schema, destructive production retention, customer/private proof data, private WQT consumer/history/retention/recurrence, REPORT-AUTO delivery, paid service, DNS/domain/email/billing/account mutation, or Release 1.0 authority.

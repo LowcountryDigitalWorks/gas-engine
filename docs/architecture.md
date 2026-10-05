@@ -297,3 +297,25 @@ Trusted portfolio inventory owns engagement identity, exact scope/target, curren
 Source state and freshness remain separate semantics. Non-`supplied` states remain exact and are freshness `not_evaluable`; they are not converted to stale. Cross-engagement summaries count operational metadata only and do not aggregate or benchmark customer performance, recommendation/report prose, or measured outcomes.
 
 Release 0.19 adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, scheduler/worker, authoritative browser persistence, cloud runtime, report delivery, runtime AI, customer portal/SaaS, cross-customer performance benchmarking, universal score, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, or new runtime dependency.
+
+## Release 0.20 accepted runtime-portability seam
+
+Release 0.20 is **accepted and merged through Issue #74 / PR #75** at squash merge `9e529669020e6d833b5f5ef7afdac48ab67e30bf`, with independent whole-pack ACCEPT and post-merge Contracts `37385826289` SUCCESS.
+
+```text
+strict non-secret runtime profile
+  + accepted local SQLite state
+  + explicitly selected accepted generated artifacts
+  -> Node 24.19 node:sqlite online backup
+  -> deterministic portable-directory manifest and root-independent identity
+  -> exact path / symlink / hash / byte / profile-policy verification
+  -> physical root-A to root-B relocation
+  -> accepted SQLite schema/repository reopen
+  -> newly issued trusted authority for representative restored reads
+  -> deterministic retention planning only
+  -> explicit operator-selected rollback / recovery / decommission metadata
+```
+
+The runtime profile, manifest, bundle IDs, database IDs, and file paths remain configuration/provenance and never mint tenant or authentication authority. Imported verification independently re-enforces profile role/classification allowlists, exact build identity presence/value, required runtime-profile and SQLite administrative entries, canonical recovery database path, and retention-policy identity. Restored storage never restores `TenantContext`, sessions, or credentials; trusted authority must be newly issued by a separately authorized authentication boundary.
+
+Release 0.20 adds no production/customer deployment, cloud runtime, Workers/D1, Docker/OCI/Kubernetes, provider networking, credentials/secrets, identity provider, scheduler/background worker, database table/migration, canonical public wire schema, destructive retention executor, private WQT runtime/history, REPORT-AUTO delivery, or Release 1.0 authority. Issue #76 tracks accepted non-blocking test-harness permission debt only and does not broaden the production seam.
