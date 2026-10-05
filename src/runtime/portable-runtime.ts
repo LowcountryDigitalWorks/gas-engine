@@ -513,7 +513,37 @@ export function verifyPortableRuntimeBundle(rootInput: string): PortableRuntimeB
   const profile = parsePortableRuntimeProfile(JSON.parse(readFileSync(profilePath, 'utf8')));
   const profileIdentity = computePortableRuntimeProfileIdentity(profile);
   if (profileIdentity !== manifest.runtimeProfileIdentity) fail('runtime profile identity mismatch');
+  if (profile.buildIdentity !== manifest.buildIdentity) fail('manifest build identity does not match runtime profile');
   if (profile.retention.id !== manifest.retention.policyId || profile.retention.version !== manifest.retention.policyVersion) fail('manifest retention policy does not match runtime profile');
+  validatePortableLogicalPath(manifest.recovery.databaseEntryPath);
+  if (manifest.recovery.databaseEntryPath !== profile.database.path) fail('recovery database path does not match runtime profile database path');
+
+  const profileEntries = manifest.entries.filter((entry) => entry.role === 'runtime_profile');
+  if (profileEntries.length !== 1) fail('manifest must contain exactly one runtime profile entry');
+  const profileEntry = profileEntries[0]!;
+  if (!profileEntry.required) fail('runtime profile entry must be required');
+  if (profileEntry.path !== PORTABLE_RUNTIME_PROFILE_PATH) fail('runtime profile entry must use the accepted profile path');
+  if (profileEntry.classification !== 'ldw_internal') fail('runtime profile entry must use LDW-internal classification');
+  validateEntryRetention(profile, profileEntry);
+  if (profileEntry.semanticIdentity !== profileIdentity) fail('runtime profile entry semantic identity does not match recomputed profile identity');
+
+  const databaseEntries = manifest.entries.filter((entry) => entry.role === 'sqlite_backup');
+  if (databaseEntries.length !== 1) fail('manifest must contain exactly one SQLite backup entry');
+  const databaseEntry = databaseEntries[0]!;
+  if (!databaseEntry.required) fail('SQLite backup entry must be required');
+  if (databaseEntry.path !== profile.database.path) fail('SQLite backup entry path does not match runtime profile database path');
+  if (databaseEntry.classification !== profile.database.classification) fail('SQLite backup entry classification does not match runtime profile');
+  if (databaseEntry.retentionClass !== profile.database.retentionClass) fail('SQLite backup entry retention class does not match runtime profile');
+  validateEntryRetention(profile, databaseEntry);
+  if (manifest.recovery.databaseEntryPath !== databaseEntry.path) fail('recovery database path does not match verified SQLite backup entry');
+
+  const allowedRoles = new Set(profile.allowedArtifactRoles);
+  const allowedClassifications = new Set(profile.allowedClassifications);
+  for (const entry of manifest.entries) {
+    if (entry.role === 'runtime_profile' || entry.role === 'sqlite_backup') continue;
+    if (!allowedRoles.has(entry.role)) fail(`generated artifact role is not allowed by runtime profile: ${entry.role}`);
+    if (!allowedClassifications.has(entry.classification)) fail(`generated artifact classification is not allowed by runtime profile: ${entry.classification}`);
+  }
 
   const ownedPaths = new Set<string>([PORTABLE_RUNTIME_MANIFEST_PATH]);
   let totalBytes = Buffer.byteLength(manifestText, 'utf8');
@@ -537,10 +567,8 @@ export function verifyPortableRuntimeBundle(rootInput: string): PortableRuntimeB
     ownedPaths.add(entry.path);
     if (entry.role === 'runtime_profile') profileBytes = bytes.byteLength;
     if (entry.role === 'sqlite_backup') {
-      if (databasePath !== undefined) fail('manifest contains more than one SQLite backup');
       databasePath = target;
       databaseBytes = bytes.byteLength;
-      if (entry.path !== profile.database.path || entry.classification !== profile.database.classification) fail('SQLite entry does not match runtime profile database configuration');
     } else if (bytes.byteLength > PORTABLE_RUNTIME_LIMITS.nonDatabaseArtifactBytes) {
       fail(`non-database artifact exceeds byte bound: ${entry.path}`);
     }
@@ -591,6 +619,9 @@ export function planPortableRuntimeRetention(
   const profile = parsePortableRuntimeProfile(profileInput);
   const manifest = parsePortableRuntimeManifest(manifestInput);
   if (manifest.runtimeProfileIdentity !== computePortableRuntimeProfileIdentity(profile)) fail('retention plan profile does not match manifest');
+  if (manifest.retention.policyId !== profile.retention.id || manifest.retention.policyVersion !== profile.retention.version) {
+    fail('retention plan manifest policy does not match runtime profile');
+  }
   const evaluatedAt = timestamp.parse(evaluatedAtInput);
   const evaluatedMs = Date.parse(evaluatedAt);
   const classes = new Map(profile.retention.classes.map((item) => [item.id, item] as const));

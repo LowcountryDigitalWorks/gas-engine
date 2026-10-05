@@ -34,6 +34,7 @@ import {
   validatePortableLogicalPath,
   verifyPortableRuntimeBundle,
   type PortableRuntimeBundleResult,
+  type PortableRuntimeManifest,
   type PortableRuntimeProfile,
 } from '../../src/runtime/portable-runtime.js';
 import { alpha, batch, beta, repository, temporaryDatabase } from '../persistence/helpers.js';
@@ -141,7 +142,7 @@ interface Fixture {
   bundle: PortableRuntimeBundleResult;
 }
 
-async function fixture(t: TestContext): Promise<Fixture> {
+async function fixture(t: TestContext, runtimeProfile: PortableRuntimeProfile = profile()): Promise<Fixture> {
   const database = temporaryDatabase(t);
   const evidence = await repository(t, database);
   await evidence.persistCollection(alpha, batch('alpha'));
@@ -162,7 +163,7 @@ async function fixture(t: TestContext): Promise<Fixture> {
   const bundle = await createPortableRuntimeBundle({
     root: rootA,
     sourceDatabasePath: database.path,
-    profile: profile(),
+    profile: runtimeProfile,
     artifacts: [
       {
         role: 'service_run',
@@ -186,6 +187,25 @@ function serviceRunPath(value: Fixture): string {
 
 function restoreServiceRun(value: Fixture): void {
   writeFileSync(serviceRunPath(value), value.runJson, { encoding: 'utf8', flag: 'w' });
+}
+
+function craftManifest(
+  value: Fixture,
+  mutate: (manifest: PortableRuntimeManifest) => void,
+): PortableRuntimeManifest {
+  const manifest = structuredClone(value.bundle.manifest);
+  mutate(manifest);
+  const { id: _id, ...material } = manifest;
+  return { ...material, id: computePortableRuntimeBundleId(material) };
+}
+
+function writeCraftedManifest(
+  value: Fixture,
+  mutate: (manifest: PortableRuntimeManifest) => void,
+): PortableRuntimeManifest {
+  const manifest = craftManifest(value, mutate);
+  writeFileSync(join(value.rootA, PORTABLE_RUNTIME_MANIFEST_PATH), JSON.stringify(manifest) + '\n', 'utf8');
+  return manifest;
 }
 
 test('strict non-secret profile accepts only canonical portable configuration', () => {
@@ -248,6 +268,136 @@ test('manifest rejects duplicate paths, unsupported version, incompatible packag
   assert.throws(() => parsePortableRuntimeManifest({ ...manifest, packageCompatibility: { ...manifest.packageCompatibility, version: '0.19.0' } }), /invalid|unsupported/i);
   assert.throws(() => parsePortableRuntimeManifest({ ...manifest, entries: [...manifest.entries, structuredClone(manifest.entries[0]!)] }), /unique|identity/i);
   assert.throws(() => parsePortableRuntimeManifest({ ...manifest, id: 'portable-runtime-bundle:' + '0'.repeat(64) }), /identity/i);
+});
+
+test('verification re-enforces generated-artifact role and classification allowlists from imported bytes', async (t) => {
+  const value = await fixture(t);
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'service_run')!.role = 'workspace_json';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /generated artifact role.*not allowed/i);
+
+  const base = profile();
+  const classificationProfile: PortableRuntimeProfile = {
+    ...base,
+    retention: {
+      ...base.retention,
+      classes: [
+        ...base.retention.classes,
+        { id: 'customer-90d', classification: 'customer_safe', protected: false, maxAgeDays: 90 },
+      ],
+    },
+  };
+  const classified = await fixture(t, classificationProfile);
+  writeCraftedManifest(classified, (manifest) => {
+    const artifact = manifest.entries.find((entry) => entry.role === 'service_run')!;
+    artifact.classification = 'customer_safe';
+    artifact.retentionClass = 'customer-90d';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(classified.rootA), /generated artifact classification.*not allowed/i);
+});
+
+test('verification requires exact profile and manifest build identity presence and value', async (t) => {
+  const value = await fixture(t);
+  writeCraftedManifest(value, (manifest) => { manifest.buildIdentity = 'release-020-other-build'; });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /build identity.*runtime profile/i);
+
+  writeCraftedManifest(value, (manifest) => { delete manifest.buildIdentity; });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /build identity.*runtime profile/i);
+
+  const { buildIdentity: _buildIdentity, ...withoutBuildIdentity } = profile();
+  const noBuild = await fixture(t, withoutBuildIdentity);
+  writeCraftedManifest(noBuild, (manifest) => { manifest.buildIdentity = 'release-020-unexpected-build'; });
+  assert.throws(() => verifyPortableRuntimeBundle(noBuild.rootA), /build identity.*runtime profile/i);
+});
+
+test('verification requires exact administrative entries and canonical recovery database path', async (t) => {
+  const value = await fixture(t);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.role = 'service_run';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /exactly one runtime profile entry/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.required = false;
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /runtime profile entry must be required/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.path = 'runtime/other-profile.json';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /runtime profile entry.*accepted profile path/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.retentionClass = 'state-protected';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /entry classification does not match retention class/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.semanticIdentity = 'portable-runtime-profile:' + '0'.repeat(64);
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /runtime profile entry semantic identity/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'service_run')!.role = 'runtime_profile';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /exactly one runtime profile entry/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'runtime_profile')!.classification = 'customer_safe';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /runtime profile entry.*LDW-internal classification/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'sqlite_backup')!.role = 'service_run';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /exactly one SQLite backup entry/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'sqlite_backup')!.required = false;
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /SQLite backup entry must be required/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'sqlite_backup')!.path = 'state/other.sqlite';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /SQLite backup entry path/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'sqlite_backup')!.classification = 'ldw_internal';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /SQLite backup entry classification/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'sqlite_backup')!.retentionClass = 'internal-90d';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /SQLite backup entry retention class/i);
+
+  writeCraftedManifest(value, (manifest) => {
+    manifest.entries.find((entry) => entry.role === 'service_run')!.role = 'sqlite_backup';
+  });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /exactly one SQLite backup entry/i);
+
+  writeCraftedManifest(value, (manifest) => { manifest.recovery.databaseEntryPath = 'state/other.sqlite'; });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /recovery database path.*runtime profile/i);
+
+  writeCraftedManifest(value, (manifest) => { manifest.recovery.databaseEntryPath = '../state/gas.sqlite'; });
+  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /logical path|traversal/i);
+});
+
+test('retention planning independently rejects manifest policy identity drift', async (t) => {
+  const value = await fixture(t);
+  const wrongId = craftManifest(value, (manifest) => { manifest.retention.policyId = 'release-020-other-policy'; });
+  assert.throws(
+    () => planPortableRuntimeRetention(value.bundle.profile, wrongId, '2026-10-05T00:00:00.000Z'),
+    /manifest policy.*runtime profile/i,
+  );
+  const wrongVersion = craftManifest(value, (manifest) => { manifest.retention.policyVersion = '2.0.0'; });
+  assert.throws(
+    () => planPortableRuntimeRetention(value.bundle.profile, wrongVersion, '2026-10-05T00:00:00.000Z'),
+    /manifest policy.*runtime profile/i,
+  );
 });
 
 test('hash mismatch, byte mismatch and missing required files fail closed', async (t) => {
