@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.18 are accepted and merged. Release 1.0 remains separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.19 are accepted and merged. Release 1.0 remains separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -22,14 +22,14 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.16 | **Accepted:** Human Decision & Measurement Cycle Pack; exact human attention selection over recomputed Release 0.15 evidence, explicit human decision, optional Release 0.8 recommendation/measurement/outcome call-through, optional Release 0.11 Search Change plan, exact current-cycle measurement/outcome isolation, deterministic JSON/HTML decision dossier. See [decision-cycle guide](decision-cycle.md) and [ADR 0016](decisions/0016-human-decision-measurement-cycle.md). |
 | 0.17 | **Accepted via Issue #60 / PR #62:** Operator Workspace & Service Reporting UX Pack. First cohesive internal LDW operator experience over accepted 0.15/0.16 semantics: site/case navigation, evidence freshness/readiness, attention review, decision/recommendation/measurement/outcome workflow, history/timeline, and customer-safe report composition/export. No provider networking, customer portal, cloud deployment, runtime AI, or production action authority. |
 | 0.18 | **Accepted via Issue #65 / PR #67:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
-| 0.19 | **Directional:** Internal Portfolio / Multi-Site Operations Console. Give LDW one internal control plane across managed sites for evidence freshness, source failures, unresolved attention, decision-cycle state, due follow-up, and report status. Internal operations only; not customer SaaS or a customer portal. |
+| 0.19 | **Accepted via Issue #69 / PR #70:** Internal Portfolio / Multi-Site Operations Console. Pure/local internal operations over trusted portfolio inventory plus zero-or-one accepted current run per engagement: strict run verification, exact tenant/site/scope/target reconciliation, exact source-state preservation with separate operational freshness, fixed unranked factual exceptions, operational-only cross-engagement counts, deterministic internal JSON, and presentation-only HTML. No unread/task persistence, invented overdue state, report-delivery state, cross-customer performance benchmarking, scoring, or customer SaaS. |
 | 0.20 | **Directional:** Private-Runtime Packaging & Portability Readiness. Prove configuration/import-export/backup/retention/deletion/rollback boundaries, private evidence placement, and deployment portability before any cloud/customer runtime. No production deployment is authorized by 0.20 itself. |
 | 1.0 | **Separately gated:** bounded private/cloud deployment proof; candidate Workers, D1, and static operator assets only after identity/auth, retention/deletion, workload/cost, rollback/decommission, and service-demand gates are satisfied. No customer portal/SaaS is authorized by this roadmap. |
 
 
 ## Forward roadmap — UX, reporting, and service maturity
 
-The accepted 0.1–0.18 baseline now contains enough evidence, review, measurement, outcome, and deterministic report semantics to stop treating UX as premature. The next phase should turn those accepted semantics into a repeatable **LDW operator product** before adding more commodity sensing.
+The accepted 0.1–0.19 baseline now contains enough evidence, review, measurement, outcome, deterministic report, reproducible-run, and portfolio-operations semantics to focus the next separately bounded release on portability/runtime readiness rather than more commodity sensing.
 
 ### 0.17 — Operator Workspace & Service Reporting UX Pack — ACCEPTED (#60 / PR #62)
 
@@ -74,23 +74,25 @@ G.A.S. should still not become the provider poller, scheduler, workflow engine, 
 
 **Service milestone after 0.18:** LDW should be able to execute a repeatable managed visibility engagement with substantially less manual reconciliation. Commercial packaging/pricing/claims remain governed by business-operations #280.
 
-### 0.19 — Internal Portfolio / Multi-Site Operations Console
+### 0.19 — Internal Portfolio / Multi-Site Operations Console — ACCEPTED (#69 / PR #70)
 
-**Primary goal:** manage several service engagements without opening each case independently.
+**Primary goal:** manage several service engagements from one internal operational projection without opening each case independently.
 
-Expected capability themes:
+Accepted capability:
 
-- internal LDW site/engagement inventory;
-- evidence freshness and source-failure exceptions;
-- unread/review-needed attention counts without universal scoring;
-- recommendation / measurement / outcome state;
-- upcoming or overdue follow-up state;
-- report-generation / delivery readiness state;
-- bounded cross-site operational summaries that preserve each site's tenant/scope boundary.
+- trusted application-local portfolio inventory owns engagement identity, exact tenant/site/scope, target, current-run selection, and explicit source-family freshness policy;
+- zero or one accepted Release 0.18 `ManagedServiceRun` per engagement, with strict full-run import/invariant verification;
+- one canonical ManagedServiceRun ID computation owned by `service-run.ts` and reused by strict import;
+- exact tenant/site/scope/target reconciliation with cross-tenant substitution failing closed;
+- exact source state preserved separately from caller-policy operational freshness;
+- exact accepted readiness, Attention count, follow-up/readiness, and report state retained as navigation metadata;
+- fixed unranked factual exceptions such as no-current-run, source state/freshness, Attention present, and report-not-requested;
+- bounded operational-only summary counts that preserve each engagement's tenant/scope boundary;
+- deterministic LDW-internal JSON and self-contained presentation-only HTML.
 
-This is an **internal control plane**, not external customer SaaS. Cross-customer semantic data must remain isolated; portfolio views should expose operational metadata needed to run the service, not flatten private customer evidence into one shared dataset.
+Release 0.19 intentionally does **not** add unread/read persistence, a task/reminder lifecycle, invented overdue semantics, report-delivery state, customer performance rollups or benchmarking, universal health/priority/severity/business-impact scores, provider networking, scheduling, customer SaaS, or a customer portal.
 
-**Service milestone after 0.19:** LDW can manage a small portfolio of recurring visibility engagements from one internal workspace.
+**Service milestone after 0.19:** LDW can manage a small portfolio of recurring visibility engagements from one internal workspace while keeping customer evidence and performance semantics isolated.
 
 ### 0.20 — Private-Runtime Packaging & Portability Readiness
 
@@ -146,7 +148,7 @@ These research tracks may feed a future large release when evidence is ready; th
 
 | Maturity point | What is realistically usable |
 | --- | --- |
-| **Now — accepted 0.16** | Engine semantics are strong enough for internal proofs: deterministic service brief, decision cycle, recommendation/measurement/outcome history, and printable static reports. Operation is still developer/operator-heavy rather than a polished product UX. |
+| **Now — accepted 0.19** | Internal operator workspace, reproducible managed-service runs, and deterministic multi-engagement portfolio operations are accepted for LDW-controlled service delivery on properly authorized evidence; there is still no customer portal, provider polling runtime, autonomous action, or deployed cloud runtime. |
 | **After 0.17** | First real internal operator UX and report-building experience. Suitable for LDW-controlled service delivery/pilot operation on properly authorized evidence; still no customer portal or autonomous action. |
 | **After 0.18** | Repeatable managed-service run method with evidence intake, follow-up state, and report-package assembly. This is the point where technical delivery should feel like a standardized service rather than an engineering proof. |
 | **After 0.19** | Internal multi-site/portfolio operations become practical for several recurring engagements. |
@@ -182,7 +184,7 @@ This sequence is not self-executing. Each functional release still requires exac
 
 ## Gates and evaluation
 
-Releases 0.1–0.18 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 0.15 was accepted after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge via PR #52, and post-merge Contracts verification. Release 0.17 was accepted after Product whole-pack review, one integrated browser/human-decision and fail-closed report-input correction, final independent whole-pack exact-head ACCEPT, protected-main squash merge via PR #62 at `52ea537e99a92b05a52c2e732a86104d65f2ea28`, and post-merge Contracts `36968094314` SUCCESS. Release 0.18 was accepted after Product whole-pack review, one bounded prior-run semantic-integrity correction, final independent whole-pack exact-head ACCEPT, protected-main squash merge via PR #67 at `6a24d9fb428c1a62b9766f5baa5815329eab78b7`, and post-merge Contracts `37056080706` SUCCESS. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.19 are accepted on `main`; Release 0.8 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #16. Release 0.9 was accepted after exact-head validation, independent review, and Product ORCH2 acceptance and merged via PR #19. Release 0.10 was accepted after exact-head validation, a bounded metric-integrity correction, independent exact-head re-review, and Product acceptance and merged via PR #35. Release 0.11 was accepted after exact-head validation, a bounded deterministic follow-up-identity correction, independent exact-head re-review, and Product acceptance and merged via PR #38. Release 0.12 was accepted after exact-head validation, independent exact-head review, and Product acceptance and merged via PR #41. Release 0.13 was accepted after whole-pack exact-head validation, one bounded IndexNow semantic-integrity correction, final independent exact-head review, Product acceptance, protected-main squash merge via PR #45, and post-merge Contracts verification. Release 0.14 was accepted after Product whole-pack exact-head review, bounded Bing semantic-integrity corrections, independent whole-pack review, a bounded ZeroRank trust-boundary correction, final independent exact-head re-review, Product acceptance, protected-main squash merge via PR #47, and post-merge Contracts verification. Release 0.15 was accepted after Product whole-pack exact-head review, one bounded service-history semantic-identity correction, final independent whole-pack exact-head review, protected-main squash merge via PR #52, and post-merge Contracts verification. Release 0.17 was accepted after Product whole-pack review, one integrated browser/human-decision and fail-closed report-input correction, final independent whole-pack exact-head ACCEPT, protected-main squash merge via PR #62 at `52ea537e99a92b05a52c2e732a86104d65f2ea28`, and post-merge Contracts `36968094314` SUCCESS. Release 0.18 was accepted after Product whole-pack review, one bounded prior-run semantic-integrity correction, final independent whole-pack exact-head ACCEPT, protected-main squash merge via PR #67 at `6a24d9fb428c1a62b9766f5baa5815329eab78b7`, and post-merge Contracts `37056080706` SUCCESS. Release 0.19 was accepted after Product whole-pack review, one tests-only source-state regression-coverage correction, final independent correction re-review ACCEPT with 0 HIGH / 0 MEDIUM / 0 material LOW, protected-main squash merge via PR #70 at `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, and post-merge Contracts `37261605064` SUCCESS. Release 1.0 remains separately gated. A roadmap row is not itself implementation authority. Repository governance targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Future functional releases require adversarial synthetic second-tenant testing for every newly implemented owned surface. Use only authorized LDW-owned evidence and clearly synthetic test material; private runtime evidence stays outside public GitHub. Customer evidence and customer deployment remain excluded.
 
@@ -280,3 +282,20 @@ Accepted flow:
 8. emit deterministic file-based run/package outputs with exact hashes, byte counts, and explicit classifications.
 
 Release 0.18 does not authorize service-run persistence, private WQT retention/history, recurrence/scheduling, provider polling/downloads, REPORT-AUTO/SuiteDash delivery, AI narrative generation, customer SaaS, Issue #49/#56, Release 0.19, or Release 1.0.
+
+## Release 0.19 — accepted Internal Portfolio / Multi-Site Operations Console
+
+Issue #69 authorized the bounded pure/local Release 0.19 portfolio-operations composition over accepted Releases 0.1–0.18; PR #70 is accepted and merged.
+
+Accepted flow:
+
+1. receive trusted portfolio inventory with exact engagement identity/scope/target and explicit source-family freshness policy;
+2. optionally receive one accepted Release 0.18 `ManagedServiceRun` per engagement;
+3. strictly import/verify each current run using the single canonical run-ID computation owned by `service-run.ts`;
+4. fail closed on duplicate engagement/exact scope, cross-tenant run substitution, or target mismatch;
+5. preserve exact source state separately from operational freshness;
+6. project exact accepted readiness, Attention count, follow-up/readiness, report state, and fixed factual exceptions;
+7. compute bounded operational-only cross-engagement counts without customer-performance aggregation or benchmarking;
+8. emit deterministic LDW-internal JSON and self-contained presentation-only HTML.
+
+Release 0.19 does not authorize provider polling/networking, scheduler/background workers, persistent unread/task state, invented overdue semantics, report-delivery state or transport, database/table/migration, new canonical wire schema, runtime AI, cloud deployment, customer portal/SaaS, cross-customer performance benchmarking, universal scores, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, Release 0.20, or Release 1.0.
