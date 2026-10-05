@@ -121,6 +121,7 @@ function factRecordForSource(result: WqtAdaptationResult, sourceRecordId: string
 }
 
 function expectDuplicateSourceKey(value: MutableJson): void {
+  refreshFlattened(value);
   assert.throws(
     () => adaptWqtNormalizedEvidence(bytes(value), trustedConfig),
     (error: unknown) => error instanceof WqtAdapterError && error.code === 'duplicate_source_key',
