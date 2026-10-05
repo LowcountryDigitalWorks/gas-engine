@@ -415,7 +415,7 @@ test('Release 0.17 customer report selections and source bindings fail closed', 
 test('Release 0.17 browser workbench escapes dynamic content and exposes no network or authoritative storage path', async (t) => {
   const fixture = await decisionCycleFixture(t);
   const attacked = structuredClone(fixture.input) as any;
-  attacked.decision.summary = '"><img src=x onerror="alert(1)"><script>alert(1)</script>';
+  attacked.decision.summary = '\"><img src=x onerror="alert(1)"><script>alert(1)</script>';
   const request = {
     ...workspaceRequest(fixture),
     decisionCycleInput: attacked,
@@ -453,7 +453,7 @@ test('Release 0.17 surfaces retain no schema, migration, runtime dependency, pro
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
-  assert.equal(packageJson.version, '0.18.0');
+  assert.equal(packageJson.version, '0.18.1');
   assert.deepEqual(packageJson.dependencies, { zod: '4.6.2' });
   assert.deepEqual(packageJson.devDependencies, {
     '@types/node': '24.13.4',
