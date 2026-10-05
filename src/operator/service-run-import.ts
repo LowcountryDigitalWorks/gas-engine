@@ -6,12 +6,12 @@ import {
   timestamp,
   version as versionSchema,
 } from '../contracts/primitives.js';
-import { hashCanonicalJson } from '../lib/canonical-json.js';
 import {
   DECISION_CYCLE_READINESS_STATES,
   decisionCycleReadinessStateSchema,
 } from './decision-cycle.js';
 import {
+  computeManagedServiceRunId,
   MANAGED_SERVICE_RUN_LIMITS,
   MANAGED_SERVICE_RUN_VERSION,
   MAX_MANAGED_SERVICE_RUN_JSON_BYTES,
@@ -154,56 +154,6 @@ function unique(values: readonly string[], label: string): void {
 
 function sameArray(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function receiptDigest(receipt: ManagedServiceRun['receipts'][number]): string {
-  return hashCanonicalJson(receipt);
-}
-
-function digestEntryList(values: readonly unknown[]): string {
-  return hashCanonicalJson(values.map((value) => hashCanonicalJson(value)));
-}
-
-function runIdentityMaterial(run: Omit<ManagedServiceRun, 'id'>): unknown {
-  return {
-    version: run.version,
-    generatedAt: run.generatedAt,
-    policy: run.policy,
-    scope: run.scope,
-    trustedTarget: run.trustedTarget,
-    runPeriod: run.runPeriod,
-    evaluatedAt: run.evaluatedAt,
-    workspaceId: run.workspaceId,
-    serviceBriefId: run.serviceBriefId,
-    decisionCycleDossierId: run.decisionCycleDossierId ?? null,
-    receiptDigests: run.receipts.map(receiptDigest),
-    readinessDigest: digestEntryList(run.readiness),
-    sourceManifestDigest: digestEntryList(run.sourceManifest),
-    attentionDigest: digestEntryList(run.attentionIds),
-    followUp: run.followUp,
-    priorComparisonDigest: run.priorComparison === undefined
-      ? null
-      : hashCanonicalJson({
-          priorRunId: run.priorComparison.priorRunId,
-          priorSummaryId: run.priorComparison.priorSummaryId,
-          readiness: digestEntryList(run.priorComparison.readiness),
-          sourceManifest: digestEntryList(run.priorComparison.sourceManifest),
-          attention: digestEntryList(run.priorComparison.attention),
-          decisionReadiness: run.priorComparison.decisionReadiness,
-          report: run.priorComparison.report,
-          receipts: digestEntryList(run.priorComparison.receipts),
-        }),
-    customerReport: run.customerReport,
-    provenance: run.provenance,
-    limitations: run.limitations,
-  };
-}
-
-function expectedRunId(run: ManagedServiceRun): string {
-  const { id: _id, ...body } = structuredClone(run);
-  return 'managed-service-run:' + hashCanonicalJson(
-    runIdentityMaterial(body),
-  );
 }
 
 function validateComparison(run: ManagedServiceRun): void {
@@ -350,7 +300,8 @@ export function parseManagedServiceRun(input: unknown): ManagedServiceRun {
   if (!parsed.success) fail('Release 0.18 managed-service run import is invalid or contains unsupported fields/version.');
   const run = parsed.data as ManagedServiceRun;
   validateInvariants(run);
-  if (run.id !== expectedRunId(run)) {
+  const { id: _id, ...body } = structuredClone(run);
+  if (run.id !== computeManagedServiceRunId(body)) {
     fail('Release 0.18 managed-service run identity does not match its exact semantic state.');
   }
   return structuredClone(run);
