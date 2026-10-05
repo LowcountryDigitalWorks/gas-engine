@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.18 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.19 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -274,3 +274,26 @@ Source receipts and prior-run summaries are application-local provenance only. T
 Release 0.18 adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, queue/scheduler/worker, cloud runtime, report delivery, runtime AI, or new persistent service-run/history layer.
 
 The public WQT snapshot resolver is pure/local. Issue #63's private semantic-history/retention/runtime work remains outside this release.
+
+## Release 0.19 accepted portfolio-operations seam
+
+Release 0.19 is **accepted and merged through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS.
+
+```text
+trusted portfolio inventory
+  + zero-or-one accepted Release 0.18 ManagedServiceRun per engagement
+  + explicit source-family freshness policy
+  -> strict Release 0.18 run import / canonical run-ID verification
+  -> exact tenant/site/scope/target reconciliation
+  -> exact source-state + operational freshness projection
+  -> fixed unranked factual exceptions
+  -> bounded operational-only cross-engagement summary
+  -> deterministic LDW-internal JSON
+  -> self-contained presentation-only HTML
+```
+
+Trusted portfolio inventory owns engagement identity, exact scope/target, current-run selection, and freshness policy. A run artifact, run ID, report ID, or browser state cannot mint portfolio authority. `src/operator/service-run.ts` singly owns canonical ManagedServiceRun identity through `computeManagedServiceRunId(...)`; the adjacent strict importer reuses that seam rather than maintaining an alternate identity algorithm.
+
+Source state and freshness remain separate semantics. Non-`supplied` states remain exact and are freshness `not_evaluable`; they are not converted to stale. Cross-engagement summaries count operational metadata only and do not aggregate or benchmark customer performance, recommendation/report prose, or measured outcomes.
+
+Release 0.19 adds no canonical wire contract, database/table/migration, provider network/credential path, server/listener, scheduler/worker, authoritative browser persistence, cloud runtime, report delivery, runtime AI, customer portal/SaaS, cross-customer performance benchmarking, universal score, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, or new runtime dependency.
