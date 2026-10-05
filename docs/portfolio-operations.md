@@ -1,8 +1,8 @@
 # Release 0.19 — Internal Portfolio / Multi-Site Operations Console
 
-Release 0.19 is an **LDW-internal, pure/local operational projection** over trusted portfolio inventory plus zero or one already-generated accepted Release 0.18 `ManagedServiceRun` per engagement. It does not create a customer portal, generic SEO dashboard, task system, provider poller, or shared cross-customer analytics store.
+Release 0.19 is an **accepted LDW-internal, pure/local operational projection** over trusted portfolio inventory plus zero or one already-generated accepted Release 0.18 `ManagedServiceRun` per engagement. It does not create a customer portal, generic SEO dashboard, task system, provider poller, or shared cross-customer analytics store.
 
-Issue #69 is the authoritative Product-frozen release contract while the candidate is under review.
+Release 0.19 is accepted on `main` through Issue #69 / PR #70 at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`; post-merge Contracts `37261605064` succeeded.
 
 ## Authority model
 
@@ -14,7 +14,7 @@ Trusted inventory/runtime configuration supplies:
 - zero or one current accepted Release 0.18 managed-service run artifact;
 - one explicit versioned source-family freshness policy.
 
-A service-run artifact is operational evidence/provenance only. It cannot create portfolio authority. When a current run is supplied, Release 0.19 strictly verifies the complete Release 0.18 application-local run, recomputes its deterministic run identity, and then requires exact inventory/run scope and target equality.
+A service-run artifact is operational evidence/provenance only. It cannot create portfolio authority. When a current run is supplied, Release 0.19 strictly verifies the complete Release 0.18 application-local run through the canonical run-ID computation owned by `src/operator/service-run.ts`, and then requires exact inventory/run scope and target equality.
 
 Duplicate engagement IDs and duplicate exact trusted scopes fail closed. The same `siteId` may legitimately exist under different tenants; tenant identity remains part of the exact scope. Cross-tenant run substitution fails closed.
 
@@ -28,7 +28,7 @@ The verifier:
 - reuses accepted source-receipt parsing;
 - validates bounded/unique receipt, readiness, source-manifest and Attention identities;
 - validates report/follow-up/provenance/prior-comparison invariants;
-- recomputes the accepted Release 0.18 deterministic run identity material;
+- reuses the canonical `computeManagedServiceRunId(...)` computation owned by `src/operator/service-run.ts`;
 - rejects semantic mutation with a stale run ID;
 - creates no tenant context, persistence, provider access, credential, or canonical wire schema.
 
