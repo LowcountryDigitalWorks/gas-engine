@@ -4,7 +4,7 @@
 
 G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, compare longitudinal observations, support explicitly human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
 
-**Current accepted baseline: Releases 0.1–0.18 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
+**Current accepted baseline: Releases 0.1–0.19 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
 
 **Release 0.8 is accepted and merged on `main` through PR #16.** It adds provider-neutral, evidence-linked human review history plus an explicit measurement/outcome ledger. Recommendations are human/trusted-caller authored only, priority remains `unassessed`, measurements resolve selected canonical observations, outcome direction is human-declared, and accepted recommendations create no action authority. Canonical recommendation/measurement/outcome contracts remain schemaVersion `1.0`; Release 0.8 adds no dependency and keeps the $0 incremental recurring-cost proof boundary. See the [Release 0.8 review-ledger guide](docs/review-ledger.md) and [ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md).
 
@@ -34,15 +34,15 @@ The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). 
 
 - **0.17 — ACCEPTED — Operator Workspace & Service Reporting UX Pack (#60 / PR #62):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
 - **0.18 — ACCEPTED — Repeatable Managed-Service Run & Evidence Intake Pack (#65 / PR #67):** standardize one reproducible service run over accepted 0.17 workspace/reporting, add deliberate WQT v1 minor-3 compatibility, exact source-receipt provenance, prior/current operational continuity, accepted 0.16 follow-up projection, and deterministic report-package assembly. Provider polling/scheduling remains outside G.A.S.
-- **0.19 — Internal Portfolio / Multi-Site Operations Console:** one internal LDW control plane for multiple managed engagements: evidence freshness, source failures, review-needed state, follow-up status, and report readiness.
-- **0.20 — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
+- **0.19 — ACCEPTED — Internal Portfolio / Multi-Site Operations Console (#69 / PR #70):** pure/local LDW-internal portfolio operations over trusted inventory and zero-or-one accepted current run per engagement, with strict run verification, exact scope/target reconciliation, source-state-preserving freshness, factual unranked exceptions, operational-only roll-ups, and deterministic internal JSON/presentation-only HTML.
+- **0.20 — Directional — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
 - **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
 
 **UX begins with accepted Release 0.17 (#60 / PR #62).** Reporting existed previously as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 turns those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
 
 A customer portal or self-service SaaS is **not** committed in the 0.x roadmap. It is a post-1.0 possibility only if managed-service demand and Business Value & Strategy evidence justify the added auth, privacy, support, and product burden.
 
-Parallel research such as internal-link intelligence (#49), AI buyer-intent probing (#56), local/GBP evidence, and later conversion/AI-referral context may feed future releases when evidence is ready, but should not block the active 0.18 service-run/evidence-intake path. Design Issue #63 remains separate private WQT consumer/history architecture and is not itself implementation authority.
+Parallel research such as internal-link intelligence (#49), AI buyer-intent probing (#56), local/GBP evidence, and later conversion/AI-referral context may feed future releases when evidence is ready, but should not block the next separately bounded 0.20 portability-readiness work. Design Issue #63 remains separate private WQT consumer/history architecture and is not itself implementation authority.
 
 The end-to-end operating lifecycle is not implemented. Release 0.2 validates records and comparison context, Release 0.3 stores validated evidence locally, Release 0.4 proves one write-only in-process authenticated ingestion route for bounded persistence parts, Release 0.5 deterministically maps an existing WQT normalized artifact into separate SiteOne/Lighthouse `CollectionBatch` streams, Release 0.6 deterministically maps an already-sanitized ZeroRank artifact into five endpoint-specific `zerorank` collection streams, and Release 0.7 deterministically compares compatible longitudinal collection snapshots while separating unchanged evidence from changed or coverage-uncertain evidence. Accepted Release 0.8 records human-authored recommendation revision history plus explicit measurements and human-declared outcomes. Accepted Release 0.9 adds only a standalone read-only local operator case/report preview over that accepted history. There is still no cross-provider correlation engine, automated prioritization policy, provider networking, production identity provider, network listener, customer portal, external execution, scheduler, runtime AI, or deployment.
 
@@ -75,7 +75,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, and the accepted Release 0.15 JSON/HTML service-brief preview, and the accepted Release 0.16 full decision-cycle JSON/HTML preview. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, the accepted Release 0.15 JSON/HTML service-brief preview, the accepted Release 0.16 full decision-cycle JSON/HTML preview, the accepted Release 0.17 workspace/report preview, the accepted Release 0.18 service-run/package preview, and the accepted Release 0.19 `preview:portfolio` JSON/HTML proof. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -132,6 +132,12 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 
 - [Release 0.16 decision cycle — accepted](docs/decision-cycle.md)
 - [Human decision & measurement cycle — accepted ADR 0016](docs/decisions/0016-human-decision-measurement-cycle.md)
+- [Release 0.17 operator workspace — accepted](docs/operator-workspace.md)
+- [Operator workspace/service reporting — accepted ADR 0017](docs/decisions/0017-operator-workspace-service-reporting.md)
+- [Release 0.18 managed-service run — accepted](docs/service-run.md)
+- [Managed-service run/evidence intake — accepted ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md)
+- [Release 0.19 portfolio operations — accepted](docs/portfolio-operations.md)
+- [Internal portfolio operations — accepted ADR 0019](docs/decisions/0019-internal-portfolio-operations-console.md)
 
 ## Release 0.17 — Operator Workspace & Service Reporting UX Pack — accepted
 
@@ -152,3 +158,13 @@ The accepted release makes one engagement reproducible without adding a hosted w
 No new canonical schema, database/table/migration, provider polling/credentials, server/listener, scheduler/worker, cloud resource, report delivery, runtime AI, paid service, or runtime dependency is part of Release 0.18. Issue #63 private WQT history/runtime and REPORT-AUTO delivery remain separately governed.
 
 See [Release 0.18 managed-service run guide](docs/service-run.md), [ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md), and the [WQT adapter guide](docs/adapters/wqt.md).
+
+## Release 0.19 — Internal Portfolio / Multi-Site Operations Console — accepted
+
+Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`; post-merge Contracts `37261605064` succeeded.
+
+The accepted release adds one pure/local LDW-internal portfolio-operations composition over trusted portfolio inventory plus zero or one accepted Release 0.18 `ManagedServiceRun` per engagement. It strictly verifies current runs through the singly owned canonical run-ID computation, requires exact tenant/site/scope/target reconciliation, preserves exact source state separately from operational freshness, emits fixed unranked factual exceptions and operational-only cross-engagement counts, and produces deterministic internal JSON plus self-contained presentation-only HTML.
+
+No database/table/migration, new canonical wire schema, provider networking/polling, scheduler/background worker, persistent unread/task state, report-delivery state, runtime AI, cloud resource, customer portal/SaaS, cross-customer performance benchmarking, universal scoring, automatic priority/severity/business-impact inference, private WQT runtime, REPORT-AUTO delivery, paid service, or new runtime dependency is part of Release 0.19. Incremental recurring cost remains $0.
+
+See the [Release 0.19 portfolio-operations guide](docs/portfolio-operations.md) and [ADR 0019](docs/decisions/0019-internal-portfolio-operations-console.md).

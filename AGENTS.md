@@ -10,7 +10,7 @@
 
 ## Accepted baseline and next-release gates
 
-Releases 0.1–0.18 are accepted and merged. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
+Releases 0.1–0.19 are accepted and merged. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
 
 Accepted Release 0.7 requires collection compatibility for exact scope, provider, provider-connection presence/value, adapter, source schema, and full collection method before absence/completeness semantics may be used. Repository-backed comparison resolves each side through atomic `getCollectionSnapshot(...)`; the dedicated snapshot read is bounded to 2,048 observations while general `listObservations(...)` remains uniformly capped at 100 records. Release 0.7 does not authorize cross-provider/generic correlation, universal scoring, direction/severity/materiality/business-impact policy, prioritization, inference, recommendations, actions, UI, network/provider access, runtime AI/BYOK, new persistence schema/tables, diff persistence, or Release 0.8. See [longitudinal diff guide](docs/analysis/diff.md).
 
@@ -68,7 +68,7 @@ Report the starting revision, final head, changed files, validation results, PR,
 
 ## Release 0.14 accepted boundary
 
-Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The accepted baseline is now Releases 0.1–0.18.
+Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The accepted baseline is now Releases 0.1–0.19.
 
 Preserve these Release 0.14 boundaries:
 
@@ -82,7 +82,7 @@ Preserve these Release 0.14 boundaries:
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
 - Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 1.0 implementation.
-- Package version is 0.18.0 on the accepted Release 0.18 baseline. Releases 0.1–0.18 are accepted and merged.
+- Package version is 0.19.0 on the accepted Release 0.19 baseline. Releases 0.1–0.19 are accepted and merged.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
 
@@ -161,3 +161,20 @@ Preserve these accepted Release 0.18 rules:
 - no DB/table/migration, canonical schema, provider network/credentials, server/listener, scheduler/worker, cloud, delivery, runtime AI, new dependency, paid service, private Issue #63 implementation, Issue #49/#56, Release 0.19, or Release 1.0.
 
 See [accepted Release 0.18 guide](docs/service-run.md) and [ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md).
+
+## Release 0.19 accepted portfolio-operations boundary
+
+Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. Releases 0.1–0.19 are the current accepted baseline.
+
+Preserve these accepted Release 0.19 rules:
+
+- trusted portfolio inventory owns engagement identity, tenant/site/scope, target, current-run selection, and explicit source-family freshness policy; artifacts and IDs cannot mint portfolio authority;
+- zero or one current accepted Release 0.18 `ManagedServiceRun` may be supplied per engagement and must pass strict full-run import/invariant validation before use;
+- canonical ManagedServiceRun ID computation remains singly owned by `src/operator/service-run.ts`; strict import reuses `computeManagedServiceRunId(...)` rather than maintaining a second identity algorithm;
+- exact tenant/site/scope/target isolation is mandatory; duplicate engagement IDs/exact scopes and cross-tenant or target substitution fail closed;
+- exact source state remains distinct from operational freshness; non-`supplied` states are `not_evaluable` for freshness and never become stale merely because freshness cannot be evaluated;
+- cross-engagement roll-ups are operational metadata counts only; never aggregate/benchmark customer performance, recommendation/report prose, or measured outcomes and never invent universal health, priority, severity, or business-impact scores;
+- the HTML console is presentation-only: no authoritative browser persistence, provider/network path, form/write/action authority, scheduler, or delivery surface;
+- add no provider networking/polling, scheduler/background worker, DB/table/migration, canonical schema, cloud runtime, runtime AI, customer portal/SaaS, report-delivery authority, private WQT runtime/history, REPORT-AUTO delivery, paid service, or new runtime dependency.
+
+See [accepted Release 0.19 guide](docs/portfolio-operations.md) and [ADR 0019](docs/decisions/0019-internal-portfolio-operations-console.md).

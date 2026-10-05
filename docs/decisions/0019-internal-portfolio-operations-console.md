@@ -1,8 +1,12 @@
 # ADR 0019 — Internal Portfolio / Multi-Site Operations Console
 
-- Status: Proposed for Release 0.19 Product review
-- Date: 2026-10-04
-- Issue: #69
+Status: **Accepted**
+
+Date: 2026-10-04  
+Issue: #69  
+Accepted PR: #70  
+Accepted merge: `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`  
+Post-merge Contracts: `37261605064` — SUCCESS
 
 ## Context
 
@@ -29,7 +33,7 @@ trusted portfolio inventory
 
 Trusted inventory remains authoritative. A run artifact cannot mint tenant, site, scope, target, or portfolio authority.
 
-The Release 0.18 generation path remains unchanged. Release 0.19 adds an adjacent strict full-run import verifier that accepts only the already-defined application-local Release 0.18 model and recomputes its existing semantic identity.
+The Release 0.18 generation path remains unchanged. Release 0.19 adds an adjacent strict full-run import verifier that accepts only the already-defined application-local Release 0.18 model and reuses the single canonical run-ID computation owned by `src/operator/service-run.ts`.
 
 ## Freshness policy
 

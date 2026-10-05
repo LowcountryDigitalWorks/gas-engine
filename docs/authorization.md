@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.18 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.19 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.18 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.18 add no dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.19 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.19 add no runtime dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -200,3 +200,21 @@ Accepted Release 0.18 authority is limited to:
 Receipts, run summaries, filenames, hashes, and prior-run IDs do not create TenantContext/site/scope/provider authority or production action authority.
 
 This authority does not include a canonical schema/table/migration, durable service-run/history database, private wqt-operations history/retention, WQT recurrence/scheduling, provider/GitHub artifact retrieval, credentials/OAuth, server/listener, scheduler/worker, Activepieces invocation, email/SuiteDash/REPORT-AUTO delivery, cloud resource, runtime AI, paid service, Issue #49/#56, Release 0.19, or Release 1.0.
+
+## Release 0.19 accepted authority boundary
+
+Release 0.19 Internal Portfolio / Multi-Site Operations Console is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS.
+
+Accepted Release 0.19 authority is limited to:
+
+- one trusted application-local portfolio inventory that owns engagement identity, exact tenant/site/scope, trusted target, current-run selection, and explicit source-family freshness policy;
+- zero or one accepted Release 0.18 `ManagedServiceRun` per engagement;
+- strict current-run import/invariant verification using the canonical run-ID computation singly owned by `src/operator/service-run.ts`;
+- exact trusted inventory/run scope and target reconciliation with cross-tenant substitution failing closed;
+- exact source-state preservation plus separate caller-policy operational freshness;
+- deterministic per-engagement navigation state and fixed unranked factual exceptions;
+- bounded operational-only cross-engagement counts that do not aggregate or benchmark customer performance;
+- deterministic bounded LDW-internal JSON and self-contained presentation-only HTML;
+- synthetic/public-safe example.test tests and preview.
+
+This authority does not include provider polling/networking, scheduler/background workers, persistent unread/task state, report-delivery state or transport, database/table/migration, new canonical wire schema, runtime AI, cloud deployment, customer portal/SaaS, cross-customer performance benchmarking, universal scores, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, paid service, Release 0.20, or Release 1.0.
