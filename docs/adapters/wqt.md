@@ -1,6 +1,6 @@
 # WQT normalized-evidence adapter
 
-Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 added accepted WQT v1 minor2/minor3 typed facts. Release 0.18 adds accepted deliberate WQT v1 minor3 compatibility and exact provider-snapshot reconstruction without changing that runtime boundary. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
+Release 0.5 established the bounded **import/export adapter proof** for already-normalized Website Quality Toolkit (WQT) evidence. GAS-SEM-001 added accepted WQT v1 minor2/minor3 typed facts. Release 0.18 adds accepted deliberate WQT v1 minor3 compatibility and exact provider-snapshot reconstruction without changing that runtime boundary. Maintenance 0.18.1 adds compatibility for distinct accepted SiteOne findings that share one source `code`, without changing any accepted WQT mapping/source/method version. The adapter does not run SiteOne or Lighthouse, dispatch WQT workflows, download GitHub artifacts, fetch URLs, use provider credentials, import WQT source at runtime, or establish tenant authority.
 
 The adapter was designed against accepted WQT main commit `3b6205f3fd3208e6ec9d896da0be4b35a2c1c26e` (tree `6526dd029ddd19cc31afa4712b0912281bca5373`). That commit is design evidence only, not a runtime pin or dependency.
 
@@ -63,7 +63,7 @@ Every source unit carries SHA-256 `canonical_json_v1` integrity over the relevan
 | --- | --- |
 | overall score | numeric `wqt-siteone-overall-score`; null becomes explicit `unknown` |
 | each unique category score | numeric `wqt-siteone-category-score`; null becomes explicit `unknown` |
-| each unique finding/summary item | text `wqt-siteone-source-status`; null becomes explicit `unknown` |
+| each accepted finding/summary item | text `wqt-siteone-source-status`; null becomes explicit `unknown` |
 | each valid minor2/minor3 typed fact on a finding | one ordinary typed observation `wqt-siteone-fact-<fact-id>` |
 
 For a minor2/minor3 fact, cohort identity uses the same finding surface plus deterministic suffix `fact:<fact-id>`. Number, text, and boolean map to the existing canonical observed value types. Explicit `null` maps to canonical `unknown` with a deterministic normalized-fact missingness reason. A supplied fact unit is preserved as the canonical metric unit.
@@ -71,6 +71,35 @@ For a minor2/minor3 fact, cohort identity uses the same finding surface plus det
 Facts are sorted by ASCII fact ID before source hashing and observation construction, so fact input order and JSON formatting do not change semantic collection/observation output. The complete normalized finding slice, including facts and display message, remains covered by ordinary source integrity. A wording-only message change can therefore change provenance/source identity while canonical status/fact values remain mechanically unchanged.
 
 The G.A.S. adapter is a defensive consumer of the accepted minor2/minor3 fact contract: at most 8 facts, bounded/patterned IDs and units, closed objects, number/text/boolean type matching, safe finite numeric bounds, 256-code-unit text bound, duplicate-ID rejection, and strict unknown keys. Unit `count` remains a numeric count semantic and accepts only explicit null or a non-negative safe integer. No finding code is special-cased in the mapping.
+
+### Repeated SiteOne finding codes — Maintenance 0.18.1
+
+Accepted WQT evidence does not guarantee global uniqueness of the SiteOne finding `code`. Maintenance 0.18.1 therefore treats `code` as the existing stable key only when it occurs once in one normalized artifact.
+
+For each repeated-code group, the adapter derives one deterministic variant descriptor from canonical JSON over:
+
+```text
+{
+  code,
+  message,
+  factDescriptors: [
+    { id, valueType, unit? }
+  ]
+}
+```
+
+Fact descriptors are sorted by ASCII fact ID. The descriptor deliberately excludes `sourceStatus` and fact values because those are mutable observed state rather than stable variant identity. The adapter uses the **full SHA-256** of that canonical descriptor and combines the exact source code with that digest through the existing identifier-safe key path. Repeated variants are ordered by exact code and then full variant digest; source occurrence/index is never identity.
+
+If two same-code findings have identical stable descriptor material, the adapter fails closed with `duplicate_source_key`. It does not silently collapse, choose first/last, assign occurrence numbers, or use mutable status/value material as fake identity.
+
+Longitudinal behavior is therefore conservative and deterministic:
+
+- stable descriptor plus `sourceStatus` change retains the same source/cohort/surface identity and records an ordinary changed status;
+- stable descriptor plus fact-value change retains the same source/cohort/surface identity and records an ordinary changed fact;
+- message or fact-shape changes create a new variant identity and therefore a conservative cohort discontinuity;
+- transitions between one unique finding and multiple same-code variants do not arbitrarily claim continuity.
+
+Previously successful unique-code outputs remain unchanged. SiteOne category-code uniqueness and Lighthouse category/audit-code uniqueness remain strict. The rule is deliberately supported across accepted WQT minors 1, 2, and 3 without changing their mapping/source/method identities.
 
 ### Canonical-representable subset policy
 
@@ -97,7 +126,7 @@ Finding message/name/label/command and other source display material remain only
 
 Titles/display strings remain source evidence. Lighthouse source scores use `lighthouse_score_0_to_1` and remain evidence, not LDW policy.
 
-Numeric zero remains an observed zero. Missing/null never becomes zero. Duplicate category/finding/audit keys fail closed rather than silently deduplicate.
+Numeric zero remains an observed zero. Missing/null never becomes zero. Duplicate SiteOne category keys and duplicate Lighthouse category/audit keys fail closed. Repeated SiteOne finding codes follow the Maintenance 0.18.1 stable-variant rule above; ambiguous identical stable descriptors fail closed rather than silently deduplicate.
 
 ## Time, provenance, and comparability
 
@@ -134,10 +163,9 @@ The adapter fails explicitly when one unit cannot fit, more than 64 parts would 
 
 ## Security, privacy, cost, and scope
 
-Release 0.5 and GAS-SEM-001 add no network/provider client, crawler, server/listener, cloud resource, credential handling, WQT runtime dependency, AI/BYOK path, recommendation/priority logic, quality gate, external action, ZeroRank, Search Console, or content-generation work. Tests use only a repository-owned synthetic `example-site` / `https://example.test` fixture.
+Release 0.5, GAS-SEM-001, Release 0.18, and Maintenance 0.18.1 add no network/provider client, crawler, server/listener, cloud resource, credential handling, WQT runtime dependency, AI/BYOK path, recommendation/priority logic, quality gate, external action, ZeroRank, Search Console, or content-generation work. Tests use only repository-owned synthetic `example-site` / `https://example.test` material.
 
 No dependency is added and no SQLite schema changes. Incremental recurring cost remains **$0**. The package remains private with no software license grant, tag, or npm publication.
-
 
 ## Release 0.18 accepted — exact provider snapshots
 
@@ -159,4 +187,4 @@ This helper performs no persistence, TenantContext issuance, provider networking
 
 The four new WQT minor3 skipped-URL count fact IDs are intentionally **not** named in production adapter logic. They pass through the same generic fact-ID/valueType/unit/count validation and representability policy already used by minor2.
 
-Issue #63 remains design-only private runtime/history work. Public Release 0.18 does not modify or operate `wqt-operations`.
+Issue #63 remains design-only private runtime/history work. Public Release 0.18 and Maintenance 0.18.1 do not modify or operate `wqt-operations`.
