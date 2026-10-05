@@ -93,6 +93,7 @@ async function createRun(
   target: string,
   options: {
     sourceEnd: string;
+    sourceState?: 'supplied' | 'not_supplied' | 'unsupported';
     unavailable?: boolean;
     unknownTimestamp?: boolean;
     withReport?: boolean;
@@ -115,19 +116,22 @@ async function createRun(
     context,
     request,
   );
+  const sourceState = options.sourceState ?? 'supplied';
   const receipts = [
     {
       id: 'search-export',
       sourceFamily: 'search_analytics',
-      state: 'supplied' as const,
-      artifactLabel: 'synthetic-search-export.json',
-      sha256: 'a'.repeat(64),
-      byteCount: 1024,
-      ...(options.unknownTimestamp ? {} : {
-        sourceWindow: { start: options.sourceEnd, end: options.sourceEnd },
-        collectedAt: options.sourceEnd,
-        receivedAt: options.sourceEnd,
-      }),
+      state: sourceState,
+      ...(sourceState === 'supplied' ? {
+        artifactLabel: 'synthetic-search-export.json',
+        sha256: 'a'.repeat(64),
+        byteCount: 1024,
+        ...(options.unknownTimestamp ? {} : {
+          sourceWindow: { start: options.sourceEnd, end: options.sourceEnd },
+          collectedAt: options.sourceEnd,
+          receivedAt: options.sourceEnd,
+        }),
+      } : {}),
       limitations: ['Synthetic public-safe source receipt only.'],
     },
     ...(options.unavailable ? [{
@@ -352,6 +356,56 @@ test('Release 0.19 preserves unknown freshness and fails closed on future freshn
     }),
     (error: unknown) => error instanceof PortfolioOperationsError && error.code === 'invalid_request',
   );
+});
+
+test('Release 0.19 preserves not-supplied and unsupported source states without stale inference', async (t) => {
+  const repositories = await setupRepositories(t);
+  const notSuppliedRun = await createRun(
+    repositories,
+    alpha,
+    alphaScope,
+    'https://alpha.example.test',
+    { sourceEnd: '2026-10-04T11:00:00.000Z', sourceState: 'not_supplied' },
+  );
+  const unsupportedRun = await createRun(
+    repositories,
+    beta,
+    betaScope,
+    'https://beta.example.test',
+    { sourceEnd: '2026-10-04T11:00:00.000Z', sourceState: 'unsupported' },
+  );
+  const consoleModel = composePortfolioOperationsConsole({
+    version: PORTFOLIO_OPERATIONS_VERSION,
+    evaluatedAt: '2026-10-04T12:00:00.000Z',
+    engagements: [
+      inventoryEntry('not-supplied', 'Synthetic Not Supplied', alphaScope, 'https://alpha.example.test', notSuppliedRun),
+      inventoryEntry('unsupported', 'Synthetic Unsupported', betaScope, 'https://beta.example.test', unsupportedRun),
+    ],
+  });
+
+  for (const expectation of [
+    { engagementId: 'not-supplied', sourceState: 'not_supplied', exceptionKind: 'source_not_supplied' },
+    { engagementId: 'unsupported', sourceState: 'unsupported', exceptionKind: 'source_unsupported' },
+  ] as const) {
+    const engagement = consoleModel.engagements.find((entry) => entry.engagementId === expectation.engagementId);
+    assert.ok(engagement);
+    const source = engagement.sources.find((entry) => entry.receiptId === 'search-export');
+    assert.ok(source);
+    assert.equal(source.sourceState, expectation.sourceState);
+    assert.deepEqual(source.freshness, {
+      state: 'not_evaluable',
+      reason: 'source_state_not_evaluable',
+    });
+    assert.ok(engagement.exceptions.some((entry) =>
+      entry.kind === expectation.exceptionKind
+      && entry.receiptId === 'search-export'
+      && entry.sourceFamily === 'search_analytics'));
+    assert.ok(!engagement.exceptions.some((entry) => entry.kind === 'source_stale'));
+    assert.equal(
+      consoleModel.summary.sourceStates.find((entry) => entry.state === expectation.sourceState)?.count,
+      1,
+    );
+  }
 });
 
 test('Release 0.19 request bounds and strict surface fail closed', () => {
