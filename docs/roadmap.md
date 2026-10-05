@@ -23,7 +23,7 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.17 | **Accepted via Issue #60 / PR #62:** Operator Workspace & Service Reporting UX Pack. First cohesive internal LDW operator experience over accepted 0.15/0.16 semantics: site/case navigation, evidence freshness/readiness, attention review, decision/recommendation/measurement/outcome workflow, history/timeline, and customer-safe report composition/export. No provider networking, customer portal, cloud deployment, runtime AI, or production action authority. |
 | 0.18 | **Accepted via Issue #65 / PR #67:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
 | 0.19 | **Accepted via Issue #69 / PR #70:** Internal Portfolio / Multi-Site Operations Console. Pure/local internal operations over trusted portfolio inventory plus zero-or-one accepted current run per engagement: strict run verification, exact tenant/site/scope/target reconciliation, exact source-state preservation with separate operational freshness, fixed unranked factual exceptions, operational-only cross-engagement counts, deterministic internal JSON, and presentation-only HTML. No unread/task persistence, invented overdue state, report-delivery state, cross-customer performance benchmarking, scoring, or customer SaaS. |
-| 0.20 | **Directional:** Private-Runtime Packaging & Portability Readiness. Prove configuration/import-export/backup/retention/deletion/rollback boundaries, private evidence placement, and deployment portability before any cloud/customer runtime. No production deployment is authorized by 0.20 itself. |
+| 0.20 | **ACTIVE / PRODUCT-FROZEN under Issue #74 / PR #75 candidate:** Private-Runtime Packaging & Portability Readiness. Prove strict non-secret runtime configuration, Node SQLite online backup, deterministic portable-directory integrity, root-independent relocation/reopen, planning-only retention, explicit rollback/recovery/decommission metadata, and external identity/auth requirements. No production/customer deployment is authorized. |
 | 1.0 | **Separately gated:** bounded private/cloud deployment proof; candidate Workers, D1, and static operator assets only after identity/auth, retention/deletion, workload/cost, rollback/decommission, and service-demand gates are satisfied. No customer portal/SaaS is authorized by this roadmap. |
 
 
@@ -94,19 +94,19 @@ Release 0.19 intentionally does **not** add unread/read persistence, a task/remi
 
 **Service milestone after 0.19:** LDW can manage a small portfolio of recurring visibility engagements from one internal workspace while keeping customer evidence and performance semantics isolated.
 
-### 0.20 — Private-Runtime Packaging & Portability Readiness
+### 0.20 — Private-Runtime Packaging & Portability Readiness — ACTIVE / PRODUCT-FROZEN (#74 / PR #75 candidate)
 
 **Primary goal:** prove G.A.S. can be packaged and moved safely before authorizing a deployed runtime.
 
-Expected capability themes:
+Product-frozen candidate capability themes:
 
 - explicit runtime/config bundle;
 - private evidence location and separation from the public repository;
-- import/export and backup/restore proof;
-- retention/deletion semantics;
+- Node 24.19 online SQLite backup plus strict accepted-schema reopen;
+- planning-only retention/deletion semantics with explicit trusted evaluation time;
 - environment/config validation;
-- deployment portability;
-- rollback/decommission package;
+- root-independent portable-directory relocation and verification;
+- explicit operator-selected rollback/recovery/decommission metadata;
 - representative workload and storage measurements;
 - exact identity/auth requirements documented before deployment.
 

@@ -453,7 +453,7 @@ test('Release 0.17 surfaces retain no schema, migration, runtime dependency, pro
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
-  assert.equal(packageJson.version, '0.19.0');
+  assert.equal(packageJson.version, '0.20.0');
   assert.deepEqual(packageJson.dependencies, { zod: '4.6.2' });
   assert.deepEqual(packageJson.devDependencies, {
     '@types/node': '24.13.4',

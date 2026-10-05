@@ -12,7 +12,7 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
-test('production surface is local-only; SQLite is confined to authorized local adapters and administrative migration', () => {
+test('production surface is local-only; SQLite/filesystem access is confined to authorized local/admin seams', () => {
   for (const path of sourceFiles('src')) {
     const content = readFileSync(path, 'utf8');
     assert.match(path, /\.ts$/);
@@ -20,8 +20,11 @@ test('production surface is local-only; SQLite is confined to authorized local a
       const specifier = match[1]!;
       const sqliteAdapter = /src[\\/]persistence[\\/](sqlite|migrations)\.ts$/.test(path)
         || /src[\\/]review[\\/]sqlite\.ts$/.test(path);
+      const runtimePortability = /src[\\/]runtime[\\/]portable-runtime\.ts$/.test(path);
+      const runtimeBuiltins = ['node:fs', 'node:path', 'node:sqlite'];
       assert.ok(specifier.startsWith('.') || ['zod', 'node:crypto', 'node:util'].includes(specifier)
-        || (sqliteAdapter && specifier === 'node:sqlite'), `${path}: unexpected import ${specifier}`);
+        || (sqliteAdapter && specifier === 'node:sqlite')
+        || (runtimePortability && runtimeBuiltins.includes(specifier)), `${path}: unexpected import ${specifier}`);
       if (/src[\\/](contracts|domain|lib)[\\/]/.test(path)) assert.doesNotMatch(specifier, /persistence/, 'Core must remain independent of storage');
     }
     assert.doesNotMatch(content, /\b(?:fetch|WebSocket|XMLHttpRequest|require)\s*\(|\bimport\s*\(/, `${path}: dynamic/network capability`);

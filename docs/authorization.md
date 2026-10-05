@@ -218,3 +218,23 @@ Accepted Release 0.19 authority is limited to:
 - synthetic/public-safe example.test tests and preview.
 
 This authority does not include provider polling/networking, scheduler/background workers, persistent unread/task state, report-delivery state or transport, database/table/migration, new canonical wire schema, runtime AI, cloud deployment, customer portal/SaaS, cross-customer performance benchmarking, universal scores, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, paid service, Release 0.20, or Release 1.0.
+
+## Release 0.20 candidate authority boundary
+
+Issue #74 authorizes the **CANDIDATE / NOT ACCEPTED** Release 0.20 Private-Runtime Packaging & Portability Readiness proof on PR #75.
+
+Candidate authority is limited to:
+
+- one strict non-secret application-local runtime profile;
+- administrative Node 24.19 `node:sqlite` online backup of accepted local SQLite state;
+- one deterministic portable-directory manifest with exact logical paths, SHA-256, byte counts, classifications, required state, retention metadata, and root-independent identity;
+- explicit accepted generated-artifact admission only, with no recursive content discovery;
+- strict path/root/symlink/hash/byte/package verification;
+- physical root-A to root-B relocation and accepted schema/repository reopen;
+- representative reads under newly issued trusted authority rather than serialized `TenantContext` or sessions;
+- deterministic retention planning only;
+- explicit operator-selected rollback bundle plus recovery/decommission requirements;
+- public-safe synthetic tests and `preview:portability`;
+- package version `0.20.0` with no dependency addition and a $0 incremental recurring cash target.
+
+This candidate authority does not include production/customer deployment, cloud resources, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credentials/secrets, identity-provider implementation, scheduler/background worker, new migration/table, new canonical public wire schema, destructive production retention, customer/private proof data, private WQT consumer/history/retention/recurrence, REPORT-AUTO delivery, paid service, DNS/domain/email/billing/account mutation, Release 1.0, or authority to mark Release 0.20 accepted.
