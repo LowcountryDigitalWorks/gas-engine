@@ -515,7 +515,7 @@ test('Release 0.18 adds no schema/migration/network/cloud/AI/private runtime/dep
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
-  assert.equal(packageJson.version, '0.18.0');
+  assert.equal(packageJson.version, '0.18.1');
   assert.deepEqual(packageJson.dependencies, { zod: '4.6.2' });
   assert.deepEqual(packageJson.devDependencies, {
     '@types/node': '24.13.4',
