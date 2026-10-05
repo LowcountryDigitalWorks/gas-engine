@@ -35,7 +35,7 @@ The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). 
 - **0.17 — ACCEPTED — Operator Workspace & Service Reporting UX Pack (#60 / PR #62):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
 - **0.18 — ACCEPTED — Repeatable Managed-Service Run & Evidence Intake Pack (#65 / PR #67):** standardize one reproducible service run over accepted 0.17 workspace/reporting, add deliberate WQT v1 minor-3 compatibility, exact source-receipt provenance, prior/current operational continuity, accepted 0.16 follow-up projection, and deterministic report-package assembly. Provider polling/scheduling remains outside G.A.S.
 - **0.19 — ACCEPTED — Internal Portfolio / Multi-Site Operations Console (#69 / PR #70):** pure/local LDW-internal portfolio operations over trusted inventory and zero-or-one accepted current run per engagement, with strict run verification, exact scope/target reconciliation, source-state-preserving freshness, factual unranked exceptions, operational-only roll-ups, and deterministic internal JSON/presentation-only HTML.
-- **0.20 — Directional — Private-Runtime Packaging & Portability Readiness:** prove configuration, import/export, private evidence placement, retention/deletion, backup/restore, portability, rollback, and workload/cost assumptions before deployment.
+- **0.20 — ACTIVE / PRODUCT-FROZEN — Private-Runtime Packaging & Portability Readiness (#74 / PR #75 candidate):** prove strict non-secret runtime configuration, Node SQLite online backup, deterministic integrity manifests, root-independent relocation/reopen, retention planning, and recovery/decommission requirements without deploying a runtime.
 - **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
 
 **UX begins with accepted Release 0.17 (#60 / PR #62).** Reporting existed previously as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 turns those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
@@ -75,7 +75,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, the accepted Release 0.15 JSON/HTML service-brief preview, the accepted Release 0.16 full decision-cycle JSON/HTML preview, the accepted Release 0.17 workspace/report preview, the accepted Release 0.18 service-run/package preview, and the accepted Release 0.19 `preview:portfolio` JSON/HTML proof. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
+`check` runs strict typechecking, build, Node's contract, persistence, ingestion, adapter, analysis, review-ledger, and operator-view tests plus JSON Schema drift validation, the accepted Release 0.9 synthetic operator preview, the Release 0.13 synthetic discovery-diagnostics preview, the accepted Release 0.14 synthetic AI-visibility preview, the accepted Release 0.15 JSON/HTML service-brief preview, the accepted Release 0.16 full decision-cycle JSON/HTML preview, the accepted Release 0.17 workspace/report preview, the accepted Release 0.18 service-run/package preview, the accepted Release 0.19 `preview:portfolio` JSON/HTML proof, and the Release 0.20 candidate `preview:portability` backup/relocation proof. Tests use fresh in-memory databases or temporary synthetic files under ignored `local-artifacts/`, with cleanup after connections close. A preloaded network tripwire rejects accidental network calls; Node permissions limit filesystem writes to test artifacts and deny child processes/workers. To intentionally refresh exported wire schemas after a contract change, run `npm run build` then `npm run schemas:generate` and review the artifacts.
 
 Read the [contract guide](docs/contracts.md) for wire/application validation differences, versions, bounds, hashing, and dependency rationale. JSON Schema alone does not prove domain consistency or authorize tenant access.
 
@@ -138,6 +138,8 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Managed-service run/evidence intake — accepted ADR 0018](docs/decisions/0018-managed-service-run-evidence-intake.md)
 - [Release 0.19 portfolio operations — accepted](docs/portfolio-operations.md)
 - [Internal portfolio operations — accepted ADR 0019](docs/decisions/0019-internal-portfolio-operations-console.md)
+- [Release 0.20 runtime portability — candidate](docs/runtime-portability.md)
+- [Private-runtime portability — proposed ADR 0020](docs/decisions/0020-private-runtime-portability.md)
 
 ## Release 0.17 — Operator Workspace & Service Reporting UX Pack — accepted
 
@@ -168,3 +170,11 @@ The accepted release adds one pure/local LDW-internal portfolio-operations compo
 No database/table/migration, new canonical wire schema, provider networking/polling, scheduler/background worker, persistent unread/task state, report-delivery state, runtime AI, cloud resource, customer portal/SaaS, cross-customer performance benchmarking, universal scoring, automatic priority/severity/business-impact inference, private WQT runtime, REPORT-AUTO delivery, paid service, or new runtime dependency is part of Release 0.19. Incremental recurring cost remains $0.
 
 See the [Release 0.19 portfolio-operations guide](docs/portfolio-operations.md) and [ADR 0019](docs/decisions/0019-internal-portfolio-operations-console.md).
+
+## Release 0.20 — Private-Runtime Packaging & Portability Readiness — candidate
+
+Release 0.20 is **CANDIDATE / NOT ACCEPTED** under Issue #74 / PR #75. The candidate proves local backup, deterministic packaging, strict integrity verification, root-A/root-B relocation, accepted SQLite reopen, newly issued trusted authority, retention planning, and recovery/decommission requirements without authorizing deployment.
+
+It uses the pinned Node 24.19 `node:sqlite` online backup primitive and adds no runtime dependency, database migration/table, canonical public wire schema, provider networking, scheduler/background worker, cloud resource, customer portal/SaaS, private WQT implementation, REPORT-AUTO delivery, credential/session serialization, or destructive production retention. Incremental recurring cash target remains $0.
+
+See the [Release 0.20 runtime-portability guide](docs/runtime-portability.md) and [proposed ADR 0020](docs/decisions/0020-private-runtime-portability.md).

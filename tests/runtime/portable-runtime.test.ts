@@ -216,16 +216,20 @@ test('online SQLite backup survives strict reopen, relocation, and newly issued 
 
   const restoredEvidence = new LocalEvidenceRepository(join(value.rootB, 'state/gas.sqlite'));
   const restoredReview = new LocalReviewLedgerRepository(join(value.rootB, 'state/gas.sqlite'));
-  t.after(() => { restoredReview.close(); restoredEvidence.close(); });
-  const restoredAlpha = createTestTenantContext('tenant-alpha');
-  const restoredBeta = createTestTenantContext('tenant-beta');
-  assert.equal((await restoredEvidence.getTenant(restoredAlpha))?.id, 'tenant-alpha');
-  assert.equal((await restoredEvidence.getTenant(restoredBeta))?.id, 'tenant-beta');
-  assert.equal((await restoredEvidence.getCollection(restoredAlpha, batch('alpha').collection.id))?.id, batch('alpha').collection.id);
-  assert.equal((await restoredEvidence.getCollection(restoredBeta, batch('beta').collection.id))?.id, batch('beta').collection.id);
-  assert.equal((await restoredReview.getCurrentRecommendation(restoredAlpha, batch('alpha').collection.scope, recommendation().id))?.id, recommendation().id);
-  assert.equal(JSON.stringify(rootBVerified.profile).includes('tenant-alpha'), false);
-  assert.equal(rootBVerified.manifestJson.includes('TenantContext'), false);
+  try {
+    const restoredAlpha = createTestTenantContext('tenant-alpha');
+    const restoredBeta = createTestTenantContext('tenant-beta');
+    assert.equal((await restoredEvidence.getTenant(restoredAlpha))?.id, 'tenant-alpha');
+    assert.equal((await restoredEvidence.getTenant(restoredBeta))?.id, 'tenant-beta');
+    assert.equal((await restoredEvidence.getCollection(restoredAlpha, batch('alpha').collection.id))?.id, batch('alpha').collection.id);
+    assert.equal((await restoredEvidence.getCollection(restoredBeta, batch('beta').collection.id))?.id, batch('beta').collection.id);
+    assert.equal((await restoredReview.getCurrentRecommendation(restoredAlpha, batch('alpha').collection.scope, recommendation().id))?.id, recommendation().id);
+    assert.equal(JSON.stringify(rootBVerified.profile).includes('tenant-alpha'), false);
+    assert.equal(rootBVerified.manifestJson.includes('tenant-beta'), false);
+  } finally {
+    restoredReview.close();
+    restoredEvidence.close();
+  }
 });
 
 test('accepted Release 0.18 run artifact remains strict and keeps exact semantic identity', async (t) => {
@@ -264,14 +268,16 @@ test('hash mismatch, byte mismatch and missing required files fail closed', asyn
 
 test('manifest-owned symlinks and unowned files fail closed rather than auto-including content', async (t) => {
   const value = await fixture(t);
-  const path = serviceRunPath(value);
-  const outside = value.rootA + '-outside.txt';
-  writeFileSync(outside, value.runJson, 'utf8');
-  t.after(() => rmSync(outside, { force: true }));
-  unlinkSync(path);
-  symlinkSync(outside, path);
+  const linkDirectory = join(value.rootA, 'artifacts/release-0.18');
+  const outside = value.rootA + '-outside';
+  mkdirSync(outside, { recursive: true });
+  writeFileSync(join(outside, 'service-run.json'), value.runJson, 'utf8');
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  rmSync(linkDirectory, { recursive: true, force: true });
+  symlinkSync(outside, linkDirectory, process.platform === 'win32' ? 'junction' : 'dir');
   assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /symlink/i);
-  unlinkSync(path);
+  rmSync(linkDirectory, { recursive: true, force: true });
+  mkdirSync(linkDirectory, { recursive: true });
   restoreServiceRun(value);
   writeFileSync(join(value.rootA, 'raw-provider-payload.json'), '{"raw":true}\n', 'utf8');
   assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /unowned file/i);
