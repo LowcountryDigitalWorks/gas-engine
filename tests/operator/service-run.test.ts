@@ -212,6 +212,7 @@ test('Release 0.18 recomputes authoritative Release 0.17 workspace and semantic 
   assert.notEqual(JSON.stringify(first.run), JSON.stringify(first.run, null, 2));
   assert.equal(first.run.id, repeated.run.id, 'pretty formatting is outside semantic run identity');
 
+
   await commitDecisionRecommendation(
     fixture.prepared.evidence,
     fixture.prepared.review,
