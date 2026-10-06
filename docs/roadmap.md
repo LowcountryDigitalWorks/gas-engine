@@ -1,6 +1,6 @@
 # Evidence-driven technical roadmap
 
-This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.19 are accepted and merged. Release 1.0 remains separately gated.
+This is a proposed progression for a bounded LDW internal managed-service evidence-engine proof, not a promise to mechanically build every numbered release. Releases 0.1–0.20 are accepted and merged. Release 1.0 remains separately gated.
 
 | Release | Bounded proof focus |
 | --- | --- |
@@ -23,13 +23,13 @@ This is a proposed progression for a bounded LDW internal managed-service eviden
 | 0.17 | **Accepted via Issue #60 / PR #62:** Operator Workspace & Service Reporting UX Pack. First cohesive internal LDW operator experience over accepted 0.15/0.16 semantics: site/case navigation, evidence freshness/readiness, attention review, decision/recommendation/measurement/outcome workflow, history/timeline, and customer-safe report composition/export. No provider networking, customer portal, cloud deployment, runtime AI, or production action authority. |
 | 0.18 | **Accepted via Issue #65 / PR #67:** Repeatable Managed-Service Run & Evidence Intake Pack. Standardize one service run from provider/sensor handoff through freshness/readiness checks, prior-cycle comparison, follow-up queue, report package assembly, and durable run evidence. Provider reads/scheduling remain Automation-owned; G.A.S. stays provider-network-free. |
 | 0.19 | **Accepted via Issue #69 / PR #70:** Internal Portfolio / Multi-Site Operations Console. Pure/local internal operations over trusted portfolio inventory plus zero-or-one accepted current run per engagement: strict run verification, exact tenant/site/scope/target reconciliation, exact source-state preservation with separate operational freshness, fixed unranked factual exceptions, operational-only cross-engagement counts, deterministic internal JSON, and presentation-only HTML. No unread/task persistence, invented overdue state, report-delivery state, cross-customer performance benchmarking, scoring, or customer SaaS. |
-| 0.20 | **ACTIVE / PRODUCT-FROZEN under Issue #74 / PR #75 candidate:** Private-Runtime Packaging & Portability Readiness. Prove strict non-secret runtime configuration, Node SQLite online backup, deterministic portable-directory integrity, root-independent relocation/reopen, planning-only retention, explicit rollback/recovery/decommission metadata, and external identity/auth requirements. No production/customer deployment is authorized. |
+| 0.20 | **Accepted via Issue #74 / PR #75:** Private-Runtime Packaging & Portability Readiness. Strict non-secret runtime configuration, Node SQLite online backup, deterministic portable-directory integrity, imported profile/manifest consistency verification, root-independent relocation/reopen, planning-only retention, explicit rollback/recovery/decommission metadata, and external identity/auth requirements. No production/customer deployment is authorized. |
 | 1.0 | **Separately gated:** bounded private/cloud deployment proof; candidate Workers, D1, and static operator assets only after identity/auth, retention/deletion, workload/cost, rollback/decommission, and service-demand gates are satisfied. No customer portal/SaaS is authorized by this roadmap. |
 
 
 ## Forward roadmap — UX, reporting, and service maturity
 
-The accepted 0.1–0.19 baseline now contains enough evidence, review, measurement, outcome, deterministic report, reproducible-run, and portfolio-operations semantics to focus the next separately bounded release on portability/runtime readiness rather than more commodity sensing.
+The accepted 0.1–0.20 baseline now contains evidence, review, measurement, outcome, deterministic report, reproducible-run, portfolio-operations, and portability/recovery-readiness semantics. Release 1.0 remains a separate consequential deployment gate rather than the next automatic engineering step.
 
 ### 0.17 — Operator Workspace & Service Reporting UX Pack — ACCEPTED (#60 / PR #62)
 
@@ -94,14 +94,14 @@ Release 0.19 intentionally does **not** add unread/read persistence, a task/remi
 
 **Service milestone after 0.19:** LDW can manage a small portfolio of recurring visibility engagements from one internal workspace while keeping customer evidence and performance semantics isolated.
 
-### 0.20 — Private-Runtime Packaging & Portability Readiness — ACTIVE / PRODUCT-FROZEN (#74 / PR #75 candidate)
+### 0.20 — Private-Runtime Packaging & Portability Readiness — ACCEPTED (#74 / PR #75)
 
-**Primary goal:** prove G.A.S. can be packaged and moved safely before authorizing a deployed runtime.
+**Accepted result:** G.A.S. local state can be packaged and moved safely without authorizing a deployed runtime. Independent whole-pack review accepted the exact candidate; PR #75 was squash-merged as `9e529669020e6d833b5f5ef7afdac48ab67e30bf` and post-merge Contracts `37385826289` succeeded.
 
-Product-frozen candidate capability themes:
+Accepted capability:
 
 - explicit runtime/config bundle;
-- private evidence location and separation from the public repository;
+- public-safe synthetic proof artifacts remain local/ignored while private/customer evidence remains outside the public repository;
 - Node 24.19 online SQLite backup plus strict accepted-schema reopen;
 - planning-only retention/deletion semantics with explicit trusted evaluation time;
 - environment/config validation;
@@ -148,11 +148,11 @@ These research tracks may feed a future large release when evidence is ready; th
 
 | Maturity point | What is realistically usable |
 | --- | --- |
-| **Now — accepted 0.19** | Internal operator workspace, reproducible managed-service runs, and deterministic multi-engagement portfolio operations are accepted for LDW-controlled service delivery on properly authorized evidence; there is still no customer portal, provider polling runtime, autonomous action, or deployed cloud runtime. |
+| **Now — accepted 0.20** | Internal operator workspace, reproducible managed-service runs, deterministic multi-engagement portfolio operations, and local portability/recovery readiness are accepted for LDW-controlled service delivery on properly authorized evidence; there is still no customer portal, provider polling runtime, autonomous action, or deployed cloud runtime. |
 | **After 0.17** | First real internal operator UX and report-building experience. Suitable for LDW-controlled service delivery/pilot operation on properly authorized evidence; still no customer portal or autonomous action. |
 | **After 0.18** | Repeatable managed-service run method with evidence intake, follow-up state, and report-package assembly. This is the point where technical delivery should feel like a standardized service rather than an engineering proof. |
 | **After 0.19** | Internal multi-site/portfolio operations become practical for several recurring engagements. |
-| **After 0.20** | Runtime is packaged/portable enough to evaluate a real private/cloud deployment safely. |
+| **Accepted 0.20** | Runtime state is packaged/portable enough to evaluate a separately gated real private/cloud deployment proof safely. |
 | **1.0 gate** | Bounded deployed private/cloud proof only after service value, auth/data boundaries, cost, and rollback are proven. |
 | **Post-1.0 only if demand exists** | Customer portal, self-service, customer-facing SaaS, or broader automated action surfaces. |
 
