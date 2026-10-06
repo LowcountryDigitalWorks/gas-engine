@@ -6,7 +6,6 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -416,19 +415,8 @@ test('hash mismatch, byte mismatch and missing required files fail closed', asyn
   restoreServiceRun(value);
 });
 
-test('manifest-owned symlinks and unowned files fail closed rather than auto-including content', async (t) => {
+test('unowned files fail closed rather than auto-including content', async (t) => {
   const value = await fixture(t);
-  const linkDirectory = join(value.rootA, 'artifacts/release-0.18');
-  const outside = value.rootA + '-outside';
-  mkdirSync(outside, { recursive: true });
-  writeFileSync(join(outside, 'service-run.json'), value.runJson, 'utf8');
-  t.after(() => rmSync(outside, { recursive: true, force: true }));
-  rmSync(linkDirectory, { recursive: true, force: true });
-  symlinkSync(outside, linkDirectory, process.platform === 'win32' ? 'junction' : 'dir');
-  assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /symlink/i);
-  rmSync(linkDirectory, { recursive: true, force: true });
-  mkdirSync(linkDirectory, { recursive: true });
-  restoreServiceRun(value);
   writeFileSync(join(value.rootA, 'raw-provider-payload.json'), '{"raw":true}\n', 'utf8');
   assert.throws(() => verifyPortableRuntimeBundle(value.rootA), /unowned file/i);
 });
@@ -539,6 +527,42 @@ test('production portability seam uses node:sqlite backup and contains no deploy
     assert.equal(source.includes(forbidden), false, `unexpected Release 0.20 production surface: ${forbidden}`);
   }
   assert.equal(source.includes('rmSync('), false);
+});
+
+test('runtime test command keeps ordinary runtime coverage permission-bounded and the symlink fixture isolated', () => {
+  const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { scripts?: Record<string, string> };
+  const command = packageJson.scripts?.test;
+  assert.ok(command);
+  const processes = command.split(' && ');
+  assert.equal(processes.length, 2);
+  const bounded = processes[0]!;
+  const symlink = processes[1]!;
+
+  assert.match(bounded, /^node --permission /);
+  assert.ok(bounded.includes('--allow-fs-read=.'));
+  assert.ok(bounded.includes('--allow-fs-write=local-artifacts'));
+  assert.ok(bounded.includes('--allow-fs-write="local-artifacts/*"'));
+  assert.ok(bounded.includes('--import ./dist/tests/no-network.js'));
+  assert.ok(bounded.includes('dist/tests/runtime/portable-runtime.test.js'));
+  assert.equal(bounded.includes('portable-runtime-symlink.test.js'), false);
+  for (const forbidden of ['--allow-child-process', '--allow-worker', '--allow-net']) {
+    assert.equal(bounded.includes(forbidden), false, `unexpected ordinary runtime permission: ${forbidden}`);
+  }
+
+  assert.equal(
+    symlink,
+    'node --import ./dist/tests/no-network.js --test --test-isolation=none dist/tests/runtime/portable-runtime-symlink.test.js',
+  );
+  assert.equal(symlink.includes('--permission'), false);
+  assert.equal(symlink.includes('portable-runtime.test.js'), false);
+
+  const isolatedSource = readFileSync('tests/runtime/portable-runtime-symlink.test.ts', 'utf8');
+  assert.equal((isolatedSource.match(/test\(/g) ?? []).length, 1);
+  assert.match(isolatedSource, /symlinkSync\(/);
+  assert.match(isolatedSource, /verifyPortableRuntimeBundle\(root\)/);
+  for (const forbidden of ['node:child_process', 'node:worker_threads', 'node:http', 'node:https', 'fetch(', 'WebSocket', 'EventSource']) {
+    assert.equal(isolatedSource.includes(forbidden), false, `unexpected isolated fixture capability: ${forbidden}`);
+  }
 });
 
 test('manifest file remains bounded and is not itself part of recursive semantic identity', async (t) => {
