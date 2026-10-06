@@ -1,8 +1,8 @@
 # G.A.S. Engine
 
-**Generative / Answer / Search** — LDW-operated internal managed-service enabling infrastructure.
+**Generative / Answer / Search** — LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine.
 
-G.A.S. Engine is intended to help Lowcountry Digital Works normalize evidence from replaceable sensors, preserve provenance and history, compare longitudinal observations, support explicitly human-reviewed recommendations, and measure subsequent outcomes. The proof should establish whether this reduces recurring delivery and reconciliation labor.
+G.A.S. combines source-preserving evidence from replaceable sensors and platforms, compares it over time, supports human-reviewed decisions, and measures outcomes. It integrates commodity sensing rather than rebuilding crawlers, rank trackers, backlink indexes, local-grid tools, or provider dashboards. The proof should establish whether this reduces recurring LDW delivery and reconciliation labor.
 
 **Current accepted baseline: Releases 0.1–0.20 are accepted and merged on `main`.** Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
 
@@ -58,7 +58,7 @@ The proof targets LDW's own public site, [lowcountrydigitalworks.com](https://lo
 
 ## Boundaries
 
-This is not customer SaaS, self-service software, a standalone commercial software product, or a general SEO platform. Do not rebuild WQT, a crawler, ZeroRank, a CRM, or a workflow engine. No universal proprietary G.A.S. score is proposed.
+G.A.S. is LDW's unified Search / SEO / generative-AI visibility intelligence and managed-service decision-support layer, but it is not customer SaaS, self-service software, or a monolithic replacement for commodity specialist platforms. Integrate replaceable WQT/SiteOne/Lighthouse, Search Console, Bing/Yandex/IndexNow evidence, ZeroRank/other AI-visibility sensors, rank/SERP data, backlink indexes, local-grid tools, CRM/workflow platforms, and generic dashboards when justified rather than rebuilding them inside G.A.S. No universal proprietary G.A.S. score is proposed.
 
 This repository is **public**. Publication-safe architecture, contract code, and clearly synthetic fixtures belong here. Never commit customer evidence, customer names as test data, private vendor payloads, confidential business records, credentials, or secrets. Private runtime evidence must remain outside public GitHub.
 

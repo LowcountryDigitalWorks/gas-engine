@@ -8,7 +8,7 @@ Release 0.1 defines the accepted direction for a bounded LDW internal managed-se
 
 ## Objectives and operating model
 
-G.A.S. means **Generative / Answer / Search**. The engine should normalize replaceable sensor evidence, retain provenance/history, support deterministic longitudinal comparison, preserve explicit human review decisions, and support subsequent measurement/outcome history without inventing universal scoring or action authority. Its value must be demonstrated through reduced recurring LDW delivery and reconciliation labor.
+G.A.S. means **Generative / Answer / Search**. It is LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine. It consumes source-preserving evidence from replaceable sensors/platforms, owns deterministic provider-preserving normalization and interpretation, retains provenance/history, supports longitudinal and bounded cross-source analysis only when semantics support it, preserves human recommendation/decision authority, and measures outcomes without inventing universal scoring or action authority. Its value must be demonstrated through reduced recurring LDW delivery and reconciliation labor.
 
 The intended lifecycle is:
 
@@ -20,8 +20,8 @@ An observation does not establish a conclusion, a mechanical diff is not an infe
 
 | System | Intended ownership | Boundary |
 | --- | --- | --- |
-| G.A.S. Engine | Normalized evidence model; provenance/history; deterministic longitudinal comparison; evidence-linked human review history; measurement/outcome history; accepted Release 0.9 compact local operator case/report preview | Own the LDW evidence/service-history record while preserving links to canonical observations; no universal proprietary G.A.S. score, automatic recommendation engine, or action authority. |
-| Website Quality Toolkit (WQT) | Existing LDW site-side technical/Search evidence generation through SiteOne and Lighthouse | Consume its normalized evidence; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client. |
+| G.A.S. Engine | Provider-neutral Search/SEO/generative-AI visibility intelligence; normalized evidence/provenance/history; deterministic longitudinal and bounded cross-source interpretation; human review/decision; measurement/outcome; operator/reporting/run/portfolio semantics | Own the LDW intelligence and service-history layer while preserving links to source evidence; integrate rather than recreate commodity sensing; no universal proprietary G.A.S. score or implicit action authority. |
+| Website Quality Toolkit (WQT) | Website-specific deterministic technical/site/technical-SEO sensing and normalization through SiteOne and Lighthouse | Consume its normalized evidence and scanner-native provenance; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client. |
 | ZeroRank | Replaceable Generative observation/sensing | Consume the accepted sanitized Release 0.6 evidence boundary without polling ZeroRank from G.A.S.; its observations and scores remain provider evidence, not authoritative LDW truth. |
 | SuiteDash | Customer/company/client-workflow and service-enrollment experience | Do not duplicate CRM or client operations in G.A.S. |
 | Activepieces | Deterministic cross-system workflow/event transport where useful | Must not become the only durable G.A.S. evidence or system-of-record layer. G.A.S. does not call Activepieces at runtime in Releases 0.6–0.8. |
@@ -142,16 +142,16 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 | Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; accepted Release 0.9 read-only local operator case/report preview; future correlation/action/cloud capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
-| Defer until separately justified/authorized | Cross-provider/generic correlation, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 1.0+ cloud/deployment work, production identity provider, GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. |
-| Do not build | Another generic crawler, browser/scraper farm, generic SEO suite, ZeroRank clone, CRM, workflow engine, or universal proprietary G.A.S. score. Do not fork a generic SEO platform. |
+| Defer until separately justified/authorized | Cross-provider/generic correlation beyond accepted bounded semantics, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 1.0+ cloud/deployment work, production identity provider, and live provider retrieval/integration for GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. Accepted sanitized GSC-style and Bing AI evidence semantics remain part of Releases 0.10 and 0.14. |
+| Do not build | Another generic crawler/browser farm, rank crawler, backlink index, local-grid crawler, prompt runner, provider dashboard clone, CRM/workflow engine, or universal proprietary G.A.S. score. |
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases through 0.9 create no cloud resource, deployment configuration, public runtime, cloud database, or provider account. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.20 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness only. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
-**$0 incremental recurring cost is the target for the bounded proof and must be measured/verified before deployment.** It is not a permanent cost guarantee or SLA. Releases 0.5–0.9 add no dependency or paid service. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
+**Accepted Releases 0.1–0.20 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service, and Release 0.20 adds no dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
 
 ## Commercial and publication limits
 
@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The accepted architecture now includes Releases 0.1–0.19 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.20 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
