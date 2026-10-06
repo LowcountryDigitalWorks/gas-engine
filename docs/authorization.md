@@ -1,12 +1,12 @@
 # Engineering authorization boundary
 
-The current program authorization is a **bounded LDW internal managed-service evidence-engine proof**. G.A.S. means Generative / Answer / Search. Its purpose is to support LDW delivery and evidence reconciliation; it is not authorized as standalone commercial software, customer SaaS, or self-service software.
+The current program authorization is a **bounded LDW internal managed-service Search / SEO / generative-AI visibility intelligence and decision-support engine proof**. G.A.S. means Generative / Answer / Search. Its purpose is to support LDW delivery and evidence reconciliation across replaceable sources; it is not authorized as standalone commercial software, customer SaaS, or self-service software.
 
 LDW internal governance is authoritative. This public document summarizes engineering boundaries without reproducing confidential governance records. A roadmap, architectural decision, recommendation, or public repository does not independently expand authority.
 
 ## Current workstream
 
-Releases 0.1–0.19 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.20 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -44,7 +44,7 @@ Owner-directed [GAS-ROADMAP-002 / Issue #31](https://github.com/LowcountryDigita
 
 Issue #31 does **not** itself authorize a software release merely because it appears on the roadmap. Each implementation still requires current-main reconciliation, an exact Product-Orchestrator-frozen release contract, the smallest useful proof, branch/PR, deterministic validation, security/privacy review, independent review, and Product Orchestrator acceptance.
 
-This evergreen internal R&D authority does not authorize customer SaaS, custom production auth, customer portals, generic crawlers/rank crawlers/backlink crawlers, cloud deployment, paid data warehouses, new provider credentials, customer/private evidence, runtime AI/BYOK, autonomous remediation/content publishing, or production mutation. Managed-service packaging, claims, pricing, and demand remain under business-operations #280. Release 1.0 remains the separate cloud gate.
+This evergreen internal R&D authority covers G.A.S. as LDW's umbrella Search / SEO / generative-AI visibility intelligence and decision-support engine, but it does not authorize commodity sensor/platform duplication merely because that workload is in scope. It does not authorize customer SaaS, custom production auth, customer portals, generic crawlers/rank crawlers/backlink crawlers/local-grid crawlers/prompt runners, cloud deployment, paid data warehouses, new provider credentials, customer/private evidence, runtime AI/BYOK, autonomous remediation/content publishing, or production mutation. Prefer INTEGRATE/CONFIGURE/WATCH for replaceable sensing unless a separately frozen decision proves an LDW-owned semantic gap. Managed-service packaging, claims, pricing, and demand remain under business-operations #280. Release 1.0 remains the separate cloud gate.
 
 ## Fixed proof limits
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.19 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.5–0.19 add no runtime dependency and reuse Node/Zod plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.20 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.20 adds no dependency and reuses Node built-ins plus accepted G.A.S. contract/persistence/read surfaces.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
