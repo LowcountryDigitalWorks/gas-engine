@@ -116,9 +116,9 @@ The preview uses only synthetic/example.test state under ignored `local-artifact
 
 ## Validation and Node permission-mode boundary
 
-The accepted Releases 0.1–0.19 suites continue to run under the bounded Node `--permission` envelope. Release 0.20 runtime tests currently execute in a separate Node process outside `--permission`; the preloaded `tests/no-network.ts` module remains an accidental-network tripwire, not an OS sandbox.
+The accepted ordinary suites, including ordinary Release 0.20 runtime tests, run under the bounded Node `--permission` envelope with filesystem writes limited to controlled `local-artifacts` paths and no child-process, worker, or network permission. The ordinary unowned-file fail-closed regression remains in that bounded process. Both test processes retain the preloaded `tests/no-network.ts` module, an accidental-network tripwire rather than an OS sandbox.
 
-This is an accepted non-blocking test-harness limitation, not a production permission expansion. Under Node 24.19, the adversarial symlink fixture's `fs.symlink` call fails under the otherwise bounded permission command with `ERR_ACCESS_DENIED` because that API requires unrestricted filesystem read/write permission. Development refused to grant unrestricted filesystem access merely to make the fixture execute. Issue #76 tracks a future bounded test/CI isolation improvement. Release 0.20 production portability code does not receive broader filesystem, child-process, worker, network, or deployment authority from this limitation.
+Exactly one dedicated real-symlink adversarial fixture runs separately outside `--permission` because Node 24.19 requires broader filesystem authority to create the actual symlink/junction used by the test. That isolated test proves `verifyPortableRuntimeBundle(...)` rejects manifest-owned symlinks fail-closed. Issue #76 is CLOSED / COMPLETED through merged PR #80. This test-harness topology does not broaden Release 0.20 production filesystem, network, child-process, worker, deployment, or runtime authority.
 
 ## Explicit exclusions
 
