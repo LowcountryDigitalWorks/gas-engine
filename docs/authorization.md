@@ -238,3 +238,25 @@ Accepted Release 0.20 authority is limited to:
 - package version `0.20.0` with no dependency addition and a $0 incremental recurring cash target.
 
 This accepted authority does not include production/customer deployment, cloud resources, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credentials/secrets, identity-provider implementation, scheduler/background worker, new migration/table, new canonical public wire schema, destructive production retention, customer/private proof data, private WQT consumer/history/retention/recurrence, REPORT-AUTO delivery, paid service, DNS/domain/email/billing/account mutation, or Release 1.0 authority.
+
+## Release 0.21 candidate authority boundary
+
+Issue #88 authorizes one bounded **candidate** Evidence-Grounded Operator Assist Pack over the accepted Releases 0.1–0.20 baseline. Until merge/post-merge acceptance, 0.21 is not part of the accepted baseline.
+
+Candidate authority is limited to:
+
+- validate an already-issued trusted `TenantContext` and recompute accepted Release 0.15 from the original strict producer input;
+- emit one bounded deterministic application-local assist packet with exact packet-local references to supplied attention/readiness/provenance/limitation facts;
+- use fixed/versioned trusted reviewer instructions that cannot be changed by evidence text;
+- accept one strict application-local external advisory bound to the exact packet and exact references;
+- validate structure/reference integrity only, never factual truth, causality, priority, impact, or approval;
+- emit deterministic bounded advisory JSON and escaped standalone read-only HTML;
+- direct the operator back to the already accepted explicit HUMAN Release 0.16 decision path;
+- use synthetic/public-safe `example.test` tests and preview material only;
+- target package `0.21.0` with no new runtime dependency and `$0` incremental recurring cash.
+
+External advisory content, suggested ordering, hypotheses, draft options, URLs, packet IDs, evidence references, and reviewer/provider/model labels never mint tenant/site/scope authority and never become canonical priority, recommendation, outcome, or production-action authority. Reviewer provenance is descriptive only, not authenticated identity.
+
+This candidate authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, Issue #56/#81 implementation, or Release 1.0.
+
+See the [Release 0.21 candidate guide](operator-assist.md) and [ADR 0021](decisions/0021-evidence-grounded-operator-assist.md).
