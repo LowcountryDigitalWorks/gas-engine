@@ -44,6 +44,45 @@ test('operator-assist packet rejects unknown top-level content before serializat
   );
 });
 
+test('operator-assist packet rejects an own top-level toJSON hook before serialization', async (t) => {
+  const packet = await packetFixture(t);
+  const withToJson = {
+    ...packet,
+    toJSON: () => ({ trustedTarget: 'attacker-controlled.example' }),
+  } as OperatorAssistPacket & { toJSON: () => unknown };
+
+  assert.throws(
+    () => assertOperatorAssistPacketIntegrity(withToJson),
+    /exactly the supported top-level fields|unsupported top-level fields/i,
+  );
+  assert.throws(
+    () => serializeOperatorAssistPacketJson(withToJson),
+    /exactly the supported top-level fields|unsupported top-level fields/i,
+  );
+});
+
+test('operator-assist packet rejects a top-level Proxy before any property trap can influence integrity or serialization', async (t) => {
+  const packet = await packetFixture(t);
+  let propertyReads = 0;
+  const proxied = new Proxy(packet, {
+    get(target, property, receiver) {
+      propertyReads += 1;
+      return Reflect.get(target, property, receiver);
+    },
+  });
+
+  assert.throws(
+    () => assertOperatorAssistPacketIntegrity(proxied),
+    /must not be a Proxy/i,
+  );
+  assert.equal(propertyReads, 0);
+  assert.throws(
+    () => serializeOperatorAssistPacketJson(proxied),
+    /must not be a Proxy/i,
+  );
+  assert.equal(propertyReads, 0);
+});
+
 test('operator-assist packet serialization is deterministic across harmless top-level property reconstruction', async (t) => {
   const packet = await packetFixture(t);
   const expected = serializeOperatorAssistPacketJson(packet);
