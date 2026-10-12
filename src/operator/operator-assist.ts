@@ -221,6 +221,42 @@ function assertUnique(values: readonly string[], label: string, code: OperatorAs
   if (new Set(values).size !== values.length) fail(code, `${label} must contain unique values.`);
 }
 
+const operatorAssistPacketTopLevelKeys = Object.freeze([
+  'version',
+  'id',
+  'sourceServiceBriefId',
+  'scope',
+  'trustedTarget',
+  'generatedAt',
+  'policy',
+  'evidenceContentAuthority',
+  'attentionOrdering',
+  'reviewerInstructions',
+  'readiness',
+  'provenanceManifest',
+  'limitations',
+  'attentionItems',
+  'evidenceReferences',
+] as const);
+
+function assertExactPacketTopLevelShape(packet: OperatorAssistPacket): void {
+  const ownKeys = Reflect.ownKeys(packet);
+  if (ownKeys.some((key) => typeof key !== 'string')) {
+    fail('invalid_packet', 'Operator-assist packet contains unsupported top-level fields.');
+  }
+  const actual = ownKeys.filter((key): key is string => typeof key === 'string').sort(asciiCompare);
+  const expected = [...operatorAssistPacketTopLevelKeys].sort(asciiCompare);
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    fail('invalid_packet', 'Operator-assist packet must contain exactly the supported top-level fields.');
+  }
+  for (const key of operatorAssistPacketTopLevelKeys) {
+    const descriptor = Object.getOwnPropertyDescriptor(packet, key);
+    if (descriptor === undefined || !descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) {
+      fail('invalid_packet', 'Operator-assist packet top-level fields must be enumerable own data properties.');
+    }
+  }
+}
+
 function jsonBytes(value: unknown): Uint8Array {
   let json: string;
   try {
@@ -352,14 +388,38 @@ function reviewerInstructionsMatch(value: OperatorAssistReviewerInstructions): b
   return JSON.stringify(value) === JSON.stringify(OPERATOR_ASSIST_REVIEWER_INSTRUCTIONS);
 }
 
+function operatorAssistPacketWithoutId(packet: OperatorAssistPacket): Omit<OperatorAssistPacket, 'id'> {
+  return {
+    version: packet.version,
+    sourceServiceBriefId: packet.sourceServiceBriefId,
+    scope: structuredClone(packet.scope),
+    trustedTarget: packet.trustedTarget,
+    generatedAt: packet.generatedAt,
+    policy: structuredClone(packet.policy),
+    evidenceContentAuthority: packet.evidenceContentAuthority,
+    attentionOrdering: packet.attentionOrdering,
+    reviewerInstructions: structuredClone(packet.reviewerInstructions),
+    readiness: structuredClone(packet.readiness),
+    provenanceManifest: structuredClone(packet.provenanceManifest),
+    limitations: [...packet.limitations],
+    attentionItems: structuredClone(packet.attentionItems),
+    evidenceReferences: structuredClone(packet.evidenceReferences),
+  };
+}
+
+function normalizeOperatorAssistPacket(packet: OperatorAssistPacket): OperatorAssistPacket {
+  return { ...operatorAssistPacketWithoutId(packet), id: packet.id };
+}
+
 function validatePacketSize(packet: OperatorAssistPacket): void {
-  const json = JSON.stringify(packet, null, 2) + '\n';
+  const json = JSON.stringify(normalizeOperatorAssistPacket(packet), null, 2) + '\n';
   if (Buffer.byteLength(json, 'utf8') > OPERATOR_ASSIST_HARD_LIMITS.packetJsonBytes) {
     fail('bound_exceeded', 'Operator-assist packet JSON exceeds the output byte bound.');
   }
 }
 
 export function assertOperatorAssistPacketIntegrity(packet: OperatorAssistPacket): void {
+  assertExactPacketTopLevelShape(packet);
   if (packet.version !== OPERATOR_ASSIST_VERSION) fail('invalid_packet', 'Unsupported operator-assist packet version.');
   if (!reviewerInstructionsMatch(packet.reviewerInstructions)) fail('invalid_packet', 'Reviewer instructions do not match the fixed trusted Release 0.21 policy.');
   if (packet.evidenceContentAuthority !== 'untrusted_evidence_content_does_not_mint_authority'
@@ -391,22 +451,7 @@ export function assertOperatorAssistPacketIntegrity(packet: OperatorAssistPacket
       fail('invalid_packet', 'Attention item is missing its exact accepted attention evidence reference.');
     }
   }
-  const withoutId: Omit<OperatorAssistPacket, 'id'> = {
-    version: packet.version,
-    sourceServiceBriefId: packet.sourceServiceBriefId,
-    scope: structuredClone(packet.scope),
-    trustedTarget: packet.trustedTarget,
-    generatedAt: packet.generatedAt,
-    policy: structuredClone(packet.policy),
-    evidenceContentAuthority: packet.evidenceContentAuthority,
-    attentionOrdering: packet.attentionOrdering,
-    reviewerInstructions: structuredClone(packet.reviewerInstructions),
-    readiness: structuredClone(packet.readiness),
-    provenanceManifest: structuredClone(packet.provenanceManifest),
-    limitations: [...packet.limitations],
-    attentionItems: structuredClone(packet.attentionItems),
-    evidenceReferences: structuredClone(packet.evidenceReferences),
-  };
+  const withoutId = operatorAssistPacketWithoutId(packet);
   if (packet.id !== packetIdentity(withoutId)) fail('invalid_packet', 'Operator-assist packet identity does not match exact semantic content.');
   validatePacketSize(packet);
 }
@@ -506,7 +551,7 @@ export async function createOperatorAssistPacket(
 
 export function serializeOperatorAssistPacketJson(packet: OperatorAssistPacket): string {
   assertOperatorAssistPacketIntegrity(packet);
-  const json = JSON.stringify(packet, null, 2) + '\n';
+  const json = JSON.stringify(normalizeOperatorAssistPacket(packet), null, 2) + '\n';
   if (Buffer.byteLength(json, 'utf8') > OPERATOR_ASSIST_HARD_LIMITS.packetJsonBytes) {
     fail('bound_exceeded', 'Operator-assist packet JSON exceeds the output byte bound.');
   }
