@@ -156,7 +156,7 @@ See [Release 0.17 operator workspace guide](docs/operator-workspace.md) and [ADR
 
 ## Release 0.18 — Repeatable Managed-Service Run & Evidence Intake Pack — accepted
 
-Release 0.18 is **accepted and merged on `main` through PR #67** at squash merge `6a24d9fb428c1c57be16ccd648cdbc86a8bda1fb`; post-merge Contracts `37056080706` succeeded.
+Release 0.18 is **accepted and merged on `main` through PR #67** at squash merge `6a24d9fb428c1a62b9766f5baa5815329eab78b7`; post-merge Contracts `37056080706` succeeded.
 
 The accepted release makes one engagement reproducible without adding a hosted workflow platform: deliberate WQT v1 minor3 adaptation, exact SiteOne/Lighthouse snapshot reconstruction, strict non-authoritative source receipts, authoritative Release 0.17 workspace recomputation, exact prior-run operational continuity, direct Release 0.16 readiness projection, optional reuse of the accepted Release 0.17 customer report, and deterministic local service-run/package files with exact SHA-256/byte-count classification.
 
