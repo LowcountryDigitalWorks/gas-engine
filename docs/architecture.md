@@ -319,3 +319,26 @@ strict non-secret runtime profile
 The runtime profile, manifest, bundle IDs, database IDs, and file paths remain configuration/provenance and never mint tenant or authentication authority. Imported verification independently re-enforces profile role/classification allowlists, exact build identity presence/value, required runtime-profile and SQLite administrative entries, canonical recovery database path, and retention-policy identity. Restored storage never restores `TenantContext`, sessions, or credentials; trusted authority must be newly issued by a separately authorized authentication boundary.
 
 Release 0.20 adds no production/customer deployment, cloud runtime, Workers/D1, Docker/OCI/Kubernetes, provider networking, credentials/secrets, identity provider, scheduler/background worker, database table/migration, canonical public wire schema, destructive retention executor, private WQT runtime/history, REPORT-AUTO delivery, or Release 1.0 authority. Issue #76 is closed/completed through merged PR #80: ordinary Release 0.20 runtime tests use the bounded Node permission process, while exactly one dedicated real-symlink adversarial fixture remains isolated outside `--permission` because Node 24.19 requires broader filesystem authority for symlink creation. That isolation is test-harness-only; the accepted production portability seam and its filesystem, network, child-process, and worker authority remain unchanged.
+
+## Release 0.21 candidate — evidence-grounded external operator assist
+
+Release 0.21 is a candidate application-local seam over accepted Release 0.15/0.16 semantics, not an embedded AI runtime:
+
+```text
+already-issued TenantContext
+  -> original strict Release 0.15 producer input
+  -> authoritative assembleServiceBrief(...)
+  -> bounded OperatorAssistPacket
+       trusted fixed reviewer policy
+       + inert exact-reference evidence payload
+  -> external human/AI reviewer OUTSIDE G.A.S.
+  -> strict packet/reference advisory validation
+  -> deterministic JSON + escaped static read-only HTML
+  -> independent HUMAN Release 0.16 decision path
+```
+
+Packet construction validates the already-issued context at entry and recomputes Release 0.15 rather than accepting a caller-created brief. Packet-local evidence references hash exact semantic attention/readiness/provenance/limitation facts and remain selectors/provenance only. Packet identity binds the recomputed brief, exact trusted scope/target, explicit assist policy, included semantic evidence-reference mapping, and fixed reviewer-instruction version; presentation bytes and external advisory prose are excluded.
+
+The external advisory is untrusted input. Validation proves only strict structure and exact packet-reference resolution. Reviewer/provider/model labels are not authenticated identity. Suggested ordering is explicitly noncanonical and no advisory content is passed to Release 0.16/0.8 write services. The HTML renderer rechecks packet/advisory integrity, escapes all dynamic prose/facts, uses restrictive CSP, and exposes no JavaScript, external asset, form, link-action, listener, or write control.
+
+Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, or production-action authority. The accepted production architecture through Release 0.20 remains unchanged.
