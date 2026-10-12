@@ -590,6 +590,18 @@ const operatorAssistAdvisoryTopLevelKeys = Object.freeze([
   'limitations',
   'id',
 ] as const);
+const operatorAssistAdvisoryRequiredTopLevelKeys = Object.freeze([
+  'version',
+  'assistPacketId',
+  'authorityBoundary',
+  'orderingSemantics',
+  'reviewCandidates',
+  'hypotheses',
+  'questionsForHuman',
+  'draftRecommendationOptions',
+  'limitations',
+  'id',
+] as const);
 const operatorAssistAdvisoryTopLevelKeySet: ReadonlySet<string> = new Set(operatorAssistAdvisoryTopLevelKeys);
 
 function assertExactValidatedAdvisoryTopLevelShape(advisory: ValidatedOperatorAssistAdvisory): void {
@@ -612,9 +624,11 @@ function assertExactValidatedAdvisoryTopLevelShape(advisory: ValidatedOperatorAs
       fail('invalid_advisory', 'Validated operator-assist advisory top-level fields must be enumerable own data properties.');
     }
   }
-  const idDescriptor = Object.getOwnPropertyDescriptor(advisory, 'id');
-  if (idDescriptor === undefined || !idDescriptor.enumerable || !Object.hasOwn(idDescriptor, 'value')) {
-    fail('invalid_advisory', 'Validated operator-assist advisory identity must be an enumerable own data property.');
+  for (const key of operatorAssistAdvisoryRequiredTopLevelKeys) {
+    const descriptor = Object.getOwnPropertyDescriptor(advisory, key);
+    if (descriptor === undefined || !descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) {
+      fail('invalid_advisory', 'Validated operator-assist advisory required top-level fields must be enumerable own data properties.');
+    }
   }
 }
 
