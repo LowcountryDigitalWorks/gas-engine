@@ -496,7 +496,6 @@ export async function createOperatorAssistPacket(
     provenanceRef.set(entry.moduleId, ref.id);
   }
   for (const text of brief.limitations) references.push(evidenceReference('limitation', { text }));
-
   const attentionItems: OperatorAssistAttentionItem[] = selected.map((entry) => {
     const fact = {
       attentionId: entry.id,
@@ -577,6 +576,48 @@ function assertEvidenceRefs(
   if (values.some((id) => !refIds.has(id))) fail('invalid_advisory', `${label} contains a reference outside the exact assist packet.`);
 }
 
+const operatorAssistAdvisoryTopLevelKeys = Object.freeze([
+  'version',
+  'assistPacketId',
+  'authorityBoundary',
+  'orderingSemantics',
+  'provenance',
+  'summary',
+  'reviewCandidates',
+  'hypotheses',
+  'questionsForHuman',
+  'draftRecommendationOptions',
+  'limitations',
+  'id',
+] as const);
+const operatorAssistAdvisoryTopLevelKeySet: ReadonlySet<string> = new Set(operatorAssistAdvisoryTopLevelKeys);
+
+function assertExactValidatedAdvisoryTopLevelShape(advisory: ValidatedOperatorAssistAdvisory): void {
+  if (typeof advisory !== 'object' || advisory === null) {
+    fail('invalid_advisory', 'Validated operator-assist advisory must be an object.');
+  }
+  if (types.isProxy(advisory)) {
+    fail('invalid_advisory', 'Validated operator-assist advisory top-level container must not be a Proxy.');
+  }
+  const ownKeys = Reflect.ownKeys(advisory);
+  if (ownKeys.some((key) => typeof key !== 'string')) {
+    fail('invalid_advisory', 'Validated operator-assist advisory contains unsupported top-level fields.');
+  }
+  for (const key of ownKeys as string[]) {
+    if (!operatorAssistAdvisoryTopLevelKeySet.has(key)) {
+      fail('invalid_advisory', 'Validated operator-assist advisory contains unsupported top-level fields.');
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(advisory, key);
+    if (descriptor === undefined || !descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) {
+      fail('invalid_advisory', 'Validated operator-assist advisory top-level fields must be enumerable own data properties.');
+    }
+  }
+  const idDescriptor = Object.getOwnPropertyDescriptor(advisory, 'id');
+  if (idDescriptor === undefined || !idDescriptor.enumerable || !Object.hasOwn(idDescriptor, 'value')) {
+    fail('invalid_advisory', 'Validated operator-assist advisory identity must be an enumerable own data property.');
+  }
+}
+
 function advisoryMaterial(value: OperatorAssistAdvisoryInput): OperatorAssistAdvisoryInput {
   return structuredClone(value);
 }
@@ -587,6 +628,14 @@ function advisoryIdentity(value: OperatorAssistAdvisoryInput): string {
     fail('bound_exceeded', 'Validated operator-assist advisory exceeds the JSON byte bound.');
   }
   return `operator-assist-advisory:${sha256Bytes(bytes)}`;
+}
+
+function finalValidatedAdvisoryJson(advisory: ValidatedOperatorAssistAdvisory): string {
+  const json = JSON.stringify(advisory, null, 2) + '\n';
+  if (Buffer.byteLength(json, 'utf8') > OPERATOR_ASSIST_HARD_LIMITS.advisoryJsonBytes) {
+    fail('bound_exceeded', 'Validated operator-assist advisory JSON exceeds the output byte bound.');
+  }
+  return json;
 }
 
 /** Strict structural/reference validation only; success does not establish factual truth. */
@@ -639,20 +688,49 @@ export function validateOperatorAssistAdvisory(
 
   const material = advisoryMaterial(value);
   const validated: ValidatedOperatorAssistAdvisory = { ...material, id: advisoryIdentity(material) };
-  assertOperatorAssistAdvisoryIntegrity(packet, validated);
-  return validated;
+  return normalizeValidatedOperatorAssistAdvisory(packet, validated);
+}
+
+function validatedAdvisoryInputFromTopLevelData(
+  advisory: ValidatedOperatorAssistAdvisory,
+): OperatorAssistAdvisoryInput {
+  return {
+    version: advisory.version,
+    assistPacketId: advisory.assistPacketId,
+    authorityBoundary: advisory.authorityBoundary,
+    orderingSemantics: advisory.orderingSemantics,
+    ...(Object.hasOwn(advisory, 'provenance') ? { provenance: advisory.provenance } : {}),
+    ...(Object.hasOwn(advisory, 'summary') ? { summary: advisory.summary } : {}),
+    reviewCandidates: advisory.reviewCandidates,
+    hypotheses: advisory.hypotheses,
+    questionsForHuman: advisory.questionsForHuman,
+    draftRecommendationOptions: advisory.draftRecommendationOptions,
+    limitations: advisory.limitations,
+  };
+}
+
+export function normalizeValidatedOperatorAssistAdvisory(
+  packet: OperatorAssistPacket,
+  advisory: ValidatedOperatorAssistAdvisory,
+): ValidatedOperatorAssistAdvisory {
+  assertExactValidatedAdvisoryTopLevelShape(advisory);
+  assertOperatorAssistPacketIntegrity(packet);
+  const input = validatedAdvisoryInputFromTopLevelData(advisory);
+  const reparsed = advisorySchema.safeParse(input);
+  if (!reparsed.success) fail('invalid_advisory', 'Validated advisory no longer matches the strict Release 0.21 structure.');
+  const revalidated = validateOperatorAssistAdvisoryWithoutIntegrityRecursion(packet, reparsed.data);
+  const expectedId = advisoryIdentity(revalidated);
+  if (advisory.id !== expectedId) fail('invalid_advisory', 'Validated advisory identity does not match exact advisory semantic data.');
+  const normalized: ValidatedOperatorAssistAdvisory = { ...revalidated, id: advisory.id };
+  finalValidatedAdvisoryJson(normalized);
+  return normalized;
 }
 
 export function assertOperatorAssistAdvisoryIntegrity(
   packet: OperatorAssistPacket,
   advisory: ValidatedOperatorAssistAdvisory,
 ): void {
-  assertOperatorAssistPacketIntegrity(packet);
-  const { id, ...input } = advisory;
-  const reparsed = advisorySchema.safeParse(input);
-  if (!reparsed.success) fail('invalid_advisory', 'Validated advisory no longer matches the strict Release 0.21 structure.');
-  const revalidated = validateOperatorAssistAdvisoryWithoutIntegrityRecursion(packet, reparsed.data);
-  if (id !== advisoryIdentity(revalidated)) fail('invalid_advisory', 'Validated advisory identity does not match exact advisory semantic data.');
+  void normalizeValidatedOperatorAssistAdvisory(packet, advisory);
 }
 
 function validateOperatorAssistAdvisoryWithoutIntegrityRecursion(
@@ -698,14 +776,10 @@ function validateOperatorAssistAdvisoryWithoutIntegrityRecursion(
   if (value.provenance?.method !== undefined) assertProseBytes(value.provenance.method.label, 'Reviewer method label');
   return advisoryMaterial(value);
 }
+
 export function serializeValidatedOperatorAssistAdvisoryJson(
   packet: OperatorAssistPacket,
   advisory: ValidatedOperatorAssistAdvisory,
 ): string {
-  assertOperatorAssistAdvisoryIntegrity(packet, advisory);
-  const json = JSON.stringify(advisory, null, 2) + '\n';
-  if (Buffer.byteLength(json, 'utf8') > OPERATOR_ASSIST_HARD_LIMITS.advisoryJsonBytes) {
-    fail('bound_exceeded', 'Validated operator-assist advisory JSON exceeds the output byte bound.');
-  }
-  return json;
+  return finalValidatedAdvisoryJson(normalizeValidatedOperatorAssistAdvisory(packet, advisory));
 }
