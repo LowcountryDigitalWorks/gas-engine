@@ -1,3 +1,4 @@
+import { types } from 'node:util';
 import { z } from 'zod';
 import { identifier, timestamp, version as versionSchema } from '../contracts/primitives.js';
 import { hashCanonicalJson, sha256Bytes } from '../lib/canonical-json.js';
@@ -240,6 +241,9 @@ const operatorAssistPacketTopLevelKeys = Object.freeze([
 ] as const);
 
 function assertExactPacketTopLevelShape(packet: OperatorAssistPacket): void {
+  if (types.isProxy(packet)) {
+    fail('invalid_packet', 'Operator-assist packet top-level container must not be a Proxy.');
+  }
   const ownKeys = Reflect.ownKeys(packet);
   if (ownKeys.some((key) => typeof key !== 'string')) {
     fail('invalid_packet', 'Operator-assist packet contains unsupported top-level fields.');
