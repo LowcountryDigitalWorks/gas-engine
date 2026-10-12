@@ -154,6 +154,31 @@ test('validated advisory rejects a supported top-level accessor before it can be
   assert.equal(accessorReads, 0);
 });
 
+test('validated advisory rejects inherited required top-level fields before prototype getters can be read', async (t) => {
+  const packet = await packetFixture(t);
+  const advisory = validateOperatorAssistAdvisory(packet, validAdvisory(packet));
+  const inherited = { ...advisory } as ValidatedOperatorAssistAdvisory;
+  delete (inherited as unknown as { version?: string }).version;
+  let inheritedReads = 0;
+  const prototype = Object.create(Object.getPrototypeOf(inherited), {
+    version: {
+      configurable: true,
+      enumerable: true,
+      get: () => {
+        inheritedReads += 1;
+        return '0.21.0';
+      },
+    },
+  });
+  Object.setPrototypeOf(inherited, prototype);
+
+  assert.throws(
+    () => serializeValidatedOperatorAssistAdvisoryJson(packet, inherited),
+    /required top-level fields must be enumerable own data properties/i,
+  );
+  assert.equal(inheritedReads, 0);
+});
+
 test('validated advisory normalization is deterministic across harmless top-level property reconstruction', async (t) => {
   const packet = await packetFixture(t);
   const advisory = validateOperatorAssistAdvisory(packet, validAdvisory(packet));
