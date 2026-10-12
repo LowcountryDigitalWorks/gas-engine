@@ -1,6 +1,5 @@
 import {
-  assertOperatorAssistAdvisoryIntegrity,
-  assertOperatorAssistPacketIntegrity,
+  normalizeValidatedOperatorAssistAdvisory,
   type OperatorAssistPacket,
   type ValidatedOperatorAssistAdvisory,
 } from './operator-assist.js';
@@ -38,10 +37,9 @@ export function renderOperatorAssistAdvisoryHtml(
   packet: OperatorAssistPacket,
   advisory: ValidatedOperatorAssistAdvisory,
 ): string {
-  assertOperatorAssistPacketIntegrity(packet);
-  assertOperatorAssistAdvisoryIntegrity(packet, advisory);
+  const normalizedAdvisory = normalizeValidatedOperatorAssistAdvisory(packet, advisory);
 
-  const provenance = advisory.provenance;
+  const provenance = normalizedAdvisory.provenance;
   const provenanceRows = provenance === undefined ? [] : [
     ['Reviewer kind', escapeHtml(provenance.reviewerKind)],
     ['Provider/product label', escapeHtml(provenance.providerLabel ?? 'not supplied')],
@@ -78,11 +76,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid
 <section>
 <h2>1. Advisory identity / exact source packet</h2>
 ${table(['Field','Value'], [
-  ['Validated advisory ID', `<code>${escapeHtml(advisory.id)}</code>`],
+  ['Validated advisory ID', `<code>${escapeHtml(normalizedAdvisory.id)}</code>`],
   ['Assist packet ID', `<code>${escapeHtml(packet.id)}</code>`],
   ['Source service brief ID', `<code>${escapeHtml(packet.sourceServiceBriefId)}</code>`],
-  ['Advisory version', escapeHtml(advisory.version)],
-  ['Review ordering', escapeHtml(advisory.orderingSemantics)],
+  ['Advisory version', escapeHtml(normalizedAdvisory.version)],
+  ['Review ordering', escapeHtml(normalizedAdvisory.orderingSemantics)],
 ], 'No identity data.')}
 </section>
 
@@ -111,7 +109,7 @@ ${list(packet.limitations, 'No source limitations supplied.')}
 
 <section>
 <h2>4. External summary</h2>
-<p class="advisory">${escapeHtml(advisory.summary ?? 'No external summary supplied.')}</p>
+<p class="advisory">${escapeHtml(normalizedAdvisory.summary ?? 'No external summary supplied.')}</p>
 <h3>External review provenance — caller supplied, not authenticated identity</h3>
 ${table(['Field','Value'], provenanceRows, 'No reviewer provenance supplied.')}
 </section>
@@ -119,7 +117,7 @@ ${table(['Field','Value'], provenanceRows, 'No reviewer provenance supplied.')}
 <section>
 <h2>5. Suggested review candidates</h2>
 <p><span class="tag">ADVISORY ORDER ONLY</span>The row order is external suggested review order and is not canonical G.A.S. priority, severity, business impact, or probability of success.</p>
-${table(['Attention ID','External rationale','Supporting refs','Contradicting refs','Uncertainty','Human validation'], advisory.reviewCandidates.map((entry) => [
+${table(['Attention ID','External rationale','Supporting refs','Contradicting refs','Uncertainty','Human validation'], normalizedAdvisory.reviewCandidates.map((entry) => [
   `<code>${escapeHtml(entry.attentionId)}</code>`,
   `<span class="advisory">${escapeHtml(entry.rationale)}</span>`,
   refs(entry.supportingEvidenceRefs),
@@ -141,7 +139,7 @@ ${table(['Reference','Kind','Module / attention','Exact inert fact'], packet.evi
 
 <section>
 <h2>7. Hypotheses</h2>
-${table(['Hypothesis','Supporting refs','Contradicting refs','Evidence needed','Uncertainty','Human validation'], advisory.hypotheses.map((entry) => [
+${table(['Hypothesis','Supporting refs','Contradicting refs','Evidence needed','Uncertainty','Human validation'], normalizedAdvisory.hypotheses.map((entry) => [
   `<span class="advisory">${escapeHtml(entry.text)}</span>`,
   refs(entry.supportingEvidenceRefs),
   refs(entry.contradictingEvidenceRefs ?? []),
@@ -153,13 +151,13 @@ ${table(['Hypothesis','Supporting refs','Contradicting refs','Evidence needed','
 
 <section>
 <h2>8. Questions for human review</h2>
-${list(advisory.questionsForHuman, 'No human-review questions supplied.')}
+${list(normalizedAdvisory.questionsForHuman, 'No human-review questions supplied.')}
 </section>
 
 <section>
 <h2>9. Draft recommendation options</h2>
 <p>These are external draft options only. They are not Release 0.8 recommendations and carry no canonical priority or execution authority.</p>
-${table(['External draft option','Supporting refs','Caveats','Human validation'], advisory.draftRecommendationOptions.map((entry) => [
+${table(['External draft option','Supporting refs','Caveats','Human validation'], normalizedAdvisory.draftRecommendationOptions.map((entry) => [
   `<span class="advisory">${escapeHtml(entry.text)}</span>`,
   refs(entry.supportingEvidenceRefs),
   list(entry.caveats, 'No caveats supplied.'),
@@ -169,7 +167,7 @@ ${table(['External draft option','Supporting refs','Caveats','Human validation']
 
 <section>
 <h2>10. External limitations / authority boundary</h2>
-${list(advisory.limitations, 'No additional external limitations supplied.')}
+${list(normalizedAdvisory.limitations, 'No additional external limitations supplied.')}
 <div class="boundary warning"><strong>Validation meaning:</strong> accepted structure and exact references resolve to this packet. Validation does not establish that advisory prose is factually correct, complete, causal, authoritative, prioritized, approved, or safe to execute.</div>
 </section>
 
