@@ -299,3 +299,21 @@ Accepted flow:
 8. emit deterministic LDW-internal JSON and self-contained presentation-only HTML.
 
 Release 0.19 does not authorize provider polling/networking, scheduler/background workers, persistent unread/task state, invented overdue semantics, report-delivery state or transport, database/table/migration, new canonical wire schema, runtime AI, cloud deployment, customer portal/SaaS, cross-customer performance benchmarking, universal scores, automatic priority/severity/business-impact inference, private WQT runtime/history, REPORT-AUTO delivery, Release 0.20, or Release 1.0.
+
+## Release 0.21 — candidate Evidence-Grounded Operator Assist Pack
+
+Issue #88 freezes one bounded Release 0.21 candidate over the accepted Releases 0.1–0.20 baseline.
+
+Candidate flow:
+
+1. validate an already-issued trusted `TenantContext` and recompute the accepted Release 0.15 service brief from original producer input;
+2. bound/filter accepted attention only for inclusion, never priority;
+3. emit one deterministic packet with fixed trusted reviewer instructions and exact packet-local evidence references;
+4. allow a human or AI reviewer to work **outside** the G.A.S. runtime;
+5. strictly validate the untrusted advisory against the exact packet ID, attention IDs, and evidence refs;
+6. emit deterministic advisory JSON plus escaped standalone read-only HTML visibly marked `EXTERNAL / AI ADVISORY — UNTRUSTED — HUMAN REVIEW REQUIRED`;
+7. require independent human review through the existing accepted Release 0.16 path before any canonical decision/recommendation/measurement/outcome step.
+
+The candidate deliberately does not embed or call an AI model and does not add provider credentials, network transport/listener, prompt execution, agent routing, persistence/schema, canonical public contracts, automatic severity/priority/business-impact scoring, automatic recommendation/outcome/action, customer/private evidence transfer, paid services, cloud deployment, Issue #49, Issue #56/#81, or Release 1.0.
+
+Release 0.21 remains a candidate until Product whole-pack review, independent exact-head review, merge, and post-merge verification complete.
