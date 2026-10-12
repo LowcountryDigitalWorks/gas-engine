@@ -212,7 +212,7 @@ The accepted release combines:
 4. within-provider descriptive change;
 5. provider-specific citation/source concentration;
 6. narrow explicit-presence cross-source divergence;
-7. optional exact caller-mapped cohort-coverage divergence;
+7. optional exact caller-mapped query/prompt cohort coverage divergence;
 8. optional accepted Release 0.10/0.11/0.12 descriptive context;
 9. deterministic site report;
 10. bounded static read-only operator HTML.
