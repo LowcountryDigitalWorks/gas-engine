@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.20 are accepted and merged to `main`. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.21 are accepted and merged to `main`. Release 0.22 is not automatically authorized and Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.20 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.20 adds no dependency and reuses Node built-ins plus accepted G.A.S. contract/persistence/read surfaces.
+Accepted Releases 0.1–0.21 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.21 adds no runtime dependency and performs no external model/provider call.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -239,24 +239,26 @@ Accepted Release 0.20 authority is limited to:
 
 This accepted authority does not include production/customer deployment, cloud resources, Workers/D1, Docker/OCI/Kubernetes, provider networking/polling, credentials/secrets, identity-provider implementation, scheduler/background worker, new migration/table, new canonical public wire schema, destructive production retention, customer/private proof data, private WQT consumer/history/retention/recurrence, REPORT-AUTO delivery, paid service, DNS/domain/email/billing/account mutation, or Release 1.0 authority.
 
-## Release 0.21 candidate authority boundary
+## Release 0.21 accepted authority boundary
 
-Issue #88 authorizes one bounded **candidate** Evidence-Grounded Operator Assist Pack over the accepted Releases 0.1–0.20 baseline. Until merge/post-merge acceptance, 0.21 is not part of the accepted baseline.
+Release 0.21 Evidence-Grounded Operator Assist Pack is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
 
-Candidate authority is limited to:
+Accepted authority is limited to:
 
 - validate an already-issued trusted `TenantContext` and recompute accepted Release 0.15 from the original strict producer input;
 - emit one bounded deterministic application-local assist packet with exact packet-local references to supplied attention/readiness/provenance/limitation facts;
 - use fixed/versioned trusted reviewer instructions that cannot be changed by evidence text;
 - accept one strict application-local external advisory bound to the exact packet and exact references;
 - validate structure/reference integrity only, never factual truth, causality, priority, impact, or approval;
-- emit deterministic bounded advisory JSON and escaped standalone read-only HTML;
+- normalize the validated advisory as the sole semantic source for deterministic bounded advisory JSON and escaped standalone read-only HTML;
+- enforce the exact final ID-bearing pretty advisory JSON including trailing newline at the accepted 750,000-byte UTF-8 ceiling;
+- fail closed on top-level Proxy, `toJSON`, accessor, unknown/symbol/non-enumerable, and inherited-required-field substitution paths before caller-controlled behavior can affect output;
 - direct the operator back to the already accepted explicit HUMAN Release 0.16 decision path;
 - use synthetic/public-safe `example.test` tests and preview material only;
-- target package `0.21.0` with no new runtime dependency and `$0` incremental recurring cash.
+- retain package `0.21.0` with no new runtime dependency and `$0` incremental recurring cash.
 
 External advisory content, suggested ordering, hypotheses, draft options, URLs, packet IDs, evidence references, and reviewer/provider/model labels never mint tenant/site/scope authority and never become canonical priority, recommendation, outcome, or production-action authority. Reviewer provenance is descriptive only, not authenticated identity.
 
-This candidate authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, Issue #56/#81 implementation, or Release 1.0.
+This accepted authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, Issue #56/#81 implementation, Release 0.22, or Release 1.0.
 
-See the [Release 0.21 candidate guide](operator-assist.md) and [ADR 0021](decisions/0021-evidence-grounded-operator-assist.md).
+See the [Release 0.21 accepted guide](operator-assist.md) and [ADR 0021](decisions/0021-evidence-grounded-operator-assist.md).
