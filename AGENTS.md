@@ -10,7 +10,7 @@
 
 ## Accepted baseline and next-release gates
 
-Releases 0.1–0.20 are accepted and merged. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
+Releases 0.1–0.21 are accepted and merged. Release 0.21 adds the accepted provider-neutral evidence-grounded operator-assist seam while preserving explicit human Release 0.16 authority; it does not embed an AI runtime or grant external execution authority. Release 0.22 is not reserved or automatically authorized. Release 1.0 remains separately gated. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
 
 Product mission: G.A.S. remains **Generative / Answer / Search** and is LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine. SEO is in scope for G.A.S. intelligence; commodity sensor/platform duplication is not. WQT owns website-specific SiteOne/Lighthouse technical/site/technical-SEO sensing and normalization. G.A.S. integrates that evidence with other replaceable sources, longitudinal and bounded cross-source interpretation, human decisions, measurement/outcomes, and service operations. Do not rebuild WQT/crawlers, rank/backlink/local-grid collection, prompt runners, or provider dashboards without separate authority.
 
@@ -66,11 +66,11 @@ Keep portable Zod wire schemas free of hidden transforms/refinements; cross-fiel
 
 For provider adapters, prefer validated import/export boundaries over new sensor/network clients. Preserve exact provider identity, provenance, mapping-version semantics, source availability, and deterministic bounded output. The accepted Release 0.5 WQT adapter must continue to reject unknown WQT minor versions until deliberately reviewed and must keep its own synthetic contract fixture rather than depending on the WQT repository at test/runtime. The accepted Release 0.6 ZeroRank adapter must likewise reject unsupported artifact versions, preserve exact request/completeness semantics, and keep sensing/credentials upstream.
 
-Report the starting revision, final head, changed files, validation results, PR, exclusions, cost/security impact, and unresolved issues to Product ORCH2. Do not mark a candidate accepted, merge, or advance to the next release without the owning Product Orchestrator's bounded authority.
+Report the starting revision, final head, changed files, validation results, PR, exclusions, cost/security impact, and unresolved issues to the owning Product Orchestrator. Do not mark a candidate accepted, merge, or advance to the next release without the owning Product Orchestrator's bounded authority.
 
 ## Release 0.14 accepted boundary
 
-Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The accepted baseline is now Releases 0.1–0.20.
+Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The current accepted baseline is Releases 0.1–0.21.
 
 Preserve these Release 0.14 boundaries:
 
@@ -84,7 +84,7 @@ Preserve these Release 0.14 boundaries:
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
 - Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 1.0 implementation.
-- Package version is 0.20.0 on the accepted Release 0.20 baseline. Releases 0.1–0.20 are accepted and merged.
+- Package version is 0.21.0 on the current accepted baseline. Releases 0.1–0.21 are accepted and merged.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
 
@@ -166,7 +166,7 @@ See [accepted Release 0.18 guide](docs/service-run.md) and [ADR 0018](docs/decis
 
 ## Release 0.19 accepted portfolio-operations boundary
 
-Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. Releases 0.1–0.20 are the current accepted baseline.
+Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. Releases 0.1–0.21 are the current accepted baseline.
 
 Preserve these accepted Release 0.19 rules:
 
@@ -191,7 +191,26 @@ Release 0.20 is **accepted and merged on `main` through Issue #74 / PR #75** at 
 - imported verification independently re-enforces profile role/classification allowlists, exact build-identity presence/value, exact required runtime-profile and SQLite administrative entries, canonical recovery database path, and retention-policy identity;
 - root-A to root-B relocation must preserve semantic bundle identity; representative restored reads require newly issued trusted authority rather than deserialized `TenantContext`, sessions, or credentials;
 - retention is deterministic planning only; rollback requires an explicit accepted bundle selection; recovery/decommission metadata creates no deployment or destructive execution authority;
-- accepted 0.1–0.19 tests retain their bounded Node `--permission` process; Release 0.20 runtime tests currently run in a separate process outside `--permission` because Node 24.19 requires full filesystem permission for the symlink fixture. `tests/no-network.ts` remains an accidental-network tripwire, not an OS sandbox. This accepted non-blocking test-harness debt is tracked by Issue #76 and is not production permission expansion;
+- accepted 0.1–0.19 ordinary tests retain their bounded Node `--permission` process; Issue #76 is closed/completed through merged PR #80, and only the dedicated real-symlink adversarial fixture remains isolated outside `--permission` because Node 24.19 requires broader filesystem authority for actual symlink/junction creation. `tests/no-network.ts` remains an accidental-network tripwire, not an OS sandbox. This isolation is test-harness-only and does not broaden production permissions;
 - add no production/customer deployment, cloud runtime, Workers/D1, Docker/OCI/Kubernetes, credentials/secrets, identity provider, provider networking, scheduler/background worker, canonical public schema, destructive retention executor, private WQT implementation, REPORT-AUTO delivery, or Release 1.0 authority.
 
 See [accepted Release 0.20 guide](docs/runtime-portability.md) and [ADR 0020](docs/decisions/0020-private-runtime-portability.md).
+
+## Release 0.21 accepted operator-assist boundary
+
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+
+Preserve these accepted Release 0.21 rules:
+
+- validate an already-issued trusted `TenantContext` and recompute accepted Release 0.15 from the original strict producer input; never accept a caller-created or mutated `ServiceBrief` as authoritative source state;
+- packet inclusion/filtering is bounded selection only and never priority, severity, business impact, or remediation order;
+- packet-local evidence references and `assistPacketId` bind deterministic accepted semantics but remain selectors/provenance, never authority;
+- fixed/versioned reviewer instructions are trusted application policy and cannot be rewritten by evidence or advisory text;
+- external reviewer output remains untrusted advisory input; validation proves only exact packet/reference grounding, never factual truth, causality, priority, impact, provider/model identity, approval, or execution safety;
+- top-level packet/advisory integrity must fail closed on Proxy, `toJSON`, accessor, symbol/unknown/non-enumerable fields and inherited required-field substitution before caller-controlled behavior can affect output;
+- normalized validated advisory data is the sole semantic source for final JSON and escaped static HTML; the exact final ID-bearing pretty advisory JSON including trailing newline must stay within the accepted 750,000-byte UTF-8 ceiling;
+- suggested review order is advisory/noncanonical; there is no automatic advisory-to-Release-0.16/0.8 write path;
+- a human must independently choose what to review and explicitly use the accepted Release 0.16 human decision path before any canonical recommendation/measurement/outcome work;
+- add no runtime AI/model/provider call, provider SDK, API key/BYOK/credential path, network client/server/listener, prompt runner/model router/agent loop, embeddings/vector DB, browser automation, automatic priority/severity/business-impact scoring, automatic recommendation/outcome/action, database/table/migration, durable advisory persistence, canonical public schema, cloud/customer deployment, customer/private evidence transfer, paid service/dependency, Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0.
+
+See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.22 remains unreserved and Release 1.0 remains separately gated.

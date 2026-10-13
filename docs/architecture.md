@@ -147,11 +147,11 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.20 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness only. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.21 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness only. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
-**Accepted Releases 0.1–0.20 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service, and Release 0.20 adds no dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
+**Accepted Releases 0.1–0.21 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service, and Release 0.21 adds no runtime dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
 
 ## Commercial and publication limits
 
@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.20 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.21 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -320,9 +320,9 @@ The runtime profile, manifest, bundle IDs, database IDs, and file paths remain c
 
 Release 0.20 adds no production/customer deployment, cloud runtime, Workers/D1, Docker/OCI/Kubernetes, provider networking, credentials/secrets, identity provider, scheduler/background worker, database table/migration, canonical public wire schema, destructive retention executor, private WQT runtime/history, REPORT-AUTO delivery, or Release 1.0 authority. Issue #76 is closed/completed through merged PR #80: ordinary Release 0.20 runtime tests use the bounded Node permission process, while exactly one dedicated real-symlink adversarial fixture remains isolated outside `--permission` because Node 24.19 requires broader filesystem authority for symlink creation. That isolation is test-harness-only; the accepted production portability seam and its filesystem, network, child-process, and worker authority remain unchanged.
 
-## Release 0.21 candidate — evidence-grounded external operator assist
+## Release 0.21 accepted evidence-grounded operator-assist seam
 
-Release 0.21 is a candidate application-local seam over accepted Release 0.15/0.16 semantics, not an embedded AI runtime:
+Release 0.21 is an **accepted application-local seam** under Issue #88 / merged PR #89 at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS and independent exact-head re-review PASS. Post-merge Contracts #452 / `38314641841` succeeded. The accepted architecture now includes Releases 0.1–0.21 without widening deployment or production-action authority.
 
 ```text
 already-issued TenantContext
@@ -339,6 +339,8 @@ already-issued TenantContext
 
 Packet construction validates the already-issued context at entry and recomputes Release 0.15 rather than accepting a caller-created brief. Packet-local evidence references hash exact semantic attention/readiness/provenance/limitation facts and remain selectors/provenance only. Packet identity binds the recomputed brief, exact trusted scope/target, explicit assist policy, included semantic evidence-reference mapping, and fixed reviewer-instruction version; presentation bytes and external advisory prose are excluded.
 
-The external advisory is untrusted input. Validation proves only strict structure and exact packet-reference resolution. Reviewer/provider/model labels are not authenticated identity. Suggested ordering is explicitly noncanonical and no advisory content is passed to Release 0.16/0.8 write services. The HTML renderer rechecks packet/advisory integrity, escapes all dynamic prose/facts, uses restrictive CSP, and exposes no JavaScript, external asset, form, link-action, listener, or write control.
+The external advisory is untrusted input. Validation proves only strict structure and exact packet-reference resolution. Reviewer/provider/model labels are not authenticated identity. Suggested ordering is explicitly noncanonical and no advisory content is passed automatically to Release 0.16/0.8 write services. The normalized validated advisory is the single semantic source for final bounded JSON and static HTML; top-level Proxy, `toJSON`, accessor, unknown/symbol/non-enumerable, and inherited-required-field substitution paths fail closed before caller-controlled behavior can affect output. The exact final ID-bearing pretty advisory JSON including its trailing newline must remain within the accepted 750,000-byte UTF-8 ceiling.
 
-Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, or production-action authority. The accepted production architecture through Release 0.20 remains unchanged.
+The HTML renderer rechecks packet/advisory integrity, escapes all dynamic prose/facts, uses restrictive CSP, and exposes no JavaScript, external asset, form, link-action, listener, or write control.
+
+Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, customer/private evidence transfer, or production-action authority. It does not authorize Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0. Release 0.22 remains unreserved and Release 1.0 remains separately gated.

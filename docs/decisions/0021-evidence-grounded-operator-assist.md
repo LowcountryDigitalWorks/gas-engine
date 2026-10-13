@@ -1,8 +1,10 @@
 # ADR 0021 — Evidence-Grounded Operator Assist boundary
 
-- **Status:** Candidate — Release 0.21 / Issue #88
+- **Status:** Accepted — Release 0.21 / Issue #88 / PR #89
 - **Decision date:** 2026-10-07
-- **Accepted baseline:** Releases 0.1–0.20
+- **Accepted date:** 2026-10-12
+- **Accepted baseline:** Releases 0.1–0.21
+- **Acceptance evidence:** Product exact-head PASS `6130681325`; independent exact-head re-review PASS `6133456059`; squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`; post-merge Contracts #452 / `38314641841` SUCCESS.
 
 ## Context
 
@@ -12,7 +14,7 @@ An external human or AI reviewer can help summarize evidence and draft hypothese
 
 ## Decision
 
-Release 0.21 will **build only the deterministic interchange, exact-reference grounding, strict validation, and read-only presentation seam**.
+Release 0.21 **builds only the deterministic interchange, exact-reference grounding, strict validation, and read-only presentation seam**.
 
 G.A.S. recomputes the accepted Release 0.15 `ServiceBrief` from the original producer input under an already-issued valid `TenantContext`. It then emits a bounded application-local `OperatorAssistPacket` containing deterministic exact references to supplied attention/readiness/provenance/limitation facts plus fixed trusted reviewer instructions.
 
@@ -108,4 +110,4 @@ Rejected. The proof is application-local/read-only. Durable advisory storage wou
 
 ## Explicit non-authority
 
-This ADR does not authorize runtime AI/LLM/model calls, provider SDKs, credentials/BYOK, network clients/listeners, browser automation, embeddings/vector DBs, automated priority/severity/business-impact scoring, automatic recommendation/outcome/action, persistence/schema expansion, external customer evidence transfer, cloud/private deployment, paid services, Issue #49, Issue #56/#81, or Release 1.0.
+This ADR does not authorize runtime AI/LLM/model calls, provider SDKs, credentials/BYOK, network clients/listeners, browser automation, embeddings/vector DBs, automated priority/severity/business-impact scoring, automatic recommendation/outcome/action, persistence/schema expansion, external customer evidence transfer, cloud/private deployment, paid services, Issue #49, Issue #56/#81, Release 0.22, or Release 1.0.
