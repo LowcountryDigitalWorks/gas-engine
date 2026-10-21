@@ -1,0 +1,22 @@
+name: G.A.S. Security Baseline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  codeql-javascript:
+    permissions:
+      contents: read
+      security-events: write
+    uses: LowcountryDigitalWorks/.github/.github/workflows/security-codeql-js.yml@ea28529418ac13b0d529db499ae0168da2a48e4d
+
+  secret-scan:
+    uses: LowcountryDigitalWorks/.github/.github/workflows/security-secrets.yml@ea28529418ac13b0d529db499ae0168da2a48e4d
+    with:
+      verify_canary: false
