@@ -4,7 +4,7 @@
 
 G.A.S. combines source-preserving evidence from replaceable sensors and platforms, compares it over time, supports human-reviewed decisions, and measures outcomes. It integrates commodity sensing rather than rebuilding crawlers, rank trackers, backlink indexes, local-grid tools, or provider dashboards. The proof should establish whether this reduces recurring LDW delivery and reconciliation labor.
 
-**Current accepted baseline: Releases 0.1–0.21 are accepted and merged on `main`.** Issue #110 authorizes a bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack candidate; review and acceptance gates remain pending. Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
+**Current accepted baseline: Releases 0.1–0.22 are accepted and merged on `main`.** Release 0.22 Measurement Interpretation & Claim Ceiling Pack was implemented through PR #111 and received the bounded AI prompt cohort correctness correction through PR #112; corrected protected `main` is `d69fb468c934aae41687b8d8f927ec2381cfcca9`, with post-merge Contracts `39906956428` and Security Baseline `39906956779` successful. Release 0.23 remains unreserved. Release 0.4 adds a bounded authenticated application/transport seam without changing accepted evidence contracts or the Release 0.3 SQLite schema. Release 0.5 adds a pure/local adapter for already-normalized WQT v1/minor1 evidence. Release 0.6 adds a second pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact; neither adapter executes sensors, holds provider credentials, issues tenant authority, or deploys anything. Release 0.7 adds deterministic same-stream longitudinal evidence diff plus non-ranked review-attention classification over coherent tenant-scoped persisted snapshots.
 
 **Release 0.8 is accepted and merged on `main` through PR #16.** It adds provider-neutral, evidence-linked human review history plus an explicit measurement/outcome ledger. Recommendations are human/trusted-caller authored only, priority remains `unassessed`, measurements resolve selected canonical observations, outcome direction is human-declared, and accepted recommendations create no action authority. Canonical recommendation/measurement/outcome contracts remain schemaVersion `1.0`; Release 0.8 adds no dependency and keeps the $0 incremental recurring-cost proof boundary. See the [Release 0.8 review-ledger guide](docs/review-ledger.md) and [ADR 0007](docs/decisions/0007-human-review-measurement-ledger.md).
 
@@ -30,13 +30,15 @@ The intended long-term operating lifecycle is:
 
 ## Forward roadmap at a glance
 
-The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). Releases 0.17–0.21 form the accepted UX, repeatable-run, portfolio-operations, portability-readiness, and evidence-grounded operator-assist sequence. Release 0.22 is authorized under Issue #110 as a bounded candidate; Release 1.0 remains a separately gated private/cloud proof rather than an automatic next engineering step.
+The canonical forward plan is maintained in [docs/roadmap.md](docs/roadmap.md). Releases 0.17–0.22 form the accepted UX, repeatable-run, portfolio-operations, portability-readiness, evidence-grounded operator-assist, and measurement-interpretation sequence. Release 0.23 remains unreserved; Release 1.0 remains a separately gated private/cloud proof rather than an automatic next engineering step.
 
 - **0.17 — ACCEPTED — Operator Workspace & Service Reporting UX Pack (#60 / PR #62):** first cohesive internal LDW operator experience over accepted 0.15/0.16 semantics; site/case navigation, evidence/readiness, attention review, human decision/recommendation/measurement/outcome workflow, timeline/history, and customer-safe report composition/export.
 - **0.18 — ACCEPTED — Repeatable Managed-Service Run & Evidence Intake Pack (#65 / PR #67):** standardize one reproducible service run over accepted 0.17 workspace/reporting, add deliberate WQT v1 minor-3 compatibility, exact source-receipt provenance, prior/current operational continuity, accepted 0.16 follow-up projection, and deterministic report-package assembly. Provider polling/scheduling remains outside G.A.S.
 - **0.19 — ACCEPTED — Internal Portfolio / Multi-Site Operations Console (#69 / PR #70):** pure/local LDW-internal portfolio operations over trusted inventory and zero-or-one accepted current run per engagement, with strict run verification, exact scope/target reconciliation, source-state-preserving freshness, factual unranked exceptions, operational-only roll-ups, and deterministic internal JSON/presentation-only HTML.
 - **0.20 — ACCEPTED — Private-Runtime Packaging & Portability Readiness (#74 / PR #75):** strict non-secret runtime configuration, Node SQLite online backup, deterministic integrity manifests, imported profile/manifest consistency verification, root-independent relocation/reopen, planning-only retention, and explicit recovery/decommission metadata without deploying a runtime.
 - **0.21 — ACCEPTED — Evidence-Grounded Operator Assist Pack (#88 / PR #89):** authoritative Release 0.15 recomputation, bounded exact-reference assist packet, fixed trusted reviewer instructions, strict untrusted external-advisory validation, deterministic JSON, and escaped read-only HTML; no model/provider call, automatic priority/recommendation/outcome/action, persistence/schema expansion, or external execution.
+- **0.22 — ACCEPTED — Measurement Interpretation & Claim Ceiling Pack (#110 / PR #111 / correction PR #112):** pure/local interpretation profile over existing canonical measurements plus strict caller-supplied design/exposure/method context; deterministic claim ceilings and overclaim prohibitions; corrected AI prompt cohort metric/sampling continuity; no schema/persistence/provider runtime/action/outcome expansion.
+- **0.23 — UNRESERVED:** no release number or scope is authorized until Product separately freezes a bounded evidence-backed gap.
 - **1.0 — Separately gated private/cloud proof:** only after service value, auth/data boundaries, measured cost, recovery, and customer-ownership/support assumptions are proven.
 
 **UX begins with accepted Release 0.17 (#60 / PR #62).** Reporting existed previously as deterministic static HTML in accepted 0.9/0.14/0.15/0.16; 0.17 turns those underlying semantics into a usable local operator workspace and consistent service-report workflow without buying a dashboard/reporting SaaS.
@@ -142,8 +144,9 @@ Read the [Release 0.9 operator case-view guide](docs/operator-case-view.md) for 
 - [Release 0.20 runtime portability — accepted](docs/runtime-portability.md)
 - [Private-runtime portability — accepted ADR 0020](docs/decisions/0020-private-runtime-portability.md)
 - [Release 0.21 operator assist — accepted](docs/operator-assist.md)
-- [Release 0.22 measurement interpretation — candidate](docs/measurement-interpretation.md)
 - [Evidence-grounded operator assist — accepted ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md)
+- [Release 0.22 measurement interpretation — accepted](docs/measurement-interpretation.md)
+- [Measurement interpretation & claim ceilings — accepted ADR 0022](docs/decisions/0022-measurement-interpretation-claim-ceilings.md)
 
 ## Release 0.17 — Operator Workspace & Service Reporting UX Pack — accepted
 
@@ -187,12 +190,24 @@ See the [accepted Release 0.20 runtime-portability guide](docs/runtime-portabili
 
 ## Release 0.21 — Evidence-Grounded Operator Assist Pack — accepted
 
-Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`. Product exact-head review passed in `6130681325`, independent exact-head re-review passed in `6133456059`, and post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`. Product exact-head review passed in `6130681325`, independent exact-head re-review passed in `6133456059`, and post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.22 are the accepted baseline.
 
 The accepted release recomputes accepted Release 0.15 from original producer input under an already-issued trusted `TenantContext`, emits one bounded deterministic assist packet with exact packet-local references to supplied attention/readiness/provenance/limitation facts and fixed trusted reviewer instructions, strictly validates an external untrusted advisory against the exact packet, and emits deterministic advisory JSON plus standalone escaped read-only HTML.
 
 The visible boundary is **EXTERNAL / AI ADVISORY — UNTRUSTED — HUMAN REVIEW REQUIRED**. Suggested review ordering is advisory only and never canonical G.A.S. priority. No advisory is converted automatically into a Release 0.16 decision, Release 0.8 recommendation, outcome, or production action. A human must independently choose what to review and explicitly use the already accepted human decision path.
 
-Release 0.21 itself performs no AI/model/provider call and adds no provider credential/BYOK handling, network client/listener, prompt runner/model router/agent loop, persistence/table/migration, canonical public wire schema, runtime dependency, cloud deployment, customer/private evidence transfer, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, Issue #49 work, Issue #56/#81 work, Release 0.22 authority, or Release 1.0 implementation. Incremental recurring cash remains $0.
+Release 0.21 itself performs no AI/model/provider call and adds no provider credential/BYOK handling, network client/listener, prompt runner/model router/agent loop, persistence/table/migration, canonical public wire schema, runtime dependency, cloud deployment, customer/private evidence transfer, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, Issue #49 work, Issue #56/#81 work, Release 0.22 authority from Release 0.21 itself, or Release 1.0 implementation. Incremental recurring cash remains $0.
 
 See the [accepted Release 0.21 guide](docs/operator-assist.md) and [accepted ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md).
+
+## Release 0.22 — Measurement Interpretation & Claim Ceiling Pack — accepted
+
+Release 0.22 is **accepted through Issue #110, implementation PR #111, and bounded correctness PR #112**. The corrected protected-main commit is `d69fb468c934aae41687b8d8f927ec2381cfcca9`; post-merge Contracts `39906956428` and Security Baseline `39906956779` both succeeded.
+
+The accepted release adds one pure/local deterministic Measurement Interpretation Profile over existing canonical Release 0.8 measurements plus strict caller-supplied design, exposure, source-quality, method, and optional external-result context. It reuses canonical comparability rather than replacing it and emits bounded readiness, one deterministic claim ceiling, allowed/prohibited claim codes, and reason/limitation codes.
+
+The bounded correction requires AI prompt cohort interpretation to use explicit `ai_prompt_observation` metric semantics on both sides and stable bounded prompt count plus sampling cadence ID/version. Missing sampling context lowers the interpretation ceiling; changed count/cadence is a discontinuity. AI referral remains a distinct referral-acquisition metric universe. Even the strongest experimental ceiling does not establish revenue/business causality, universal visibility, or action authority.
+
+Release 0.22 adds no canonical schema, persistence/migration/table, provider client/OAuth/network path, crawler, prompt runner, scheduler/background worker, runtime AI, universal confidence/SEO/AI-visibility score, recommendation acceptance, outcome direction, production action, cloud/customer deployment, customer/private evidence, or paid dependency. Release 0.23 remains unreserved and Release 1.0 remains separately gated.
+
+See the [accepted Release 0.22 guide](docs/measurement-interpretation.md) and [accepted ADR 0022](docs/decisions/0022-measurement-interpretation-claim-ceilings.md).
