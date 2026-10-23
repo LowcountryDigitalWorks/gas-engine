@@ -8,9 +8,9 @@ Use `interpretMeasurement(input)` from `src/analysis/measurement-interpretation.
 
 The required design classes are `annotated_pre_post`, `normalized_pre_post`, `group_pre_post`, `matched_control_test`, `randomized_or_balanced_split_test`, `ai_referral_pre_post`, `ai_prompt_cohort_observation`, `provider_native_experiment`, and `other_explicit`. Exposure states are `not_applicable`, `unknown`, `not_yet_exposed`, `partially_exposed`, `sufficiently_exposed`, and `exposure_discontinuous`.
 
-Both inputs must be canonical Release 0.8 measurement records in baseline/follow-up order, with the exact follow-up relationship. Canonical cohort identity, declared comparability, measurement methodology, result availability, observed values, and chronology remain gates. Caller design labels cannot override them. Source/method context includes provider, metric and metric-definition version, method and method version, and optional model/location/prompt/entity cohort identities. Its fields participate in profile identity. Measurement observation ordering is normalized as irrelevant; semantic content is preserved.
+Both primary inputs must be canonical Release 0.8 measurement records in baseline/follow-up order, with the exact follow-up relationship. Canonical cohort identity, declared comparability, measurement methodology, result availability, observed values, and chronology remain gates. Caller design labels cannot override them. Controlled and experimental ceilings additionally require four arm-specific canonical measurements: baseline/follow-up for distinct control and test cohorts, each internally comparable with valid relationships, aligned observation windows, stable provider/metric/method context, and observed values. The external experiment result must name those exact four IDs in order and match the declared provider/method version. Source/method context includes provider, metric and metric-definition version, method and method version, an explicit metric class, and optional model/location/prompt/entity cohort identities. Its fields participate in profile identity. Measurement observation ordering is normalized as irrelevant; semantic content is preserved.
 
-The output carries the exact canonical measurement records, design/exposure/method context, canonical comparability projection, readiness, one claim ceiling, allowed and prohibited claim codes, limitations, and the exact caller-supplied external result when present. The external result is narrowly typed with provider, method/version, statistic name/value, reference, and caller acceptance. `statisticValue` remains the supplied string: the profile does not parse, recompute, threshold, or universalize it.
+The output carries the exact canonical measurement records, design/exposure/method context, canonical comparability projection, readiness, one claim ceiling, allowed and prohibited claim codes, limitations, and the exact caller-supplied external result when present. The external result is narrowly typed with provider, method/version, statistic name/value, reference, caller acceptance, and exact arm measurement IDs. `statisticValue` remains the supplied string: the profile does not parse, recompute, threshold, or universalize it.
 
 ## Claim ceilings
 
@@ -34,7 +34,8 @@ No ceiling states that a change caused an outcome. In particular, `controlled_ef
 - Not-yet, partial, or discontinuous exposure cannot support an effect ceiling. Elapsed time is not exposure readiness.
 - Preliminary, partial, truncated, or anonymized source state lowers the result to descriptive observation.
 - Prompt-cohort claims require exact provider, model, location, prompt revision, entity revision, metric, and method identities. Small cohorts do not receive a universal minimum or generalization.
-- External statistics remain provider/method evidence and are preserved exactly without statistical computation.
+- AI-referral claims require both method contexts to classify the metric as `ai_referral_acquisition`; other metrics remain descriptive under that design label.
+- External statistics remain provider/method evidence and are preserved exactly without statistical computation. An accepted flag alone cannot create experimental evidence.
 - Claim and reason arrays are deterministic code sets. No generated prose is authoritative.
 
 ## Authority and exclusions

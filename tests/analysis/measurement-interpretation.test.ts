@@ -17,7 +17,7 @@ const context = {
 };
 const baseContext = {
   providerId: 'synthetic-search-provider', metricId: 'synthetic-clicks', metricDefinitionVersion: '1.0.0',
-  methodId: 'synthetic-search-method', methodVersion: '1.0.0',
+  methodId: 'synthetic-search-method', methodVersion: '1.0.0', metricClass: 'search_analytics',
 };
 
 function measurement(id: string, role: 'baseline' | 'follow_up', overrides: Partial<Contract<'measurement'>> = {}): Contract<'measurement'> {
@@ -52,6 +52,18 @@ function input(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function armPair(prefix: string, cohortId: string) {
+  const baselineId = `${prefix}-baseline`;
+  return [
+    measurement(baselineId, 'baseline', { cohort: { schemaVersion: '1.0', kind: 'cohort', id: cohortId, revision: 1, context } }),
+    measurement(`${prefix}-followup`, 'follow_up', {
+      cohort: { schemaVersion: '1.0', kind: 'cohort', id: cohortId, revision: 1, context },
+      relationship: { role: 'follow_up', baselineMeasurementId: baselineId },
+    }),
+  ] as const;
+}
+const matchedArms = { control: armPair('synthetic-control', 'synthetic-control'), test: armPair('synthetic-test', 'synthetic-test') };
+
 test('comparable annotated pre/post with unknown exposure supports temporal association only', () => {
   const result = interpretMeasurement(input());
   assert.equal(result.claimCeiling, 'temporal_association_only');
@@ -71,28 +83,57 @@ test('normalized pre/post retains a normalized association ceiling without a cau
   assert.equal(result.claimCeiling, 'normalized_association_only');
 });
 
-test('matched concurrent groups yield only a controlled-effect-consistent ceiling', () => {
+test('matched concurrent canonical arms yield only a controlled-effect-consistent ceiling', () => {
   const result = interpretMeasurement(input({ designClass: 'matched_control_test', methodContext: {
     baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test', controlCount: 8, testCount: 8,
-  } }));
+  }, armEvidence: matchedArms }));
   assert.equal(result.claimCeiling, 'controlled_effect_consistent');
   assert.ok(result.prohibitedOverclaimCodes.includes('business_or_revenue_causality'));
 });
 
+test('caller arm labels or misaligned canonical arms cannot create a controlled claim', () => {
+  const contextOnly = interpretMeasurement(input({ designClass: 'matched_control_test', methodContext: {
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test', controlCount: 8, testCount: 8,
+  } }));
+  assert.equal(contextOnly.claimCeiling, 'descriptive_observation_only');
+  const misaligned = structuredClone(matchedArms);
+  const shiftedWindow = { start: '2026-09-02T00:00:00.000Z', end: '2026-09-09T00:00:00.000Z' };
+  misaligned.test[0].dueWindow = shiftedWindow;
+  misaligned.test[0].createdAt = '2026-09-09T00:01:00.000Z';
+  if (misaligned.test[0].result.state === 'measured') misaligned.test[0].result.observedWindow = shiftedWindow;
+  const result = interpretMeasurement(input({ designClass: 'matched_control_test', methodContext: {
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test',
+  }, armEvidence: misaligned }));
+  assert.equal(result.claimCeiling, 'descriptive_observation_only');
+});
+
 test('balanced experiment requires sufficient exposure and caller-accepted external result, preserved exactly', () => {
-  const supplied = { providerId: 'synthetic-test-provider', methodId: 'synthetic-stat-test', methodVersion: '2.1.0', statisticName: 'p-value', statisticValue: '0.031', resultReference: 'synthetic-result', acceptedByCaller: true };
+  const supplied = { providerId: baseContext.providerId, methodId: baseContext.methodId, methodVersion: baseContext.methodVersion, statisticName: 'p-value', statisticValue: '0.031', resultReference: 'synthetic-result', acceptedByCaller: true, measurementIds: ['synthetic-control-baseline', 'synthetic-control-followup', 'synthetic-test-baseline', 'synthetic-test-followup'] };
   const result = interpretMeasurement(input({ designClass: 'randomized_or_balanced_split_test', exposure: { state: 'sufficiently_exposed' }, methodContext: {
-    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test', balancedOrRandomized: true,
-  }, externalResult: supplied }));
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test', balancedOrRandomized: true, controlCount: 8, testCount: 8,
+  }, armEvidence: matchedArms, externalResult: supplied }));
   assert.equal(result.claimCeiling, 'bounded_experimental_effect_consistent');
   assert.deepEqual(result.externalResult, supplied);
   assert.ok(result.prohibitedOverclaimCodes.includes('business_or_revenue_causality'));
 });
 
+test('experimental ceiling fails closed when external result IDs do not bind to arm evidence', () => {
+  const result = interpretMeasurement(input({ designClass: 'randomized_or_balanced_split_test', exposure: { state: 'sufficiently_exposed' }, methodContext: {
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test', balancedOrRandomized: true, controlCount: 8, testCount: 8,
+  }, armEvidence: matchedArms, externalResult: {
+    providerId: baseContext.providerId, methodId: baseContext.methodId, methodVersion: baseContext.methodVersion,
+    statisticName: 'p-value', statisticValue: '0.031', resultReference: 'synthetic-result', acceptedByCaller: true,
+    measurementIds: ['synthetic-control-baseline', 'synthetic-test-baseline', 'synthetic-control-followup', 'synthetic-test-followup'],
+  } }));
+  assert.equal(result.claimCeiling, 'descriptive_observation_only');
+});
+
 test('AI referral measurement is limited to the exact referral metric', () => {
-  const result = interpretMeasurement(input({ designClass: 'ai_referral_pre_post' }));
+  const referral = { ...baseContext, metricClass: 'ai_referral_acquisition' };
+  const result = interpretMeasurement(input({ designClass: 'ai_referral_pre_post', methodContext: { baseline: referral, followUp: referral } }));
   assert.equal(result.claimCeiling, 'ai_referral_change_only');
   assert.ok(result.prohibitedOverclaimCodes.includes('universal_visibility'));
+  assert.equal(interpretMeasurement(input({ designClass: 'ai_referral_pre_post' })).claimCeiling, 'descriptive_observation_only');
 });
 
 test('frozen prompt cohort permits only exact cohort claims and changed identity blocks comparison', () => {

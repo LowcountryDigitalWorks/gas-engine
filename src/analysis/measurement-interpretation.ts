@@ -33,6 +33,7 @@ const methodIdentity = z.strictObject({
   promptCohortRevision: z.number().int().min(1).max(1_000_000).optional(),
   entitySetId: identifier.optional(),
   entitySetRevision: z.number().int().min(1).max(1_000_000).optional(),
+  metricClass: z.enum(['search_analytics', 'ai_referral_acquisition', 'ai_prompt_observation', 'other_explicit']).optional(),
 });
 const qualityContext = z.strictObject({
   preliminary: z.boolean(),
@@ -48,6 +49,11 @@ const externalResult = z.strictObject({
   statisticValue: safeRef,
   resultReference: identifier,
   acceptedByCaller: z.boolean(),
+  measurementIds: z.tuple([identifier, identifier, identifier, identifier]),
+});
+const armEvidence = z.strictObject({
+  control: z.tuple([measurementSchema, measurementSchema]),
+  test: z.tuple([measurementSchema, measurementSchema]),
 });
 const inputSchema = z.strictObject({
   designClass,
@@ -58,6 +64,7 @@ const inputSchema = z.strictObject({
     evidenceReference: identifier.optional(),
   }),
   measurements: z.tuple([measurementSchema, measurementSchema]),
+  armEvidence: armEvidence.optional(),
   methodContext: z.strictObject({
     baseline: methodIdentity,
     followUp: methodIdentity,
@@ -109,6 +116,7 @@ export interface MeasurementInterpretationProfile {
   };
   readonly methodContext: z.infer<typeof inputSchema>['methodContext'];
   readonly measurements: readonly unknown[];
+  readonly armEvidence?: z.infer<typeof armEvidence>;
   readonly readiness: 'ready' | 'limited' | 'blocked';
   readonly claimCeiling: MeasurementClaimCeiling;
   readonly allowedClaimCodes: readonly string[];
@@ -136,6 +144,41 @@ function orderedMeasurement(value: z.infer<typeof measurementSchema>): unknown {
 
 function contextChanged(input: z.infer<typeof inputSchema>): boolean {
   return canonicalJson(input.methodContext.baseline) !== canonicalJson(input.methodContext.followUp);
+}
+
+function armEvidenceValid(input: z.infer<typeof inputSchema>): boolean {
+  const arms = input.armEvidence;
+  if (!arms) return false;
+  const [controlBefore, controlAfter] = arms.control;
+  const [testBefore, testAfter] = arms.test;
+  const pairs = [[controlBefore, controlAfter], [testBefore, testAfter]] as const;
+  for (const [before, after] of pairs) {
+    if (before.comparability.state !== 'comparable' || after.comparability.state !== 'comparable'
+      || compareCohorts(before.cohort, after.cohort).state !== 'comparable'
+      || before.relationship.role !== 'baseline' || after.relationship.role !== 'follow_up'
+      || after.relationship.baselineMeasurementId !== before.id
+      || before.result.state !== 'measured' || after.result.state !== 'measured'
+      || before.result.observations.some((item) => item.value.state !== 'observed')
+      || after.result.observations.some((item) => item.value.state !== 'observed')
+      || canonicalJson(before.methodology) !== canonicalJson(after.methodology)
+      || (before.result.state === 'measured' && after.result.state === 'measured'
+        && Date.parse(before.result.observedWindow.end) > Date.parse(after.result.observedWindow.start))) return false;
+  }
+  const sameWindow = (left: typeof controlBefore, right: typeof controlBefore): boolean =>
+    left.result.state === 'measured' && right.result.state === 'measured'
+    && canonicalJson(left.result.observedWindow) === canonicalJson(right.result.observedWindow);
+  return controlBefore.cohort.id === controlAfter.cohort.id
+    && testBefore.cohort.id === testAfter.cohort.id
+    && controlBefore.cohort.id !== testBefore.cohort.id
+    && input.methodContext.controlCohortId === controlBefore.cohort.id
+    && input.methodContext.testCohortId === testBefore.cohort.id
+    && [controlBefore, controlAfter, testBefore, testAfter].every((measurement) =>
+      measurement.cohort.context.dimensions.providerId === input.methodContext.baseline.providerId
+      && measurement.cohort.context.metric.id === input.methodContext.baseline.metricId
+      && measurement.cohort.context.metric.meaningVersion === input.methodContext.baseline.metricDefinitionVersion
+      && measurement.cohort.context.method.id === input.methodContext.baseline.methodId
+      && measurement.cohort.context.method.version === input.methodContext.baseline.methodVersion)
+    && sameWindow(controlBefore, testBefore) && sameWindow(controlAfter, testAfter);
 }
 
 function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationProfile {
@@ -214,7 +257,10 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
   if (comparison !== 'comparable') {
     ceiling = 'not_interpretable';
   } else if (input.designClass === 'ai_referral_pre_post') {
-    ceiling = 'ai_referral_change_only';
+    const referralMetric = input.methodContext.baseline.metricClass === 'ai_referral_acquisition'
+      && input.methodContext.followUp.metricClass === 'ai_referral_acquisition';
+    ceiling = referralMetric ? 'ai_referral_change_only' : 'descriptive_observation_only';
+    if (!referralMetric) reasons.add('ai_referral_metric_semantics_required');
   } else if (input.designClass === 'ai_prompt_cohort_observation') {
     const before = input.methodContext.baseline;
     const promptIdentityComplete = before.promptCohortId !== undefined
@@ -227,20 +273,28 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
     ceiling = 'descriptive_observation_only';
   } else if (input.designClass === 'randomized_or_balanced_split_test'
       || input.designClass === 'provider_native_experiment') {
-    const acceptedResult = input.externalResult?.acceptedByCaller === true;
+    const armsValid = armEvidenceValid(input);
+    const acceptedResult = input.externalResult?.acceptedByCaller === true && armsValid
+      && input.armEvidence !== undefined
+      && canonicalJson(input.externalResult.measurementIds) === canonicalJson([
+        input.armEvidence.control[0].id, input.armEvidence.control[1].id,
+        input.armEvidence.test[0].id, input.armEvidence.test[1].id,
+      ])
+      && input.externalResult.providerId === input.methodContext.baseline.providerId
+      && input.externalResult.methodId === input.methodContext.baseline.methodId
+      && input.externalResult.methodVersion === input.methodContext.baseline.methodVersion;
     const balanced = input.methodContext.balancedOrRandomized === true
-      && input.methodContext.controlCohortId !== undefined
-      && input.methodContext.testCohortId !== undefined;
+      && input.methodContext.controlCount !== undefined && input.methodContext.testCount !== undefined;
     ceiling = input.exposure.state === 'sufficiently_exposed' && acceptedResult && balanced
       ? 'bounded_experimental_effect_consistent' : 'descriptive_observation_only';
-    if (!acceptedResult) reasons.add('accepted_external_result_required');
+    if (!armsValid) reasons.add('arm_specific_canonical_measurements_required');
+    if (!acceptedResult) reasons.add('accepted_external_result_bound_to_measurements_required');
     if (!balanced) reasons.add('balanced_or_randomized_cohorts_required');
   } else if (input.designClass === 'matched_control_test') {
-    const matched = input.methodContext.controlCohortId !== undefined
-      && input.methodContext.testCohortId !== undefined;
+    const matched = armEvidenceValid(input);
     ceiling = matched && (input.exposure.state === 'unknown' || input.exposure.state === 'sufficiently_exposed')
       ? 'controlled_effect_consistent' : 'descriptive_observation_only';
-    if (!matched) reasons.add('matched_control_and_test_cohorts_required');
+    if (!matched) reasons.add('arm_specific_canonical_measurements_required');
   } else if (input.designClass === 'normalized_pre_post') {
     const normalized = input.methodContext.normalizationMethodId !== undefined
       && input.methodContext.normalizationMethodVersion !== undefined;
@@ -282,6 +336,10 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
     },
     methodContext: input.methodContext,
     measurements: input.measurements.map(orderedMeasurement),
+    ...(input.armEvidence === undefined ? {} : { armEvidence: {
+      control: input.armEvidence.control.map(orderedMeasurement) as [z.infer<typeof measurementSchema>, z.infer<typeof measurementSchema>],
+      test: input.armEvidence.test.map(orderedMeasurement) as [z.infer<typeof measurementSchema>, z.infer<typeof measurementSchema>],
+    } }),
     readiness,
     claimCeiling: ceiling,
     allowedClaimCodes,
@@ -303,7 +361,15 @@ export function interpretMeasurement(input: unknown): MeasurementInterpretationP
     const measurements = parsed.measurements.map((item) => parseContract('measurement', item)) as [
       z.infer<typeof measurementSchema>, z.infer<typeof measurementSchema>,
     ];
-    const output = build({ ...parsed, measurements });
+    const parsedArms = parsed.armEvidence === undefined ? undefined : {
+      control: parsed.armEvidence.control.map((item) => parseContract('measurement', item)) as [
+        z.infer<typeof measurementSchema>, z.infer<typeof measurementSchema>,
+      ],
+      test: parsed.armEvidence.test.map((item) => parseContract('measurement', item)) as [
+        z.infer<typeof measurementSchema>, z.infer<typeof measurementSchema>,
+      ],
+    };
+    const output = build({ ...parsed, measurements, ...(parsedArms === undefined ? {} : { armEvidence: parsedArms }) });
     if (Buffer.byteLength(canonicalJson(output), 'utf8') > MAX_OUTPUT_BYTES) {
       throw new MeasurementInterpretationError('invalid_output');
     }
