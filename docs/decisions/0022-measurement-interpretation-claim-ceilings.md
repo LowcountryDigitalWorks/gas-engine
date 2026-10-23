@@ -1,8 +1,8 @@
 # ADR 0022 — Measurement Interpretation & Claim Ceilings
 
-- **Status:** Candidate — Release 0.22 / Issue #110; Product acceptance pending exact-head review.
+- **Status:** ACCEPTED — Release 0.22 / Issue #110; merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`.
 - **Decision date:** 2026-10-22
-- **Accepted baseline:** Releases 0.1–0.21 at `18856f506ff62bfffcd9f76eddafe360623112d4`.
+- **Accepted baseline:** Releases 0.1–0.22.
 
 ## Context
 
@@ -26,4 +26,4 @@ No canonical JSON schema, persistence, migration/table, provider/network runtime
 
 ## Review status
 
-This ADR documents a candidate implementation only. Product semantic review, independent exact-head review, required hosted checks, and release acceptance remain pending.
+This ADR documents an accepted release. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668).

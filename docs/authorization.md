@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.21 are accepted and merged to `main`. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack candidate. This does not accept the candidate or waive Product semantic review, independent exact-head review, required checks, or release acceptance. Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.22 are accepted and merged to `main`. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack, accepted and merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668). Release 0.23 remains unreserved. Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -262,3 +262,19 @@ External advisory content, suggested ordering, hypotheses, draft options, URLs, 
 This accepted authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, Issue #56/#81 implementation, Release 0.22, or Release 1.0.
 
 See the [Release 0.21 accepted guide](operator-assist.md) and [ADR 0021](decisions/0021-evidence-grounded-operator-assist.md).
+
+## Release 0.22 accepted authority boundary
+
+Release 0.22 Measurement Interpretation & Claim Ceiling Pack is **accepted and merged on `main` through Issue #110 / PR #112** at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668).
+
+Accepted Release 0.22 authority is limited to:
+
+- pure/local deterministic measurement interpretation and claim ceiling classification over canonical Release 0.8 measurements and Release 0.11 comparability semantics;
+- evaluation of design class, exposure state, method continuity, source quality, and optional external experiment results;
+- requirement for explicit `ai_prompt_observation` metric class on both baseline and follow-up contexts, plus bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity for `ai_prompt_cohort_change_only` claims;
+- emission of deterministic profile output with allowed/prohibited claim codes and reason/limitation codes;
+- public-safe synthetic tests and fixtures.
+
+This accepted authority does **not** include canonical schema changes, database/table/migration expansion, provider/API/OAuth/network/runtime AI/prompt runner/scheduler/cloud/customer/private-data work, automatic recommendation, priority, decision, outcome, action/remediation or business/revenue causality authority, universal Search/SEO/AI visibility/confidence scores or cross-provider equivalence, public pricing/SLA/ranking/citation/traffic/lead/time-savings claims, Release 0.23 reservation, or Release 1.0 authority.
+
+See [accepted Release 0.22 guide](measurement-interpretation.md) and [accepted ADR 0022](decisions/0022-measurement-interpretation-claim-ceilings.md).
