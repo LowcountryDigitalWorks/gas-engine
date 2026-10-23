@@ -12,6 +12,8 @@ Both primary inputs must be canonical Release 0.8 measurement records in baselin
 
 The output carries the exact canonical measurement records, design/exposure/method context, canonical comparability projection, readiness, one claim ceiling, allowed and prohibited claim codes, limitations, and the exact caller-supplied external result when present. The external result is narrowly typed with provider, method/version, statistic name/value, reference, caller acceptance, and exact arm measurement IDs. `statisticValue` remains the supplied string: the profile does not parse, recompute, threshold, or universalize it.
 
+For `ai_prompt_cohort_observation`, both baseline and follow-up method contexts must declare `metricClass: "ai_prompt_observation"`. Each must also supply a bounded positive `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion`. `promptCount` is the declared number of prompts in the frozen cohort; cadence ID/version names the declared sampling schedule. These are caller-supplied context fields only; they do not run or verify a prompt sampler. They participate in deterministic profile identity. Missing count/cadence context lowers the ceiling to descriptive observation; changed count or cadence marks the comparison discontinuous.
+
 ## Claim ceilings
 
 | Claim ceiling | Meaning |
@@ -30,10 +32,10 @@ No ceiling states that a change caused an outcome. In particular, `controlled_ef
 ## Deterministic safeguards
 
 - Unknown or discontinuous canonical comparability blocks interpretation; caller design cannot upgrade it.
-- Changed source/method identity, methodology, provider/model/location, prompt cohort, or entity set adds a discontinuity reason and blocks a direct comparison.
+- Changed source/method identity, methodology, provider/model/location, prompt cohort or sampling context, or entity set adds a discontinuity reason and blocks a direct comparison.
 - Not-yet, partial, or discontinuous exposure cannot support an effect ceiling. Elapsed time is not exposure readiness.
 - Preliminary, partial, truncated, or anonymized source state lowers the result to descriptive observation.
-- Prompt-cohort claims require exact provider, model, location, prompt revision, entity revision, metric, and method identities. Small cohorts do not receive a universal minimum or generalization.
+- Prompt-cohort claims require both method contexts to declare `ai_prompt_observation` and to carry the same complete provider, model, location, prompt revision, prompt count, sampling cadence ID/version, entity revision, metric, and method identities. Small cohorts do not receive a universal minimum or generalization.
 - AI-referral claims require both method contexts to classify the metric as `ai_referral_acquisition`; other metrics remain descriptive under that design label.
 - External statistics remain provider/method evidence and are preserved exactly without statistical computation. An accepted flag alone cannot create experimental evidence.
 - Claim and reason arrays are deterministic code sets. No generated prose is authoritative.

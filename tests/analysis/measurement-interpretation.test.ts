@@ -163,15 +163,57 @@ test('AI referral measurement is limited to the exact referral metric', () => {
   assert.ok(mismatch.comparability.reasons.includes('canonical_source_context_mismatch'));
 });
 
-test('frozen prompt cohort permits only exact cohort claims and changed identity blocks comparison', () => {
-  const identity = { ...baseContext, model: 'synthetic-model', location: 'synthetic-location', promptCohortId: 'synthetic-prompts', promptCohortRevision: 1, entitySetId: 'synthetic-entities', entitySetRevision: 1 };
+test('frozen prompt cohort permits only exact cohort claims with explicit metric semantics and sampling context', () => {
+  const identity = {
+    ...baseContext,
+    metricClass: 'ai_prompt_observation',
+    model: 'synthetic-model', location: 'synthetic-location',
+    promptCohortId: 'synthetic-prompts', promptCohortRevision: 1,
+    promptCount: 24, promptSamplingCadenceId: 'synthetic-weekly-sample', promptSamplingCadenceVersion: '1.0.0',
+    entitySetId: 'synthetic-entities', entitySetRevision: 1,
+  };
   const stable = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: { baseline: identity, followUp: identity } }));
   assert.equal(stable.claimCeiling, 'ai_prompt_cohort_change_only');
+  const searchMetric = { ...identity, metricClass: 'search_analytics' };
+  const promptLookingSearchMetric = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
+    baseline: searchMetric, followUp: searchMetric,
+  } }));
+  assert.equal(promptLookingSearchMetric.claimCeiling, 'descriptive_observation_only');
+  assert.ok(promptLookingSearchMetric.comparability.reasons.includes('ai_prompt_metric_semantics_required'));
+  const oneSideWrongMetric = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
+    baseline: identity, followUp: searchMetric,
+  } }));
+  assert.equal(oneSideWrongMetric.claimCeiling, 'not_interpretable');
+
   const changed = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
     baseline: identity, followUp: { ...identity, promptCohortRevision: 2 },
   } }));
   assert.equal(changed.claimCeiling, 'not_interpretable');
   assert.ok(changed.comparability.reasons.includes('prompt_cohort_changed'));
+  for (const change of [
+    { promptCount: 25 },
+    { promptSamplingCadenceId: 'synthetic-biweekly-sample' },
+    { promptSamplingCadenceVersion: '2.0.0' },
+  ]) {
+    const changedSampling = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
+      baseline: identity, followUp: { ...identity, ...change },
+    } }));
+    assert.equal(changedSampling.claimCeiling, 'not_interpretable');
+    assert.ok(changedSampling.comparability.reasons.includes('prompt_sampling_context_changed'));
+  }
+  for (const field of ['promptCount', 'promptSamplingCadenceId', 'promptSamplingCadenceVersion'] as const) {
+    const incomplete = { ...identity };
+    delete (incomplete as Partial<typeof identity>)[field];
+    const limited = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
+      baseline: incomplete, followUp: incomplete,
+    } }));
+    assert.equal(limited.claimCeiling, 'descriptive_observation_only', field);
+    assert.ok(limited.comparability.reasons.includes('prompt_sampling_context_incomplete'));
+  }
+  const differentCoverageIdentity = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
+    baseline: identity, followUp: { ...identity, promptCount: 25 },
+  } }));
+  assert.notEqual(stable.id, differentCoverageIdentity.id);
   for (const field of ['entitySetRevision', 'model', 'methodVersion'] as const) {
     const changedIdentity = { ...identity, [field]: field === 'entitySetRevision' ? 2 : 'synthetic-changed' };
     const profile = interpretMeasurement(input({ designClass: 'ai_prompt_cohort_observation', methodContext: {
