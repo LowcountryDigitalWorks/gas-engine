@@ -213,7 +213,7 @@ Preserve these accepted Release 0.21 rules:
 - a human must independently choose what to review and explicitly use the accepted Release 0.16 human decision path before any canonical recommendation/measurement/outcome work;
 - add no runtime AI/model/provider call, provider SDK, API key/BYOK/credential path, network client/server/listener, prompt runner/model router/agent loop, embeddings/vector DB, browser automation, automatic priority/severity/business-impact scoring, automatic recommendation/outcome/action, database/table/migration, durable advisory persistence, canonical public schema, cloud/customer deployment, customer/private evidence transfer, paid service/dependency, Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0.
 
-See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself did not authorize Release 0.22; Release 0.22 was separately authorized and is now accepted under Issue #110 / PR #112. Release 0.23 remains unreserved. Release 1.0 remains separately gated.
+See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself does not authorize Release 0.22; the bounded candidate is authorized separately by Issue #110. Release 1.0 remains separately gated.
 
 ## Release 0.22 accepted measurement-interpretation boundary
 

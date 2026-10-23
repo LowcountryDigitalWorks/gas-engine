@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.22 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.21 and 0.22 add no external model/provider/network runtime dependency.
+Accepted Releases 0.1–0.21 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.21 adds no runtime dependency and performs no external model/provider call.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -241,7 +241,7 @@ This accepted authority does not include production/customer deployment, cloud r
 
 ## Release 0.21 accepted authority boundary
 
-Release 0.21 Evidence-Grounded Operator Assist Pack is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. At Release 0.21 acceptance, Releases 0.1–0.21 were the accepted baseline; Release 0.22 was later separately accepted under Issue #110 / PR #112.
+Release 0.21 Evidence-Grounded Operator Assist Pack is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
 
 Accepted authority is limited to:
 
@@ -271,7 +271,7 @@ Accepted Release 0.22 authority is limited to:
 
 - pure/local deterministic measurement interpretation and claim ceiling classification over canonical Release 0.8 measurements and Release 0.11 comparability semantics;
 - evaluation of design class, exposure state, method continuity, source quality, and optional external experiment results;
-- requirement for explicit `ai_prompt_observation` metric class on both baseline and follow-up contexts, plus bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity for `ai_prompt_cohort_change_only` claims; missing required sampling context lowers the claim ceiling to descriptive observation, while changed prompt count or cadence ID/version is discontinuous and cannot support direct prompt-cohort comparison;
+- requirement for explicit `ai_prompt_observation` metric class on both baseline and follow-up contexts, plus bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity for `ai_prompt_cohort_change_only` claims;
 - emission of deterministic profile output with allowed/prohibited claim codes and reason/limitation codes;
 - public-safe synthetic tests and fixtures.
 
