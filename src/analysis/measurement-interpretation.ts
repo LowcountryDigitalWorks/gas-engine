@@ -339,7 +339,14 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
                 : ['exact_observation_description'];
   const id = `measurement-interpretation:${hashCanonicalJson({
     methodology: MEASUREMENT_INTERPRETATION_METHODOLOGY,
-    input: { ...input, measurements: input.measurements.map(orderedMeasurement) },
+    input: {
+      ...input,
+      measurements: input.measurements.map(orderedMeasurement),
+      ...(input.armEvidence === undefined ? {} : { armEvidence: {
+        control: input.armEvidence.control.map(orderedMeasurement),
+        test: input.armEvidence.test.map(orderedMeasurement),
+      } }),
+    },
   })}`;
   return {
     id,

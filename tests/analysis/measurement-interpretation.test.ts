@@ -250,6 +250,25 @@ test('unordered measurement observations do not change identity and output is pl
   assert.equal(JSON.parse(JSON.stringify(profileA)).id, profileA.id);
 });
 
+test('arm observation ordering does not change profile identity or output', () => {
+  const firstArms = structuredClone(matchedArms);
+  if (firstArms.control[0].result.state !== 'measured') throw new Error('fixture error');
+  const extraObservation = structuredClone(firstArms.control[0].result.observations[0]!);
+  extraObservation.reference.id = 'synthetic-control-observation-extra';
+  firstArms.control[0].result.observations.push(extraObservation);
+  const reversedArms = structuredClone(firstArms);
+  if (reversedArms.control[0].result.state !== 'measured') throw new Error('fixture error');
+  reversedArms.control[0].result.observations.reverse();
+  const common = {
+    designClass: 'matched_control_test',
+    methodContext: { baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test' },
+  };
+  const profileA = interpretMeasurement(input({ ...common, armEvidence: firstArms }));
+  const profileB = interpretMeasurement(input({ ...common, armEvidence: reversedArms }));
+  assert.equal(profileA.id, profileB.id);
+  assert.deepEqual(profileA, profileB);
+});
+
 test('duplicate observation references with different values fail closed regardless of order', () => {
   const first = measurement('synthetic-baseline', 'baseline');
   if (first.result.state !== 'measured') throw new Error('fixture error');
