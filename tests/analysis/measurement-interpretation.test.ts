@@ -105,6 +105,27 @@ test('caller arm labels or misaligned canonical arms cannot create a controlled 
     baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test',
   }, armEvidence: misaligned }));
   assert.equal(result.claimCeiling, 'descriptive_observation_only');
+  const crossScope = structuredClone(matchedArms);
+  for (const item of crossScope.test) {
+    item.cohort.context = structuredClone(item.cohort.context);
+    item.cohort.context.scope.siteId = 'synthetic-other-site';
+    item.cohort.context.subject.reference = 'synthetic-other-site';
+    if (item.result.state === 'measured') {
+      for (const observation of item.result.observations) observation.reference.scope = structuredClone(item.cohort.context.scope);
+    }
+  }
+  const mismatched = interpretMeasurement(input({ designClass: 'matched_control_test', methodContext: {
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test',
+  }, armEvidence: crossScope }));
+  assert.equal(mismatched.claimCeiling, 'descriptive_observation_only');
+  const crossMethodology = structuredClone(matchedArms);
+  for (const item of crossMethodology.test) {
+    item.methodology = { id: 'synthetic-different-methodology', version: '2.0.0' };
+  }
+  const differentMethod = interpretMeasurement(input({ designClass: 'matched_control_test', methodContext: {
+    baseline: baseContext, followUp: baseContext, controlCohortId: 'synthetic-control', testCohortId: 'synthetic-test',
+  }, armEvidence: crossMethodology }));
+  assert.equal(differentMethod.claimCeiling, 'descriptive_observation_only');
 });
 
 test('balanced experiment requires sufficient exposure and caller-accepted external result, preserved exactly', () => {

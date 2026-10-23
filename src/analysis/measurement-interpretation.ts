@@ -172,6 +172,11 @@ function armEvidenceValid(input: z.infer<typeof inputSchema>): boolean {
     && controlBefore.cohort.id !== testBefore.cohort.id
     && input.methodContext.controlCohortId === controlBefore.cohort.id
     && input.methodContext.testCohortId === testBefore.cohort.id
+    && controlBefore.cohort.revision === testBefore.cohort.revision
+    && canonicalJson(controlBefore.cohort.context) === canonicalJson(testBefore.cohort.context)
+    && canonicalJson(controlBefore.methodology) === canonicalJson(testBefore.methodology)
+    && canonicalJson(controlAfter.methodology) === canonicalJson(testAfter.methodology)
+    && canonicalJson(controlBefore.methodology) === canonicalJson(controlAfter.methodology)
     && [controlBefore, controlAfter, testBefore, testAfter].every((measurement) =>
       measurement.cohort.context.dimensions.providerId === input.methodContext.baseline.providerId
       && measurement.cohort.context.metric.id === input.methodContext.baseline.metricId
