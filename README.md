@@ -188,7 +188,7 @@ See the [accepted Release 0.20 runtime-portability guide](docs/runtime-portabili
 
 ## Release 0.21 — Evidence-Grounded Operator Assist Pack — accepted
 
-Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`. Product exact-head review passed in `6130681325`, independent exact-head re-review passed in `6133456059`, and post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`. Product exact-head review passed in `6130681325`, independent exact-head re-review passed in `6133456059`, and post-merge Contracts #452 / `38314641841` succeeded. At Release 0.21 acceptance, Releases 0.1–0.21 were the accepted baseline.
 
 The accepted release recomputes accepted Release 0.15 from original producer input under an already-issued trusted `TenantContext`, emits one bounded deterministic assist packet with exact packet-local references to supplied attention/readiness/provenance/limitation facts and fixed trusted reviewer instructions, strictly validates an external untrusted advisory against the exact packet, and emits deterministic advisory JSON plus standalone escaped read-only HTML.
 
