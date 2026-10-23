@@ -1,6 +1,8 @@
-# Measurement Interpretation Profile — Release 0.22 candidate
+# Measurement Interpretation Profile — Release 0.22
 
-Release 0.22 adds a pure/local deterministic profile over two existing canonical Release 0.8 measurements and caller-supplied design, exposure, method, and source-quality context. The profile returns one bounded claim ceiling, enumerated allowed/prohibited claim codes, and explicit reason/limitation codes. It does not change measurements or write an outcome.
+Release 0.22 is accepted on protected `main` through implementation PR #111 and bounded correctness PR #112. It adds a pure/local deterministic profile over two existing canonical Release 0.8 measurements and caller-supplied design, exposure, method, and source-quality context. The profile returns one bounded claim ceiling, enumerated allowed/prohibited claim codes, and explicit reason/limitation codes. It does not change measurements or write an outcome.
+
+The accepted correction requires explicit AI-prompt metric semantics and stable bounded prompt-sampling context before an AI prompt cohort can receive its narrow cohort-change ceiling. This correction does not broaden Release 0.22 authority or add any schema, persistence, provider/runtime, action, or outcome surface.
 
 ## Contract
 
@@ -45,3 +47,5 @@ No ceiling states that a change caused an outcome. In particular, `controlled_ef
 Release 0.11 remains authoritative for its accepted search-change readiness/comparability composition. Release 0.8 remains authoritative for canonical measurements and outcomes. Release 0.16 remains the human decision/outcome authority. A human must record any canonical outcome through those existing flows.
 
 This profile has no persistence, schema, migration, database, network, provider client, crawler, prompt runner, scheduler, runtime AI, recommendation, approval, action, portal, or production side effect. Synthetic fixtures are public-safe. Incremental cost target is `$0`.
+
+Release 0.23 remains unreserved. Release 1.0 remains separately gated.
