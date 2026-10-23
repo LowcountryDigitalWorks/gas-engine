@@ -139,7 +139,7 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 
 | Direction | Scope |
 | --- | --- |
-| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; accepted Release 0.9 read-only local operator case/report preview; future correlation/action/cloud capabilities only under separate authority. |
+| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; accepted Release 0.9 read-only local operator case/report preview; accepted Release 0.22 measurement interpretation/claim-ceiling semantics; future correlation/action/cloud capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
 | Defer until separately justified/authorized | Cross-provider/generic correlation beyond accepted bounded semantics, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 1.0+ cloud/deployment work, production identity provider, and live provider retrieval/integration for GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. Accepted sanitized GSC-style and Bing AI evidence semantics remain part of Releases 0.10 and 0.14. |
@@ -147,11 +147,11 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.21 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness only. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.22 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness only. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
-**Accepted Releases 0.1–0.21 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service, and Release 0.21 adds no runtime dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
+**Accepted Releases 0.1–0.22 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service, and Release 0.22 adds no runtime dependency. This is not a permanent cost guarantee or SLA. Release 0.23 remains unreserved; Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
 
 ## Commercial and publication limits
 
@@ -212,7 +212,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.21 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.22 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -322,7 +322,7 @@ Release 0.20 adds no production/customer deployment, cloud runtime, Workers/D1, 
 
 ## Release 0.21 accepted evidence-grounded operator-assist seam
 
-Release 0.21 is an **accepted application-local seam** under Issue #88 / merged PR #89 at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS and independent exact-head re-review PASS. Post-merge Contracts #452 / `38314641841` succeeded. The accepted architecture now includes Releases 0.1–0.21 without widening deployment or production-action authority.
+Release 0.21 is an **accepted application-local seam** under Issue #88 / merged PR #89 at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS and independent exact-head re-review PASS. Post-merge Contracts #452 / `38314641841` succeeded. The accepted architecture now includes Releases 0.1–0.22 without widening deployment or production-action authority.
 
 ```text
 already-issued TenantContext
@@ -343,8 +343,16 @@ The external advisory is untrusted input. Validation proves only strict structur
 
 The HTML renderer rechecks packet/advisory integrity, escapes all dynamic prose/facts, uses restrictive CSP, and exposes no JavaScript, external asset, form, link-action, listener, or write control.
 
-Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, customer/private evidence transfer, or production-action authority. It does not authorize Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0. Issue #110 separately authorizes the bounded Release 0.22 candidate described below; Release 1.0 remains separately gated.
+Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, customer/private evidence transfer, or production-action authority. It did not itself authorize Issue #49/#56/#81 implementation or Release 0.22; Release 0.22 was separately authorized and accepted under Issue #110. Release 1.0 remains separately gated.
 
-## Release 0.22 authorized candidate — Measurement Interpretation Profile
+## Release 0.22 accepted — Measurement Interpretation Profile
 
-Issue #110 authorizes a pure/local application-level profile over two existing Release 0.8 canonical measurements and caller-supplied design, exposure, source-quality, and method context. It reuses canonical measurement/cohort comparability and preserves exact external result provenance without statistical recomputation. Its bounded output gives deterministic readiness, one claim ceiling, allowed/prohibited claim codes, and reason/limitation codes. It does not change canonical measurement values, Release 0.11 search-change behavior, Release 0.16 human decision/outcome authority, canonical schemas, or persistence. This architecture describes a candidate; Product and independent exact-head review, hosted checks, and release acceptance remain pending.
+Release 0.22 is accepted under Issue #110 through implementation PR #111 and bounded correctness PR #112. The corrected protected-main commit is `d69fb468c934aae41687b8d8f927ec2381cfcca9`; post-merge Contracts `39906956428` and Security Baseline `39906956779` both succeeded.
+
+The accepted seam is a pure/local application-level profile over existing Release 0.8 canonical measurements plus strict caller-supplied design, exposure, source-quality, and method context. It reuses canonical measurement/cohort comparability and preserves exact external result provenance without statistical recomputation. Its bounded output gives deterministic readiness, one claim ceiling, allowed/prohibited claim codes, and reason/limitation codes. It does not change canonical measurement values, Release 0.11 search-change behavior, Release 0.16 human decision/outcome authority, canonical schemas, or persistence.
+
+For `ai_prompt_cohort_observation`, both baseline and follow-up method contexts must explicitly classify the metric as `ai_prompt_observation` and carry complete stable prompt sampling context: bounded positive prompt count plus sampling cadence ID/version. Missing sampling context limits the result to descriptive observation; changed count or cadence is a discontinuity. These fields participate in deterministic identity. AI referral remains a separate referral-acquisition metric universe.
+
+Even the strongest accepted ceiling is an interpretation bound, not a universal confidence, visibility, priority, or business-value score. Release 0.22 creates no recommendation acceptance, action authority, automatic outcome direction, business/revenue causality, or cross-provider equivalence. It adds no canonical schema, persistence/migration/table, provider network/OAuth/credentials, crawler, prompt runner, scheduler/background worker, runtime AI, cloud/customer deployment, customer/private evidence, or paid dependency.
+
+Release 0.23 remains unreserved and requires a separate Product freeze. Release 1.0 remains separately gated.
