@@ -155,6 +155,12 @@ test('AI referral measurement is limited to the exact referral metric', () => {
   assert.equal(result.claimCeiling, 'ai_referral_change_only');
   assert.ok(result.prohibitedOverclaimCodes.includes('universal_visibility'));
   assert.equal(interpretMeasurement(input({ designClass: 'ai_referral_pre_post' })).claimCeiling, 'descriptive_observation_only');
+  const mismatchedCanonicalMetric = { ...referral, metricId: 'synthetic-ai-referrals' };
+  const mismatch = interpretMeasurement(input({ designClass: 'ai_referral_pre_post', methodContext: {
+    baseline: mismatchedCanonicalMetric, followUp: mismatchedCanonicalMetric,
+  } }));
+  assert.equal(mismatch.claimCeiling, 'not_interpretable');
+  assert.ok(mismatch.comparability.reasons.includes('canonical_source_context_mismatch'));
 });
 
 test('frozen prompt cohort permits only exact cohort claims and changed identity blocks comparison', () => {

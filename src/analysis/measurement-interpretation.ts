@@ -146,6 +146,17 @@ function contextChanged(input: z.infer<typeof inputSchema>): boolean {
   return canonicalJson(input.methodContext.baseline) !== canonicalJson(input.methodContext.followUp);
 }
 
+function measurementMatchesMethod(
+  measurement: z.infer<typeof measurementSchema>,
+  method: z.infer<typeof methodIdentity>,
+): boolean {
+  return measurement.cohort.context.dimensions.providerId === method.providerId
+    && measurement.cohort.context.metric.id === method.metricId
+    && measurement.cohort.context.metric.meaningVersion === method.metricDefinitionVersion
+    && measurement.cohort.context.method.id === method.methodId
+    && measurement.cohort.context.method.version === method.methodVersion;
+}
+
 function armEvidenceValid(input: z.infer<typeof inputSchema>): boolean {
   const arms = input.armEvidence;
   if (!arms) return false;
@@ -178,11 +189,7 @@ function armEvidenceValid(input: z.infer<typeof inputSchema>): boolean {
     && canonicalJson(controlAfter.methodology) === canonicalJson(testAfter.methodology)
     && canonicalJson(controlBefore.methodology) === canonicalJson(controlAfter.methodology)
     && [controlBefore, controlAfter, testBefore, testAfter].every((measurement) =>
-      measurement.cohort.context.dimensions.providerId === input.methodContext.baseline.providerId
-      && measurement.cohort.context.metric.id === input.methodContext.baseline.metricId
-      && measurement.cohort.context.metric.meaningVersion === input.methodContext.baseline.metricDefinitionVersion
-      && measurement.cohort.context.method.id === input.methodContext.baseline.methodId
-      && measurement.cohort.context.method.version === input.methodContext.baseline.methodVersion)
+      measurementMatchesMethod(measurement, input.methodContext.baseline))
     && sameWindow(controlBefore, testBefore) && sameWindow(controlAfter, testAfter);
 }
 
@@ -204,6 +211,11 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
   if (contextChanged(input)) {
     comparison = 'discontinuous';
     reasons.add('source_or_method_context_changed');
+  }
+  if (!measurementMatchesMethod(baseline, input.methodContext.baseline)
+    || !measurementMatchesMethod(followUp, input.methodContext.followUp)) {
+    comparison = 'discontinuous';
+    reasons.add('canonical_source_context_mismatch');
   }
   if (input.designClass === 'ai_prompt_cohort_observation') {
     const before = input.methodContext.baseline;
