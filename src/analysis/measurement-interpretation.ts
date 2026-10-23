@@ -31,6 +31,9 @@ const methodIdentity = z.strictObject({
   location: identifier.optional(),
   promptCohortId: identifier.optional(),
   promptCohortRevision: z.number().int().min(1).max(1_000_000).optional(),
+  promptCount: z.number().int().min(1).max(1_000_000).optional(),
+  promptSamplingCadenceId: identifier.optional(),
+  promptSamplingCadenceVersion: version.optional(),
   entitySetId: identifier.optional(),
   entitySetRevision: z.number().int().min(1).max(1_000_000).optional(),
   metricClass: z.enum(['search_analytics', 'ai_referral_acquisition', 'ai_prompt_observation', 'other_explicit']).optional(),
@@ -222,6 +225,12 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
     const before = input.methodContext.baseline;
     const after = input.methodContext.followUp;
     if (before.promptCohortId !== after.promptCohortId || before.promptCohortRevision !== after.promptCohortRevision) reasons.add('prompt_cohort_changed');
+    if (before.promptCount !== after.promptCount
+      || before.promptSamplingCadenceId !== after.promptSamplingCadenceId
+      || before.promptSamplingCadenceVersion !== after.promptSamplingCadenceVersion) {
+      comparison = 'discontinuous';
+      reasons.add('prompt_sampling_context_changed');
+    }
     if (before.entitySetId !== after.entitySetId || before.entitySetRevision !== after.entitySetRevision) reasons.add('entity_set_changed');
     if (before.providerId !== after.providerId || before.model !== after.model || before.location !== after.location) reasons.add('provider_model_or_location_changed');
     if (before.metricId !== after.metricId || before.metricDefinitionVersion !== after.metricDefinitionVersion
@@ -281,12 +290,25 @@ function build(input: z.infer<typeof inputSchema>): MeasurementInterpretationPro
     if (!referralMetric) reasons.add('ai_referral_metric_semantics_required');
   } else if (input.designClass === 'ai_prompt_cohort_observation') {
     const before = input.methodContext.baseline;
+    const after = input.methodContext.followUp;
+    const promptMetricSemantics = before.metricClass === 'ai_prompt_observation'
+      && after.metricClass === 'ai_prompt_observation';
+    const promptSamplingContextComplete = before.promptCount !== undefined
+      && before.promptSamplingCadenceId !== undefined && before.promptSamplingCadenceVersion !== undefined
+      && after.promptCount !== undefined
+      && after.promptSamplingCadenceId !== undefined && after.promptSamplingCadenceVersion !== undefined;
     const promptIdentityComplete = before.promptCohortId !== undefined
       && before.promptCohortRevision !== undefined && before.providerId !== undefined
       && before.model !== undefined && before.location !== undefined
-      && before.entitySetId !== undefined && before.entitySetRevision !== undefined;
-    ceiling = promptIdentityComplete && !qualityLimited ? 'ai_prompt_cohort_change_only' : 'descriptive_observation_only';
+      && before.entitySetId !== undefined && before.entitySetRevision !== undefined
+      && after.promptCohortId !== undefined && after.promptCohortRevision !== undefined
+      && after.providerId !== undefined && after.model !== undefined && after.location !== undefined
+      && after.entitySetId !== undefined && after.entitySetRevision !== undefined;
+    ceiling = promptMetricSemantics && promptIdentityComplete && promptSamplingContextComplete && !qualityLimited
+      ? 'ai_prompt_cohort_change_only' : 'descriptive_observation_only';
+    if (!promptMetricSemantics) reasons.add('ai_prompt_metric_semantics_required');
     if (!promptIdentityComplete) reasons.add('ai_prompt_cohort_identity_incomplete');
+    if (!promptSamplingContextComplete) reasons.add('prompt_sampling_context_incomplete');
   } else if (qualityLimited || exposureBlocksEffect) {
     ceiling = 'descriptive_observation_only';
   } else if (input.designClass === 'randomized_or_balanced_split_test'
