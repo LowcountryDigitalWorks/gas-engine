@@ -70,7 +70,7 @@ Report the starting revision, final head, changed files, validation results, PR,
 
 ## Release 0.14 accepted boundary
 
-Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The current accepted baseline is Releases 0.1–0.21.
+Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. At Release 0.14 acceptance, the accepted baseline was Releases 0.1–0.14.
 
 Preserve these Release 0.14 boundaries:
 
@@ -166,7 +166,7 @@ See [accepted Release 0.18 guide](docs/service-run.md) and [ADR 0018](docs/decis
 
 ## Release 0.19 accepted portfolio-operations boundary
 
-Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. Releases 0.1–0.21 are the current accepted baseline.
+Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. At Release 0.19 acceptance, Releases 0.1–0.19 were the accepted baseline.
 
 Preserve these accepted Release 0.19 rules:
 
@@ -198,7 +198,7 @@ See [accepted Release 0.20 guide](docs/runtime-portability.md) and [ADR 0020](do
 
 ## Release 0.21 accepted operator-assist boundary
 
-Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. At Release 0.21 acceptance, Releases 0.1–0.21 were the accepted baseline.
 
 Preserve these accepted Release 0.21 rules:
 
