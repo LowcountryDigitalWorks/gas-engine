@@ -250,6 +250,24 @@ test('unordered measurement observations do not change identity and output is pl
   assert.equal(JSON.parse(JSON.stringify(profileA)).id, profileA.id);
 });
 
+test('duplicate observation references with different values fail closed regardless of order', () => {
+  const first = measurement('synthetic-baseline', 'baseline');
+  if (first.result.state !== 'measured') throw new Error('fixture error');
+  const secondObservation = structuredClone(first.result.observations[0]!);
+  if (secondObservation.value.state !== 'observed' || secondObservation.value.value.type !== 'number') throw new Error('fixture error');
+  secondObservation.value.value.value = 11;
+  const reversed = structuredClone(first);
+  if (reversed.result.state !== 'measured') throw new Error('fixture error');
+  first.result.observations.push(secondObservation);
+  reversed.result.observations.push(secondObservation);
+  reversed.result.observations.reverse();
+  const followUp = measurement('synthetic-followup', 'follow_up');
+  assert.throws(() => interpretMeasurement(input({ measurements: [first, followUp] })),
+    (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input');
+  assert.throws(() => interpretMeasurement(input({ measurements: [reversed, followUp] })),
+    (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input');
+});
+
 test('result relationships and result state are retained as canonical gates', () => {
   const followup = measurement('synthetic-followup', 'follow_up', {
     relationship: { role: 'follow_up', baselineMeasurementId: 'other-baseline' },

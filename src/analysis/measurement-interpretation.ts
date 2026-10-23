@@ -137,7 +137,8 @@ function orderedMeasurement(value: z.infer<typeof measurementSchema>): unknown {
       ...value.result,
       observations: [...value.result.observations].sort((a, b) =>
         compareText(canonicalJson(a.reference), canonicalJson(b.reference))
-        || compareText(a.reference.id, b.reference.id)),
+        || compareText(a.reference.id, b.reference.id)
+        || compareText(canonicalJson(a), canonicalJson(b))),
     },
   };
 }
