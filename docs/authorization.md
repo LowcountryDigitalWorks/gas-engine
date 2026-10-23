@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.21 are accepted and merged to `main`. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack candidate. This does not accept the candidate or waive Product semantic review, independent exact-head review, required checks, or release acceptance. Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.22 are accepted and merged to `main`. Release 0.22 Measurement Interpretation & Claim Ceiling Pack was accepted through Issue #110, implementation PR #111, and bounded correctness PR #112; corrected protected `main` is `d69fb468c934aae41687b8d8f927ec2381cfcca9`, with post-merge Contracts `39906956428` and Security Baseline `39906956779` successful. Release 0.23 remains unreserved and requires a separate Product freeze. Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,15 +79,15 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.21 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.21 adds no runtime dependency and performs no external model/provider call.
+Accepted Releases 0.1–0.22 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.22 adds no runtime dependency and performs no provider/model/network call.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
-Release 1.0 cloud deployment remains separately gated. The gate must assess current account headroom, exact identity/auth design and resources, retention/deletion, representative workload and cost measurements, and rollback/decommission planning. Material expansions and any paid costs require separate authority.
+Release 0.23 remains unreserved. Release 1.0 cloud deployment remains separately gated. The gate must assess current account headroom, exact identity/auth design and resources, retention/deletion, representative workload and cost measurements, and rollback/decommission planning. Material expansions and any paid costs require separate authority.
 
 ## Stop and return
 
-Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking, generic correlation outside the exact Issue #43 Release 0.13 diagnostic rules, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Issue #31 supplies live authority only for competitor-informed roadmap work and separately frozen bounded internal R&D releases. Release 1.0 cloud deployment, external/customer software, provider-network expansion, paid tooling, and other material scope expansions remain separately gated; Release 0.13 and #31 do not grant those authorities automatically.
+Return to the Product Orchestrator if accepted `main` materially changes, competing work invalidates the dispatch, future authority narrows, or completion requires a canonical contract change, new persistence/schema, production identity/auth, automatic recommendation/ranking, generic correlation outside the exact accepted bounded semantics, universal metric direction/severity/materiality assumptions, provider/network access, a server/listener, scheduler/background work, external action/execution, paid tooling, real customer/private evidence, security-setting changes, governance bypass, cloud deployment, or a material architecture departure. Do not silently expand scope. Issue #31 supplies live authority only for competitor-informed roadmap work and separately frozen bounded internal R&D releases. Release 0.23 is unreserved; Release 1.0 cloud deployment, external/customer software, provider-network expansion, paid tooling, and other material scope expansions remain separately gated.
 
 ## Release 0.14 — accepted AI Visibility Intelligence Pack
 
@@ -241,7 +241,7 @@ This accepted authority does not include production/customer deployment, cloud r
 
 ## Release 0.21 accepted authority boundary
 
-Release 0.21 Evidence-Grounded Operator Assist Pack is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+Release 0.21 Evidence-Grounded Operator Assist Pack is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.22 are the accepted baseline.
 
 Accepted authority is limited to:
 
@@ -259,6 +259,27 @@ Accepted authority is limited to:
 
 External advisory content, suggested ordering, hypotheses, draft options, URLs, packet IDs, evidence references, and reviewer/provider/model labels never mint tenant/site/scope authority and never become canonical priority, recommendation, outcome, or production-action authority. Reviewer provenance is descriptive only, not authenticated identity.
 
-This accepted authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, Issue #56/#81 implementation, Release 0.22, or Release 1.0.
+This accepted Release 0.21 authority does **not** include a runtime AI/LLM/model call, provider/model SDK, API key/BYOK/credential handling, prompt runner/model router/agent loop, browser automation, network client/server/listener, embeddings/vector database, new database/table/migration, new canonical public wire schema, durable advisory persistence, automatic severity/priority/business-impact score, automatic recommendation/outcome/action, CMS/provider/site mutation, publishing, customer/private evidence transfer, paid dependency/service, cloud/private deployment, Issue #49 implementation, or Issue #56/#81 implementation. Release 0.21 itself did not authorize Release 0.22; Release 0.22 is accepted separately under Issue #110. Release 1.0 remains separately gated.
 
 See the [Release 0.21 accepted guide](operator-assist.md) and [ADR 0021](decisions/0021-evidence-grounded-operator-assist.md).
+
+## Release 0.22 accepted authority boundary
+
+Release 0.22 Measurement Interpretation & Claim Ceiling Pack is **accepted under Issue #110 through implementation PR #111 and bounded correctness PR #112**. The corrected protected-main commit is `d69fb468c934aae41687b8d8f927ec2381cfcca9`; post-merge Contracts `39906956428` and Security Baseline `39906956779` both succeeded.
+
+Accepted Release 0.22 authority is limited to:
+
+- one strict pure/local `interpretMeasurement(...)` application-level profile over existing canonical Release 0.8 measurements plus bounded caller-supplied design, exposure, source-quality, method, and optional external-result context;
+- reuse of canonical measurement/cohort comparability and exact baseline/follow-up relationships rather than a competing canonical interpretation ledger;
+- bounded deterministic readiness, one claim ceiling, allowed/prohibited claim codes, and reason/limitation codes;
+- exact external statistical/result provenance preservation without generic p-value/significance recomputation or universal confidence scoring;
+- controlled/experimental ceilings only when coherent canonical control/test arms, exact method identity, sufficient exposure, and exact external-result binding satisfy the accepted gates;
+- AI referral claims only under explicit `ai_referral_acquisition` metric semantics;
+- AI prompt cohort claims only when both sides declare `metricClass: ai_prompt_observation` and carry complete stable provider/model/location/prompt/entity identity plus bounded positive `promptCount`, `promptSamplingCadenceId`, and `promptSamplingCadenceVersion`; missing sampling context lowers the ceiling and changed count/cadence is discontinuous;
+- synthetic/public-safe proof only, with package version `0.22.0` and `$0` incremental recurring cash.
+
+Release 0.22 claim ceilings are interpretation bounds, not confidence, quality, priority, business-value, SEO, or universal AI-visibility scores. They do not establish business/revenue causality, cross-provider equivalence, recommendation acceptance, action authority, or outcome direction.
+
+This accepted authority does **not** include a canonical JSON schema change, database/table/migration, persistence expansion, provider network/API/OAuth/credential path, crawler, rank/backlink/local-grid collector, prompt runner, scheduler/background worker, runtime AI/LLM/embeddings/BYOK, generic statistical engine, universal score, automatic recommendation/approval/outcome/action, cloud/customer deployment, customer/private evidence, paid dependency/service, Release 0.23, or Release 1.0.
+
+See the [Release 0.22 accepted guide](measurement-interpretation.md) and [ADR 0022](decisions/0022-measurement-interpretation-claim-ceilings.md). Release 0.23 remains unreserved and requires a separate Product freeze.
