@@ -1,8 +1,8 @@
 # ADR 0022 — Measurement Interpretation & Claim Ceilings
 
-- **Status:** Candidate — Release 0.22 / Issue #110; Product acceptance pending exact-head review.
+- **Status:** ACCEPTED — Release 0.22 / Issue #110; merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`.
 - **Decision date:** 2026-10-22
-- **Accepted baseline:** Releases 0.1–0.21 at `18856f506ff62bfffcd9f76eddafe360623112d4`.
+- **Accepted baseline:** Releases 0.1–0.22.
 
 ## Context
 
@@ -10,7 +10,7 @@ Release 0.8 records canonical measurements and human-declared outcomes. Release 
 
 ## Decision
 
-Add `interpretMeasurement`, a strict, pure/local function over two primary canonical Release 0.8 measurement records plus bounded caller-supplied design, exposure, method, quality, and optional external-result context. Matched and experimental ceilings additionally require two canonical measurements per arm, tied to distinct control/test cohorts, valid baseline/follow-up relationships, comparable cohorts, aligned windows, and consistent provider/metric/method identity. An external experiment result must bind to those exact four measurement IDs and method provenance. AI-referral claims require an explicit `ai_referral_acquisition` metric class. It reuses existing canonical measurement/cohort semantics and fails closed when canonical comparison is unknown or discontinuous. It returns a deterministic profile ID, the canonical records and supplied context, a comparability projection, readiness, one enum claim ceiling, fixed allowed/prohibited claim codes, and reason/limitation codes.
+Add `interpretMeasurement`, a strict, pure/local function over two primary canonical Release 0.8 measurement records plus bounded caller-supplied design, exposure, method, quality, and optional external-result context. Matched and experimental ceilings additionally require two canonical measurements per arm, tied to distinct control/test cohorts, valid baseline/follow-up relationships, comparable cohorts, aligned windows, and consistent provider/metric/method identity. An external experiment result must bind to those exact four measurement IDs and method provenance. AI-referral claims require an explicit `ai_referral_acquisition` metric class. For `ai_prompt_cohort_change_only`, both baseline and follow-up contexts require explicit `ai_prompt_observation` metric semantics and bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity; missing required sampling context lowers the ceiling to `descriptive_observation_only`, while changed prompt count or cadence identity/version is discontinuous and blocks direct cohort comparison. It reuses existing canonical measurement/cohort semantics and fails closed when canonical comparison is unknown or discontinuous. It returns a deterministic profile ID, the canonical records and supplied context, a comparability projection, readiness, one enum claim ceiling, fixed allowed/prohibited claim codes, and reason/limitation codes.
 
 The identity binds the complete semantic input, including design, exposure, method/provider/model/location/prompt/entity context, canonical measurement values, quality flags, and external-result provenance. Only observation ordering is normalized because those entries are unordered. The profile does not recalculate external statistics.
 
@@ -26,4 +26,4 @@ No canonical JSON schema, persistence, migration/table, provider/network runtime
 
 ## Review status
 
-This ADR documents a candidate implementation only. Product semantic review, independent exact-head review, required hosted checks, and release acceptance remain pending.
+This ADR documents an accepted release. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668).
