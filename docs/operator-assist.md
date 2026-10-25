@@ -1,6 +1,6 @@
 # Release 0.21 Evidence-Grounded Operator Assist Pack — accepted
 
-Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS and independent exact-head re-review PASS. Post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline. Release 0.22 is not automatically authorized and Release 1.0 remains separately gated.
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS and independent exact-head re-review PASS. Post-merge Contracts #452 / `38314641841` succeeded. At Release 0.21 acceptance, Releases 0.1–0.21 were the accepted baseline. Release 0.22 was later separately authorized and accepted under Issue #110 / PR #112. Release 0.23 remains unreserved and Release 1.0 remains separately gated.
 
 ## Purpose
 

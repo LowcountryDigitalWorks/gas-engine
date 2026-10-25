@@ -1,6 +1,8 @@
-# Measurement Interpretation Profile — Release 0.22 candidate
+# Measurement Interpretation Profile — Release 0.22 accepted
 
-Release 0.22 adds a pure/local deterministic profile over two existing canonical Release 0.8 measurements and caller-supplied design, exposure, method, and source-quality context. The profile returns one bounded claim ceiling, enumerated allowed/prohibited claim codes, and explicit reason/limitation codes. It does not change measurements or write an outcome.
+Release 0.22 is **accepted and merged on `main` through PR #112** at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92` (Product exact-head PASS, post-merge Contracts run #470 / 39906956428 SUCCESS, Security Baseline run #11 / 39906956779 SUCCESS, and independence-clean review ACCEPT via PR business-operations#668).
+
+It adds a pure/local deterministic profile over two existing canonical Release 0.8 measurements and caller-supplied design, exposure, method, and source-quality context. The profile returns one bounded claim ceiling, enumerated allowed/prohibited claim codes, and explicit reason/limitation codes. It does not change measurements or write an outcome.
 
 ## Contract
 

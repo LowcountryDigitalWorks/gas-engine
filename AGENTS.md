@@ -10,7 +10,7 @@
 
 ## Accepted baseline and next-release gates
 
-Releases 0.1–0.21 are accepted and merged. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack as a candidate implementation; it is not accepted until Product and independent exact-head review, required checks, and the release gate pass. Release 0.21 adds the accepted provider-neutral evidence-grounded operator-assist seam while preserving explicit human Release 0.16 authority; it does not embed an AI runtime or grant external execution authority. Release 1.0 remains separately gated. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
+Releases 0.1–0.22 are accepted and merged. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack, accepted and merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` after Product exact-head PASS, post-merge Contracts run #470 / 39906956428 SUCCESS, Security Baseline run #11 / 39906956779 SUCCESS, and independence-clean review (business-operations#667, review id gas-110-pr112-91eb424c-correction-ir-v1, PR business-operations#668). Release 0.22 adds pure/local measurement interpretation and claim ceiling semantics over canonical Release 0.8 measurements and Release 0.11 comparability semantics without persistence expansion, provider/runtime calls, or automatic outcome/action authority. Release 0.23 remains unreserved. Release 1.0 remains separately gated. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
 
 Product mission: G.A.S. remains **Generative / Answer / Search** and is LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine. SEO is in scope for G.A.S. intelligence; commodity sensor/platform duplication is not. WQT owns website-specific SiteOne/Lighthouse technical/site/technical-SEO sensing and normalization. G.A.S. integrates that evidence with other replaceable sources, longitudinal and bounded cross-source interpretation, human decisions, measurement/outcomes, and service operations. Do not rebuild WQT/crawlers, rank/backlink/local-grid collection, prompt runners, or provider dashboards without separate authority.
 
@@ -70,7 +70,7 @@ Report the starting revision, final head, changed files, validation results, PR,
 
 ## Release 0.14 accepted boundary
 
-Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. The current accepted baseline is Releases 0.1–0.21.
+Release 0.14 is **accepted and merged on `main` through PR #47** after Product exact-head review, bounded Bing semantic-integrity corrections, final independent review, the bounded ZeroRank analysis trust-boundary correction, final independent exact-head re-review, protected-main squash merge `a30a889ee2f164ba38d22c5fb38642fbf19b330d`, and post-merge Contracts run `36808029361` SUCCESS. At Release 0.14 acceptance, the accepted baseline was Releases 0.1–0.14.
 
 Preserve these Release 0.14 boundaries:
 
@@ -84,7 +84,7 @@ Preserve these Release 0.14 boundaries:
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
 - Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 1.0 implementation.
-- The accepted `main` baseline is package version 0.21.0. The authorized Release 0.22 candidate uses package version 0.22.0; it remains unaccepted until all exact-head gates pass.
+- The accepted `main` baseline is package version 0.22.0.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
 
@@ -166,7 +166,7 @@ See [accepted Release 0.18 guide](docs/service-run.md) and [ADR 0018](docs/decis
 
 ## Release 0.19 accepted portfolio-operations boundary
 
-Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. Releases 0.1–0.21 are the current accepted baseline.
+Release 0.19 is **accepted and merged on `main` through Issue #69 / PR #70** at squash merge `8f25068a659f1c57be16ccd648cdbc86a8bda1fb`, with post-merge Contracts `37261605064` SUCCESS. At Release 0.19 acceptance, Releases 0.1–0.19 were the accepted baseline.
 
 Preserve these accepted Release 0.19 rules:
 
@@ -198,7 +198,7 @@ See [accepted Release 0.20 guide](docs/runtime-portability.md) and [ADR 0020](do
 
 ## Release 0.21 accepted operator-assist boundary
 
-Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. Releases 0.1–0.21 are the accepted baseline.
+Release 0.21 is **accepted and merged on `main` through Issue #88 / PR #89** at squash merge `d555d7a31444c942dede978547a5dd5ca3f11695`, after Product exact-head PASS `6130681325` and independent exact-head re-review PASS `6133456059`; post-merge Contracts #452 / `38314641841` succeeded. At Release 0.21 acceptance, Releases 0.1–0.21 were the accepted baseline.
 
 Preserve these accepted Release 0.21 rules:
 
@@ -213,4 +213,24 @@ Preserve these accepted Release 0.21 rules:
 - a human must independently choose what to review and explicitly use the accepted Release 0.16 human decision path before any canonical recommendation/measurement/outcome work;
 - add no runtime AI/model/provider call, provider SDK, API key/BYOK/credential path, network client/server/listener, prompt runner/model router/agent loop, embeddings/vector DB, browser automation, automatic priority/severity/business-impact scoring, automatic recommendation/outcome/action, database/table/migration, durable advisory persistence, canonical public schema, cloud/customer deployment, customer/private evidence transfer, paid service/dependency, Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0.
 
-See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself does not authorize Release 0.22; the bounded candidate is authorized separately by Issue #110. Release 1.0 remains separately gated.
+See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself did not authorize Release 0.22; Release 0.22 was separately authorized and is now accepted under Issue #110 / PR #112. Release 0.23 remains unreserved. Release 1.0 remains separately gated.
+
+## Release 0.22 accepted measurement-interpretation boundary
+
+Release 0.22 is **accepted and merged on `main` through Issue #110 / PR #112** at squash merge `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668). Releases 0.1–0.22 are the accepted baseline.
+
+Preserve these accepted Release 0.22 rules:
+
+- Release 0.22 remains pure/local Measurement Interpretation & Claim Ceiling semantics over two primary canonical Release 0.8 measurements and caller-supplied design, exposure, method, and source-quality context;
+- `ai_prompt_cohort_change_only` requires explicit `ai_prompt_observation` metric semantics on BOTH baseline and follow-up contexts;
+- bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity is required; missing context lowers the ceiling to descriptive observation and changed sampling context is discontinuous;
+- no canonical schema, migration/table, or persistence expansion;
+- no provider/API/OAuth/network/runtime AI/prompt runner/scheduler/cloud/customer/private-data work;
+- no automatic recommendation, priority, decision, outcome, action/remediation or business/revenue causality authority;
+- no universal Search/SEO/AI visibility/confidence score or cross-provider equivalence;
+- no public pricing/SLA/ranking/citation/traffic/lead/time-savings claim;
+- incremental cash $0 / included capacity only;
+- Release 0.23 remains unreserved unless a separate Product freeze says otherwise;
+- Release 1.0 remains separately gated.
+
+See [accepted Release 0.22 guide](docs/measurement-interpretation.md) and [ADR 0022](docs/decisions/0022-measurement-interpretation-claim-ceilings.md).
