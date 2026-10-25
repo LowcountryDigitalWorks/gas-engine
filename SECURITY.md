@@ -1,6 +1,6 @@
 # Security posture
 
-Releases 0.1–0.7 are accepted on `main`. Releases 0.5 and 0.6 add pure/local adapters for already-normalized WQT evidence and already-sanitized ZeroRank evidence respectively. Release 0.7 adds deterministic same-stream longitudinal comparison over coherent tenant-scoped persisted snapshots. None adds a deployed service, provider networking, production identity provider, listener, customer evidence, cloud deployment, provider credential handling, or sensor execution.
+Releases 0.1–0.22 are accepted on `main`. Releases 0.5 and 0.6 add pure/local adapters for already-normalized WQT evidence and already-sanitized ZeroRank evidence respectively. Release 0.7 adds deterministic same-stream longitudinal comparison over coherent tenant-scoped persisted snapshots. None adds a deployed service, provider networking, production identity provider, listener, customer evidence, cloud deployment, provider credential handling, or sensor execution.
 
 Every owned repository operation still requires an opaque context recognized by the package-internal tenant-authority registry. The production persistence surface exposes only the `TenantContext` type and `requireTenantContext`; persistence cannot mint authority. Release 0.4 deliberately permits exactly one additional production caller of `issueTenantContext`: `src/authentication/principal.ts`, where a trusted authenticator adapter may register a verified principal and exact tenant/site/site-scope/provider/provider-connection grants. Request/transport/service/provider-adapter/analysis code cannot call the issuer. Record IDs, scope fields, valid evidence, WQT/ZeroRank site or workspace/target values, provider/source IDs, hashes, clones, casts, and proxies cannot create authority.
 
@@ -57,7 +57,7 @@ Evidence is always untrusted data. Instruction-like text may be persisted as tex
 - **Untrusted input:** provider payloads, retrieved page content, normalized WQT evidence, sanitized ZeroRank evidence, and other evidence remain inert input. Future display/adapter paths must preserve that property and provenance.
 - **Least privilege:** separate sensor/read adapters from write/action adapters and their credentials. Read access never grants write access. A recommendation, including one accepted by a human, does not automatically authorize a production change.
 - **Dependencies:** review necessity, maintenance, licenses, and advisories before adoption. Releases 0.5–0.7 add no dependency; Zod/TypeScript/Node types remain the existing locked set.
-- **Release controls:** `main` remains governed by PR, linear/squash history, review-thread resolution, and the required `contracts` check. Releases 0.1–0.7 are accepted; Release 0.8 and cloud deployment remain separately gated.
+- **Release controls:** `main` remains governed by PR, linear/squash history, review-thread resolution, and the required `contracts` check. Releases 0.1–0.22 are accepted; cloud deployment remains separately gated.
 
 ## Report a vulnerability privately
 
