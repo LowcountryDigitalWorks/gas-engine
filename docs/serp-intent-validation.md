@@ -1,6 +1,6 @@
 # Release 0.23 — SERP Intent Validation Profile
 
-Status: **candidate under Issue #120; not accepted until Product + independent exact-head review and required checks pass**.
+Status: **accepted and merged via Issue #120 / PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7`, accepted tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`**.
 
 Release 0.23 closes the accepted Release 0.12 page-focus validation seam with one pure/local, provider-neutral comparison profile over already-sanitized SERP snapshots. It validates **result-family similarity under an explicit method**, not user-intent truth and not page-change authority.
 
@@ -174,4 +174,4 @@ Any later recommendation must pass through separately accepted human review sema
 
 ## Cost, data, and security
 
-Incremental cash cost is `$0`. The candidate adds no dependency, credential, network path, cloud resource, database, schema/migration, listener, scheduler, runtime AI, provider account access, customer/private data, or production mutation.
+Incremental cash cost is `$0`. The accepted release adds no dependency, credential, network path, cloud resource, database, schema/migration, listener, scheduler, runtime AI, provider account access, customer/private data, or production mutation.
