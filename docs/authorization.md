@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.22 are accepted and merged to `main`. Issue #110 authorizes the bounded Release 0.22 Measurement Interpretation & Claim Ceiling Pack, accepted and merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668). Issue #120 authorizes the bounded Release 0.23 SERP Intent Validation Profile as a candidate; it is not accepted until Product and independent exact-head review, required checks, and the release gate pass. Release 1.0 remains separately gated. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.23 are accepted and merged to `main`. Release 0.22 was accepted through Issue #110 / PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92` after Product exact-head review, Contracts/Security validation, and independence-clean review. Release 0.23 SERP Intent Validation Profile is accepted through Issue #120 / PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd` after Product exact-head PASS, fresh independence-clean exact-head PASS, required pre-merge Contracts/Security validation, zero unresolved threads, protected-main merge, and successful post-merge Contracts/Security validation. The accepted package baseline is `0.23.0`. Release 1.0 remains separately gated, and this accepted state does not reserve or authorize Release 0.24. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.22 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Releases 0.21 and 0.22 add no external model/provider/network runtime dependency. The authorized Release 0.23 candidate keeps the same `$0`/included-only target and adds no provider/network runtime dependency.
+Accepted Releases 0.1–0.23 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.23 adds no provider/network runtime dependency.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -275,15 +275,15 @@ Accepted Release 0.22 authority is limited to:
 - emission of deterministic profile output with allowed/prohibited claim codes and reason/limitation codes;
 - public-safe synthetic tests and fixtures.
 
-This accepted authority does **not** include canonical schema changes, database/table/migration expansion, provider/API/OAuth/network/runtime AI/prompt runner/scheduler/cloud/customer/private-data work, automatic recommendation, priority, decision, outcome, action/remediation or business/revenue causality authority, universal Search/SEO/AI visibility/confidence scores or cross-provider equivalence, public pricing/SLA/ranking/citation/traffic/lead/time-savings claims, Release 0.23 authority beyond the separately frozen Issue #120 candidate, or Release 1.0 authority.
+This accepted authority does **not** include canonical schema changes, database/table/migration expansion, provider/API/OAuth/network/runtime AI/prompt runner/scheduler/cloud/customer/private-data work, automatic recommendation, priority, decision, outcome, action/remediation or business/revenue causality authority, universal Search/SEO/AI visibility/confidence scores or cross-provider equivalence, public pricing/SLA/ranking/citation/traffic/lead/time-savings claims, Release 0.24 authority, or Release 1.0 authority. Release 0.23 acceptance is separately established under Issue #120 / PR #121.
 
 See [accepted Release 0.22 guide](measurement-interpretation.md) and [accepted ADR 0022](decisions/0022-measurement-interpretation-claim-ceilings.md).
 
-## Release 0.23 authorized candidate boundary
+## Release 0.23 accepted boundary
 
-Issue #120 authorizes one bounded **candidate** SERP Intent Validation Profile over already-sanitized, synthetic/public-safe SERP snapshots. Release 0.23 is not accepted or merged merely because this authority exists.
+Release 0.23 SERP Intent Validation Profile is **accepted and merged through Issue #120 / PR #121** at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`. Product exact-head semantic review and a fresh independence-clean exact-head review passed; required pre-merge and post-merge Contracts/Security validation passed; review threads were clear. The accepted package version is `0.23.0`.
 
-Authorized candidate behavior is limited to:
+Accepted behavior is limited to:
 
 - pure/local provider-neutral comparison of explicit representative queries selected from a supplied Release 0.12 page-focus candidate/query-selection identity;
 - one strict caller-supplied/versioned comparison policy containing bounded top-K, comparable-pair floor, explicit same/distinct overlap thresholds with an ambiguity band, collection-time skew, and optional repeated-borderline snapshot requirements;
@@ -298,6 +298,6 @@ Authorized candidate behavior is limited to:
 - fixed human review and no-automatic-page-change ceilings;
 - public-safe synthetic/adversarial tests, guide, ADR, and package version `0.23.0`.
 
-This candidate authority does **not** include a live SERP or DataForSEO request, provider API/OAuth/account work, custom crawler/scraper, network client, provider SDK, runtime AI/LLM/embeddings/query generation, database/table/migration/canonical-schema change, scheduler/background worker, cloud runtime, UI framework, customer/private evidence, paid dependency/resource, automatic recommendation/priority/approval, or split/merge/consolidate/redirect/canonical/create/delete/rewrite/publish/action authority.
+This accepted authority does **not** include a live SERP or DataForSEO request, provider API/OAuth/account work, custom crawler/scraper, network client, provider SDK, runtime AI/LLM/embeddings/query generation, database/table/migration/canonical-schema change, scheduler/background worker, cloud runtime, UI framework, customer/private evidence, paid dependency/resource, automatic recommendation/priority/approval, or split/merge/consolidate/redirect/canonical/create/delete/rewrite/publish/action authority. Release 0.23 acceptance does not reserve or authorize Release 0.24.
 
-See [Release 0.23 candidate guide](serp-intent-validation.md) and [ADR 0023](decisions/0023-serp-intent-validation-profile.md). Product exact-head semantic review, one fresh independence-clean review, hosted checks, unresolved-thread clearance, and standing merge authority remain required before acceptance.
+See [accepted Release 0.23 guide](serp-intent-validation.md) and [accepted ADR 0023](decisions/0023-serp-intent-validation-profile.md). Any future semantic expansion requires separately bounded authority, validation, and independent review.
