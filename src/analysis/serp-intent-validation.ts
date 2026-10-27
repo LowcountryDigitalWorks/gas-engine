@@ -118,6 +118,7 @@ export type SerpIntentNotReadyReason =
   | 'source_schema_mismatch'
   | 'collection_time_skew_exceeded'
   | 'insufficient_eligible_organic_depth'
+  | 'incompatible_result_typing'
   | 'incompatible_organic_rank_semantics'
   | 'too_few_comparable_query_pairs'
   | 'snapshot_count_mismatch'
@@ -272,13 +273,19 @@ function resultShape(snapshot: SerpSnapshot): SerpResultShapeContext {
 }
 
 function selectOrganic(snapshot: SerpSnapshot, topK: number): OrganicSelection | SerpIntentNotReadyReason {
-  const organic = snapshot.results
-    .map((row, index) => ({ row, index }))
-    .filter(({ row }) => row.type === 'organic' && row.url !== undefined);
+  const resultRows = snapshot.results.map((row, index) => ({ row, index }));
+  if (resultRows.some(({ row }) => row.type === 'organic' && row.url === undefined)) {
+    return 'incompatible_result_typing';
+  }
 
+  const organic = resultRows.filter(({ row }) => row.type === 'organic');
   const anySameTypeRank = organic.some(({ row }) => row.sameTypeRank !== undefined);
   if (anySameTypeRank && organic.some(({ row }) => row.sameTypeRank === undefined)) {
     return 'incompatible_organic_rank_semantics';
+  }
+  if (anySameTypeRank) {
+    const ranks = organic.map(({ row }) => row.sameTypeRank!);
+    if (new Set(ranks).size !== ranks.length) return 'incompatible_organic_rank_semantics';
   }
 
   const ordered = [...organic].sort((left, right) => {
@@ -374,10 +381,12 @@ function compareSnapshotPair(
 
   const leftOrganic = selectOrganic(left, policy.topK);
   const rightOrganic = selectOrganic(right, policy.topK);
-  const organicReasons: SerpIntentNotReadyReason[] = [];
-  if (typeof leftOrganic === 'string') organicReasons.push(leftOrganic);
-  if (typeof rightOrganic === 'string') organicReasons.push(rightOrganic);
-  if (organicReasons.length > 0) return uniqueSorted(organicReasons) as SerpIntentNotReadyReason[];
+  if (typeof leftOrganic === 'string' || typeof rightOrganic === 'string') {
+    const organicReasons: SerpIntentNotReadyReason[] = [];
+    if (typeof leftOrganic === 'string') organicReasons.push(leftOrganic);
+    if (typeof rightOrganic === 'string') organicReasons.push(rightOrganic);
+    return uniqueSorted(organicReasons) as SerpIntentNotReadyReason[];
+  }
 
   const exact = overlap(leftOrganic.urls, rightOrganic.urls);
   let registrableDomainOverlap: SerpDomainOverlap;
