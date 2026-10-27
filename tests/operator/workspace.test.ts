@@ -415,7 +415,7 @@ test('Release 0.17 customer report selections and source bindings fail closed', 
 test('Release 0.17 browser workbench escapes dynamic content and exposes no network or authoritative storage path', async (t) => {
   const fixture = await decisionCycleFixture(t);
   const attacked = structuredClone(fixture.input) as any;
-  attacked.decision.summary = '\"><img src=x onerror=\"alert(1)\"><script>alert(1)</script>';
+  attacked.decision.summary = '"><img src=x onerror="alert(1)"><script>alert(1)</script>';
   const request = {
     ...workspaceRequest(fixture),
     decisionCycleInput: attacked,
@@ -428,11 +428,11 @@ test('Release 0.17 browser workbench escapes dynamic content and exposes no netw
   assert.match(html, /form-action 'none'/);
   assert.match(html, /script-src 'sha256-/);
   assert.match(html, /focus-visible/);
-  assert.match(html, /<nav aria-label=\"Workspace sections\">/);
-  assert.match(html, /id=\"evidence-provider\"/);
+  assert.match(html, /<nav aria-label="Workspace sections">/);
+  assert.match(html, /id="evidence-provider"/);
   assert.match(html, /Evidence state counts/);
   assert.match(html, /Source \/ method manifest/);
-  assert.match(html, /<th scope=\"col\">/);
+  assert.match(html, /<th scope="col">/);
   assert.match(html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html, /<img\s+src=x/i);
 
@@ -469,9 +469,9 @@ test('Release 0.17 surfaces retain no schema, migration, runtime dependency, pro
     'src/operator/workspace-entrypoint.ts',
   ].map((path) => readFileSync(path, 'utf8')).join('\n');
   assert.doesNotMatch(sources, /CREATE\s+TABLE|ALTER\s+TABLE|INSERT\s+INTO/i);
-  assert.doesNotMatch(sources, /from ['\"].*(?:sqlite|migrations)/i);
+  assert.doesNotMatch(sources, /from ['"].*(?:sqlite|migrations)/i);
   assert.doesNotMatch(sources, /\b(?:OpenAI|Anthropic|embedding|BYOK)\b/i);
-  assert.doesNotMatch(sources, /from ['\"](?:node:http|node:https|node:net|undici|axios)/i);
+  assert.doesNotMatch(sources, /from ['"](?:node:http|node:https|node:net|undici|axios)/i);
   assert.doesNotMatch(sources, /\bfetch\s*\(/);
   assert.doesNotMatch(sources, /Issue\s*#(?:49|56)|Release\s+1\.0/i);
 });
