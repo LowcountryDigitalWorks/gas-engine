@@ -1,12 +1,12 @@
 # ADR 0023 — SERP Intent Validation Profile
 
-Status: **candidate under gas-engine #120**
+Status: **accepted via gas-engine #120 / PR #121**
 
 ## Context
 
 Accepted Release 0.12 deliberately stops at a page-focus divergence candidate and requires separate SERP/result validation before any intent or page-architecture conclusion. Research under #101 found that bounded SERP overlap is useful decision evidence when source, locale, device, time, depth, and methodology remain explicit, but it is not intent truth.
 
-Product froze Release 0.23 in #120 as a synthetic mechanism proof so G.A.S. can validate this semantic seam without a live provider request, DataForSEO credits, a crawler, or a new evidence store.
+Product froze Release 0.23 in #120 as a synthetic mechanism proof so G.A.S. can validate this semantic seam without a live provider request, DataForSEO credits, a crawler, or a new evidence store. The reviewed candidate was accepted and merged through PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7`, tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`.
 
 ## Decision
 
@@ -84,4 +84,4 @@ Tradeoffs:
 
 ## Validation and acceptance
 
-The candidate must pass repository-required deterministic validation plus hosted Contracts and G.A.S. Security Baseline on the exact final head. Product exact-head semantic review and one fresh independence-clean review remain required. Candidate movement invalidates review identity. This DEV lane does not self-accept or merge.
+Release 0.23 was accepted after exact-head deterministic validation, Product semantic review, one fresh independence-clean review, required hosted checks, zero unresolved review threads, and protected-main merge at `c8405603dc60a8cbf941b45a8361784c938e4fb7` / tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`. Post-merge Contracts and Security Baseline checks also passed. Any future semantic change requires separately bounded authority and review; this acceptance does not reserve or authorize Release 0.24.
