@@ -10,7 +10,7 @@
 
 ## Accepted baseline and next-release gates
 
-Releases 0.1–0.22 are accepted and merged. Issue #110 authorized Release 0.22, which is accepted and merged on `main` through PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` after Product exact-head PASS, post-merge Contracts run #470 / 39906956428 SUCCESS, Security Baseline run #11 / 39906956779 SUCCESS, and independence-clean review (business-operations#667, review id gas-110-pr112-91eb424c-correction-ir-v1, PR business-operations#668). Release 0.22 adds pure/local measurement interpretation and claim ceiling semantics over canonical Release 0.8 measurements and Release 0.11 comparability semantics without persistence expansion, provider/runtime calls, or automatic outcome/action authority. Issue #120 separately authorizes the bounded Release 0.23 SERP Intent Validation Profile candidate; it is not accepted until Product and independent exact-head review, required checks, and the release gate pass. Release 1.0 remains separately gated. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
+Releases 0.1–0.23 are accepted and merged. Release 0.22 was accepted through Issue #110 / PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` after Product exact-head review, Contracts/Security validation, and independence-clean review. Release 0.23 SERP Intent Validation Profile is accepted through Issue #120 / PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd` after Product exact-head PASS, fresh independence-clean exact-head PASS, required pre-merge Contracts/Security validation, zero unresolved threads, protected-main merge, and successful post-merge Contracts/Security validation. The accepted package baseline is `0.23.0`. Release 1.0 remains separately gated; no Release 0.24 candidate is reserved or authorized by this accepted state. Release 0.4 proves **authenticated bounded ingestion** on accepted Release 0.3: an injected opaque-credential authenticator, immutable registered principals with exact grants, one application ingestion service, and one in-process Web `POST /v1/evidence/collections` transport. Release 0.5 adds one accepted pure/local adapter for already-normalized WQT evidence. Release 0.6 adds one accepted pure/local adapter for the exact sanitized ZeroRank `ldw.zerorank-evidence.v1` minor-0 artifact. Release 0.7 adds accepted deterministic same-semantic-stream longitudinal evidence diff plus non-ranked review-attention filtering over coherent tenant-scoped persisted snapshots. Preserve that accepted behavior in all future work.
 
 Product mission: G.A.S. remains **Generative / Answer / Search** and is LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine. SEO is in scope for G.A.S. intelligence; commodity sensor/platform duplication is not. WQT owns website-specific SiteOne/Lighthouse technical/site/technical-SEO sensing and normalization. G.A.S. integrates that evidence with other replaceable sources, longitudinal and bounded cross-source interpretation, human decisions, measurement/outcomes, and service operations. Do not rebuild WQT/crawlers, rank/backlink/local-grid collection, prompt runners, or provider dashboards without separate authority.
 
@@ -84,7 +84,7 @@ Preserve these Release 0.14 boundaries:
 - Optional Release 0.10/0.11/0.12 context is descriptive only and cannot change Release 0.14 findings.
 - Static operator output remains escaped, CSP-restricted, standalone, no-JavaScript, no external assets, no write controls, bounded, and non-evaluative.
 - Do not add provider networking, credentials/OAuth, runtime AI/BYOK, crawler/SERP scraping, scheduler/worker, persistence, cloud resources, customer/private evidence, new paid service, or Release 1.0 implementation.
-- The accepted `main` baseline is package version 0.22.0; the authorized Release 0.23 candidate uses package version 0.23.0 until accepted or rejected.
+- The accepted `main` package baseline is `0.23.0` after accepted Release 0.23; this history section grants no Release 0.24 authority.
 
 See [Release 0.14 guide](docs/ai-visibility-intelligence.md), [Bing adapter guide](docs/adapters/bing-ai-performance.md), and [ADR 0014](docs/decisions/0014-ai-visibility-intelligence-pack.md).
 
@@ -213,7 +213,7 @@ Preserve these accepted Release 0.21 rules:
 - a human must independently choose what to review and explicitly use the accepted Release 0.16 human decision path before any canonical recommendation/measurement/outcome work;
 - add no runtime AI/model/provider call, provider SDK, API key/BYOK/credential path, network client/server/listener, prompt runner/model router/agent loop, embeddings/vector DB, browser automation, automatic priority/severity/business-impact scoring, automatic recommendation/outcome/action, database/table/migration, durable advisory persistence, canonical public schema, cloud/customer deployment, customer/private evidence transfer, paid service/dependency, Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0.
 
-See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself did not authorize Release 0.22; Release 0.22 was separately authorized and is now accepted under Issue #110 / PR #112. Release 0.23 is separately authorized as an unaccepted candidate by Issue #120. Release 1.0 remains separately gated.
+See [accepted Release 0.21 guide](docs/operator-assist.md) and [ADR 0021](docs/decisions/0021-evidence-grounded-operator-assist.md). Release 0.21 itself did not authorize Release 0.22; Release 0.22 was separately authorized and is now accepted under Issue #110 / PR #112. Release 0.23 was separately authorized and is now accepted under Issue #120 / PR #121. Release 1.0 remains separately gated.
 
 ## Release 0.22 accepted measurement-interpretation boundary
 
@@ -230,14 +230,14 @@ Preserve these accepted Release 0.22 rules:
 - no universal Search/SEO/AI visibility/confidence score or cross-provider equivalence;
 - no public pricing/SLA/ranking/citation/traffic/lead/time-savings claim;
 - incremental cash $0 / included capacity only;
-- Release 0.23 authority is limited to the separately frozen Issue #120 candidate; acceptance is not implied;
+- Release 0.23 is separately accepted under Issue #120 / PR #121; this Release 0.22 section grants no Release 0.24 authority;
 - Release 1.0 remains separately gated.
 
 See [accepted Release 0.22 guide](docs/measurement-interpretation.md) and [ADR 0022](docs/decisions/0022-measurement-interpretation-claim-ceilings.md).
 
-## Release 0.23 authorized SERP-intent-validation candidate boundary
+## Release 0.23 accepted SERP-intent-validation boundary
 
-Issue #120 freezes and authorizes exactly one bounded Release 0.23 candidate. Preserve these candidate rules until Product/IR acceptance:
+Release 0.23 is **accepted and merged through Issue #120 / PR #121** at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`. Preserve these accepted rules:
 
 - consume only caller-supplied sanitized synthetic/public-safe SERP snapshots; no provider retrieval or credential path;
 - use one explicit versioned policy for top-K, comparable-pair floor, same/distinct thresholds with an ambiguity band, collection-time skew, repeated-borderline snapshot requirements, and exact source-equality semantics;
@@ -252,6 +252,6 @@ Issue #120 freezes and authorizes exactly one bounded Release 0.23 candidate. Pr
 - preserve `humanIntentReviewRequired: true` and `noAutomaticPageChange: true` or exact semantic equivalents;
 - emit no split/merge/consolidate/redirect/canonical/create/delete/rewrite/publish, recommendation, priority, approval, or external-action authority;
 - add no canonical schema/table/migration, persistence, provider SDK/network client, crawler/scraper, DataForSEO usage, scheduler/worker, runtime AI, cloud, UI framework, customer/private evidence, or paid dependency/resource;
-- package candidate version is `0.23.0`; accepted `main` remains 0.22.0 until merge.
+- accepted package version is `0.23.0`.
 
-See [Release 0.23 candidate guide](docs/serp-intent-validation.md) and [ADR 0023](docs/decisions/0023-serp-intent-validation-profile.md). The candidate still requires exact-head machine validation, Product semantic review, one fresh independence-clean IR, zero unresolved threads, and standing merge authority. This DEV lane must not self-accept, independently review, or merge it.
+See [accepted Release 0.23 guide](docs/serp-intent-validation.md) and [ADR 0023](docs/decisions/0023-serp-intent-validation-profile.md). Release 0.23 was accepted after exact-head machine validation, Product semantic review, one fresh independence-clean IR, zero unresolved threads, and protected-main merge. Any future semantic expansion requires separately bounded authority/review; this acceptance does not reserve or authorize Release 0.24.
