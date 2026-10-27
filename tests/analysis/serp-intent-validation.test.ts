@@ -325,7 +325,7 @@ test('duplicate exact URLs are deduped while URL variants remain distinct', () =
   assert.notEqual(profile.state, 'not_ready');
   const urls = profile.comparisons[0]!.snapshots[0]!.exactUrlOverlap.rightTopKUrls;
   assert.equal(urls.filter((url) => url === 'https://a.test/one').length, 1);
-  assert.ok(urls.includes('https://a.test/one/'));
+  assert.equal(new Set(urls).has('https://a.test/one/'), true);
 });
 
 test('result-shape differences are descriptive only and cannot change candidate state', () => {
