@@ -9,7 +9,7 @@ import {
   type SerpSnapshot,
 } from '../../src/analysis/serp-intent-validation.js';
 
-type Mutable<T> = { -readonly [P in keyof T]: Mutable<T[P]> };
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 const baseSource: SerpSnapshot['source'] = {
   providerId: 'synthetic-serp-provider',
@@ -100,7 +100,7 @@ const distinctRight = [
 const ambiguousRight = [
   'https://a.test/one',
   'https://b.test/two',
-  'https://x.test/three',
+  'https://c.test/three',
   'https://y.test/four',
   'https://z.test/five',
 ];
@@ -149,7 +149,7 @@ test('low exact URL overlap yields distinct_result_family_candidate', () => {
 test('ambiguity-band overlap yields ambiguous', () => {
   const profile = validateSerpIntentProfile(input(ambiguousRight));
   assert.equal(profile.state, 'ambiguous');
-  assert.equal(profile.comparisons[0]?.snapshots[0]?.exactUrlOverlap.jaccard, 2 / 8);
+  assert.equal(profile.comparisons[0]?.snapshots[0]?.exactUrlOverlap.jaccard, 3 / 7);
 });
 
 test('missing, failed, partial, and truncated evidence are not_ready and never manufactured zero overlap', () => {
