@@ -140,6 +140,8 @@ test('high exact URL overlap yields same_result_family_candidate', () => {
   assert.equal(profile.comparisons[0]?.snapshots[0]?.exactUrlOverlap.intersectionCount, 4);
   assert.equal(profile.comparisons[0]?.snapshots[0]?.exactUrlOverlap.unionCount, 6);
   assert.equal(profile.comparisons[0]?.snapshots[0]?.exactUrlOverlap.jaccard, 4 / 6);
+  assert.deepEqual(profile.comparisons[0]?.snapshots[0]?.requestedDepth, { left: 10, right: 10 });
+  assert.deepEqual(profile.comparisons[0]?.snapshots[0]?.actualEligibleOrganicDepth, { left: 5, right: 5 });
 });
 
 test('low exact URL overlap yields distinct_result_family_candidate', () => {
@@ -263,12 +265,27 @@ test('provider same-type rank controls organic ordering when supplied', () => {
   assert.deepEqual(comparison.exactUrlOverlap.rightTopKUrls, sameRight);
 });
 
-test('partial same-type rank semantics fail closed', () => {
+test('partial or duplicate same-type rank semantics fail closed', () => {
+  const partial = snapshot('query-b', sameRight);
+  delete (partial.results[1] as Mutable<(typeof partial.results)[number]>).sameTypeRank;
+  const partialProfile = validateSerpIntentProfile(input(sameRight, { right: partial }));
+  assert.equal(partialProfile.state, 'not_ready');
+  assert.ok(partialProfile.reasons.includes('incompatible_organic_rank_semantics'));
+
+  const duplicate = snapshot('query-b', sameRight);
+  (duplicate.results[1] as Mutable<(typeof duplicate.results)[number]>).sameTypeRank = 1;
+  const duplicateProfile = validateSerpIntentProfile(input(sameRight, { right: duplicate }));
+  assert.equal(duplicateProfile.state, 'not_ready');
+  assert.ok(duplicateProfile.reasons.includes('incompatible_organic_rank_semantics'));
+});
+
+test('organic result rows without URLs fail closed as incompatible result typing', () => {
   const right = snapshot('query-b', sameRight);
-  delete (right.results[1] as Mutable<(typeof right.results)[number]>).sameTypeRank;
+  right.results.unshift({ type: 'organic', sameTypeRank: 99 });
   const profile = validateSerpIntentProfile(input(sameRight, { right }));
   assert.equal(profile.state, 'not_ready');
-  assert.ok(profile.reasons.includes('incompatible_organic_rank_semantics'));
+  assert.ok(profile.reasons.includes('incompatible_result_typing'));
+  assert.equal(profile.comparisons.length, 0);
 });
 
 test('representative-query and snapshot input order cannot change deterministic identity/output', () => {
