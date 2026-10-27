@@ -481,7 +481,7 @@ test('Release 0.21 adds no persistence/schema/runtime dependency or network/mode
   ]) assert.equal(production.toLowerCase().includes(forbidden.toLowerCase()), false, forbidden);
 
   const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { dependencies: Record<string, string>; version: string };
-  assert.equal(pkg.version, '0.22.0');
+  assert.equal(pkg.version, '0.23.0');
   assert.deepEqual(Object.keys(pkg.dependencies).sort(), ['zod']);
   const schemas = readdirSync('schemas', { recursive: true }).filter((entry) => String(entry).endsWith('.json'));
   assert.equal(schemas.length, 11);
