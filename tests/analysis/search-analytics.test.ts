@@ -512,6 +512,12 @@ test('minor0 SearchAnalyticsSignal cohort preserves accepted Release 0.10 JSON s
   assert.ok(signal);
   assert.deepEqual(Object.keys(signal.cohort).sort(), [...LEGACY_SIGNAL_COHORT_KEYS].sort());
   assert.equal(Object.hasOwn(signal.cohort, 'sourceUniverse'), false);
+  const overlap = report.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  assert.ok(overlap);
+  assert.deepEqual(Object.keys(overlap.cohort).sort(), ['pages', 'query', 'queryId', 'searchType']);
+  assert.equal(Object.hasOwn(overlap.cohort, 'sourceUniverse'), false);
+  assert.equal(overlap.cohort.searchType, 'web');
 });
 
 function minor1WindowPair(
@@ -563,6 +569,23 @@ test('minor1 signals expose source universe and modality-aware deterministic ide
     webModality: 'multimodal',
   });
   assert.notEqual(textSignal.id, multimodalSignal.id);
+
+  const textOverlap = textReport.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  const multimodalOverlap = multimodalReport.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  assert.ok(textOverlap);
+  assert.ok(multimodalOverlap);
+  assert.deepEqual(textOverlap.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'text_based',
+  });
+  assert.deepEqual(multimodalOverlap.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  });
+  assert.equal(textOverlap.values.pageCount, multimodalOverlap.values.pageCount);
+  assert.notEqual(textOverlap.id, multimodalOverlap.id);
 
   const repeat = analyzeSearchAnalyticsSignals(textBased.baseline, textBased.current, policies);
   assert.equal(repeat.signals.find((item) => item.id === textSignal.id)?.id, textSignal.id);

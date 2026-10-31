@@ -480,6 +480,26 @@ function signalSourceUniverse(sidecar: SearchAnalyticsAdaptedRow): SearchAnalyti
   };
 }
 
+function overlapSourceUniverse(
+  semantics: SearchAnalyticsSemantics,
+  rows: readonly ValidatedSearchAnalyticsRow[],
+): SearchAnalyticsSignalSourceUniverse | undefined {
+  const minor1 = minor1ContextFromSemantics(semantics);
+  const fromSemantics = minor1 === undefined
+    ? undefined
+    : { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
+  for (const row of rows) {
+    const fromRow = signalSourceUniverse(row.sidecar);
+    const matches = fromSemantics === undefined
+      ? fromRow === undefined
+      : fromRow?.reportFamily === fromSemantics.reportFamily && fromRow.webModality === fromSemantics.webModality;
+    if (!matches) {
+      fail('invalid_window', 'Search-analytics overlap rows do not match the validated source universe.');
+    }
+  }
+  return fromSemantics;
+}
+
 function baseSignal(
   kind: SearchAnalyticsSignalKind,
   row: ValidatedSearchAnalyticsRow,
@@ -669,6 +689,7 @@ export function analyzeSearchAnalyticsSignals(
     const overlapPolicy = policy(policies.overlap.id, policies.overlap.version, {
       minimumImpressions: policies.overlap.minimumImpressions,
     });
+    const sourceUniverse = overlapSourceUniverse(current.semantics, rows);
     signals.push({
       id: signalId({
         kind: 'query_page_overlap_candidate',
@@ -676,6 +697,7 @@ export function analyzeSearchAnalyticsSignals(
         queryId,
         rows: rows.map((row) => row.sidecar.rowIdentity),
         policy: overlapPolicy,
+        ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
       }),
       kind: 'query_page_overlap_candidate',
       providerId: SEARCH_ANALYTICS_PROVIDER_ID,
@@ -684,6 +706,7 @@ export function analyzeSearchAnalyticsSignals(
         queryId,
         searchType: 'web',
         pages: rows.map((row) => ({ page: row.sidecar.page, pageId: row.sidecar.pageId })),
+        ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
       },
       periods: { current: period(current.semantics) },
       freshness: { current: current.semantics.freshness },

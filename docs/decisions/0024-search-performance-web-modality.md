@@ -16,9 +16,9 @@ Release 0.24 candidate will:
 
 1. accept minor 1 sanitized artifacts only when `webModality` is exactly `text_based` or `multimodal`, rejecting `combined` and unknown values fail-closed;
 2. keep minor 0 adaptation and application-local row/semantics shape **unchanged** (no guessed `webModality` on minor 0), and keep minor 0 collection seed identity material **byte-identical** to protected main Release 0.23 (no additive `schemaMinorVersion` in seed semantics for minor 0);
-3. bind minor 1 collection identity, row identity, and compatibility to the canonical Search Performance web modality context (including collection method configuration `gsc-web-modality` / modality version);
+3. bind minor 1 collection identity, row identity, and compatibility to the canonical Search Performance web modality context: `collection.method` remains `ldw-gsc-search-analytics` version `1.1.0` with `configurationRevision` 2 and a `configurationId` digest bound to `reportFamily` and `webModality`; each canonical observation cohort uses `dimensions.configuration` `{ id: 'gsc-web-modality', version: <modality> }`;
 4. treat minor 0 versus minor 1 and `text_based` versus `multimodal` as **incompatible** for baseline/current comparison, search-change preparation, and measurement-interpretation continuity claims;
-5. propagate validated minor 1 modality into Page Focus `source` as `PageFocusSearchUniverse` and into deterministic report identity (not a presentation-only sidecar), and into minor 1 `SearchAnalyticsSignal.cohort.sourceUniverse` plus signal deterministic identity;
+5. propagate validated minor 1 modality into Page Focus `source` as `PageFocusSearchUniverse` and into deterministic report identity (not a presentation-only sidecar), and into minor 1 row and overlap `SearchAnalyticsSignal.cohort.sourceUniverse` plus those signals' deterministic identity;
 6. fail closed when application-local row modality does not match window semantics (sidecar-only relabel cannot forge a comparable window);
 7. preserve Release 0.22 measurement-interpretation ceilings so a modality discontinuity cannot be claim-upgraded into continuity;
 8. keep all behavior pure/local with no canonical wire schema change, no persistence/migration, no provider/network/OAuth client, no Generative-AI-report adapter, no runtime AI, and no recommendation/action authority.
@@ -28,7 +28,7 @@ Release 0.24 candidate will:
 ### Benefits
 
 - Keeps Search text and multimodal evidence separable through adaptation, analysis, and human review surfaces.
-- Reuses accepted canonical observation mapping; modality lives in trusted configuration identity and application-local semantics.
+- Reuses accepted canonical observation mapping; strictly validated source modality is evidence semantics bound into collection method/cohort identity and application-local semantics. It does not issue tenant or authority, and it does not come from trusted tenant configuration.
 - Page Focus remains neutral while exposing the exact underlying Search Analytics universe for audit.
 
 ### Tradeoffs

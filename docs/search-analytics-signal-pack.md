@@ -211,7 +211,7 @@ Extend the accepted Release 0.10 boundary with sanitized `ldw.search-analytics-e
 
 ### Minor 0 preservation
 
-Minor 0 behavior, field shape, compatibility semantics, and **protected-main canonical identity material** (collection, idempotency, source, observation, cohort, and method configuration identities for the same sanitized fixture and trusted config) remain exactly as accepted in Release 0.10 / protected `main` at Release 0.23. Minor 0 collection seed semantics **must not** add fields that main did not hash (including `schemaMinorVersion: 0`). Minor 0 rows and window semantics **must not** gain `reportFamily`, `searchType`, or `webModality`.
+Minor 0 behavior, field shape, compatibility semantics, and **protected-main canonical identity material** (collection, idempotency, source, observation, cohort, and method configuration identities for the same sanitized fixture and trusted config) remain exactly as accepted in Release 0.10 / protected `main` at Release 0.23. Minor 0 collection seed semantics **must not** add fields that main did not hash (including `schemaMinorVersion: 0`). Minor 0 rows and window semantics keep the existing `searchType: 'web'` unchanged and **must not** gain `reportFamily` or `webModality`.
 
 ### Minor 1 source contract
 
@@ -224,7 +224,7 @@ Minor 1 requires, together:
 
 `webModality: combined` and any other value fail closed at adaptation. Each row carries matching minor 1 fields; row modality must match window semantics or validation fails closed (sidecar-only relabel is not sufficient).
 
-Canonical mapping remains four observations per row. Collection method configuration identity includes `gsc-web-modality` with version equal to the modality string so text and multimodal streams are distinct compatible universes.
+Canonical mapping remains four observations per row. Minor 1 `collection.method` remains `ldw-gsc-search-analytics` at version `1.1.0` with `configurationRevision: 2`. Its `configurationId` digest is bound to `reportFamily` and `webModality`, so text and multimodal streams are distinct compatible universes. Each canonical observation cohort uses `dimensions.configuration = { id: 'gsc-web-modality', version: <modality> }`.
 
 ### Compatibility
 
@@ -237,7 +237,7 @@ Matched metrics alone do not establish comparability.
 
 ### Signal pack (Release 0.10 reuse)
 
-Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`). Validated minor 1 signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`; signal deterministic identity includes that universe when present. Signals are still application-local, non-persisted, and provider-neutral.
+Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`), including the existing `searchType: 'web'`. Validated minor 1 row signals and `query_page_overlap_candidate` signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`, and bind that universe into signal deterministic identity. Signals are still application-local, non-persisted, and provider-neutral.
 
 ### Page Focus (Release 0.12 reuse)
 

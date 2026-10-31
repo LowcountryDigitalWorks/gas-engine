@@ -264,7 +264,7 @@ Release 0.24 candidate on `feat/136-search-performance-web-modality-r0` extends 
 - minor 1 requires `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`; **`combined` is rejected**;
 - minor 0↔minor 1 and text↔multimodal incompatibility for compatibility, search-change, and measurement-interpretation continuity;
 - Page Focus minor 1 `source` exposes exact modality and binds report identity; minor 0 Page Focus keeps legacy source keys only;
-- minor 1 Search Analytics signals expose `cohort.sourceUniverse` and bind signal identity; minor 0 signal cohort JSON shape unchanged;
+- minor 1 row and overlap Search Analytics signals expose `cohort.sourceUniverse` and bind signal identity; minor 0 signal cohort JSON shape unchanged;
 - sidecar/canonical modality mismatch fails closed through `validateSearchAnalyticsWindow(...)`;
 - no canonical wire schema, persistence/migration, provider/network/OAuth, Generative-AI-report path, runtime AI, recommendation, or action authority.
 
