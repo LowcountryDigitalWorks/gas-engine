@@ -1,6 +1,6 @@
-# ADR 0024 — Search Performance web modality (Release 0.24 candidate)
+# ADR 0024 — Search Performance web modality
 
-- Status: Proposed in Release 0.24 candidate via Issue #136 (not accepted on `main`)
+- Status: **accepted via gas-engine #136 / PR #143** at protected-main `b484fe8ed13d197726680582872bf09335a58d2d`, tree `b1e3fe40242c43e976e38d1fb599affee402390a`
 - Date: 2026-10-31
 - Issue: #136
 
@@ -12,7 +12,7 @@ Issue #136 frozen contract corrections removed `combined` and require explicit m
 
 ## Decision
 
-Release 0.24 candidate will:
+Accepted Release 0.24:
 
 1. accept minor 1 sanitized artifacts only when `webModality` is exactly `text_based` or `multimodal`, rejecting `combined` and unknown values fail-closed;
 2. keep minor 0 adaptation and application-local row/semantics shape **unchanged** (no guessed `webModality` on minor 0), and keep minor 0 collection seed identity material **byte-identical** to protected main Release 0.23 (no additive `schemaMinorVersion` in seed semantics for minor 0);
@@ -56,4 +56,4 @@ No customer/private evidence, provider credentials, secrets, new dependencies, c
 
 ## Acceptance
 
-Not yet accepted. Candidate requires Product exact-head review, hosted Contracts/Security validation, fresh independence-clean review, zero unresolved threads, and protected-main merge before this ADR status moves to Accepted.
+Accepted. Product exact-head review, hosted Contracts/Security validation, fresh independence-clean review, zero unresolved threads, and protected-main squash merge of PR #143 as `b484fe8ed13d197726680582872bf09335a58d2d` are complete. This acceptance does not reserve or authorize a later semantic release.

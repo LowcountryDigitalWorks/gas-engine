@@ -6,7 +6,7 @@ LDW internal governance is authoritative. This public document summarizes engine
 
 ## Current workstream
 
-Releases 0.1–0.23 are accepted and merged to `main`. Release 0.22 was accepted through Issue #110 / PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92` after Product exact-head review, Contracts/Security validation, and independence-clean review. Release 0.23 SERP Intent Validation Profile is accepted through Issue #120 / PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd` after Product exact-head PASS, fresh independence-clean exact-head PASS, required pre-merge Contracts/Security validation, zero unresolved threads, protected-main merge, and successful post-merge Contracts/Security validation. The accepted package baseline is `0.23.0`. Release 1.0 remains separately gated, and this accepted state does not reserve or authorize Release 0.24. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
+Releases 0.1–0.24 are accepted and merged to `main`. Release 0.22 was accepted through Issue #110 / PR #112 at commit `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92` after Product exact-head review, Contracts/Security validation, and independence-clean review. Release 0.23 SERP Intent Validation Profile is accepted through Issue #120 / PR #121 at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd` after Product exact-head PASS, fresh independence-clean exact-head PASS, required pre-merge Contracts/Security validation, zero unresolved threads, protected-main merge, and successful post-merge Contracts/Security validation. The accepted package baseline is `0.24.0`. Release 0.24 is accepted through Issue #136 / PR #143 at protected-main `b484fe8ed13d197726680582872bf09335a58d2d` and tree `b1e3fe40242c43e976e38d1fb599affee402390a`. Release 1.0 remains separately gated, and this accepted state does not reserve or authorize a later semantic release. Repository governance is established: a repository ruleset targets `main` and requires pull requests, review-thread resolution, linear history, and the `contracts` status check.
 
 Release 0.8 is **accepted and merged through PR #16** after exact-head validation, Product ORCH2 review, and independent review. The accepted Release 0.8 scope is evidence-linked human-authored recommendation review history plus an explicit measurement/outcome ledger. It does not authorize automatic recommendation/inference generation, ranking/priority calculation, generic cross-provider correlation, actions/remediation, provider/network access, scheduler/background workers, runtime AI/BYOK, cloud resources, or customer evidence.
 
@@ -79,7 +79,7 @@ Tenant identity remains an authorization boundary even during an LDW-only proof.
 
 ## Cost and cloud gate
 
-Accepted Releases 0.1–0.23 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.23 adds no provider/network runtime dependency.
+Accepted Releases 0.1–0.24 target **$0 incremental recurring cost**: no cloud resources are provisioned, paid services introduced, or deployment performed. Developer/CI execution uses existing or included capacity. Release 0.23 adds no provider/network runtime dependency.
 
 For a later cloud proof, **$0 incremental recurring cost is the target and must be measured/verified before deployment.** This is not a permanent guarantee. Cloudflare Workers, D1, and static operator assets are candidates, not an approved deployment plan.
 
@@ -302,16 +302,16 @@ This accepted authority does **not** include a live SERP or DataForSEO request, 
 
 See [accepted Release 0.23 guide](serp-intent-validation.md) and [accepted ADR 0023](decisions/0023-serp-intent-validation-profile.md). Any future semantic expansion requires separately bounded authority, validation, and independent review.
 
-## Release 0.24 candidate boundary (Issue #136)
+## Release 0.24 accepted boundary (Issue #136 / PR #143)
 
-Issue #136 authorizes a **candidate only** (not merged acceptance) for Search Performance web modality over the accepted 0.10 adapter/analysis baseline. The candidate may:
+Issue #136 / PR #143 is **accepted and merged** at protected-main `b484fe8ed13d197726680582872bf09335a58d2d` and tree `b1e3fe40242c43e976e38d1fb599affee402390a` for Search Performance web modality over the accepted 0.10 adapter/analysis baseline. The accepted boundary is:
 
 - adapt sanitized `ldw.search-analytics-evidence.v1` minor 1 with `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`;
-- preserve minor 0 exactly as accepted without modality fields and with protected-main canonical identity parity for minor 0 seed/collection/source/observation ids;
+- preserve minor 0 exact legacy shape, including existing `searchType: web`, with no `reportFamily` or `webModality`, and protected-main canonical identity parity for minor 0 seed/collection/source/observation ids;
 - enforce fail-closed rejection of `combined` and sidecar-only modality relabel;
-- propagate validated minor 1 modality into Page Focus source projection and deterministic report identity;
+- propagate validated minor 1 modality into Page Focus source projection and deterministic report identity, and into row and overlap `SearchAnalyticsSignal.cohort.sourceUniverse` plus signal identity;
 - keep Release 0.11/0.22 compatibility and measurement-interpretation ceilings across modality boundaries.
 
-This candidate authority does **not** include canonical wire schema changes, database/table/migration expansion, provider/API/OAuth/network retrieval, Generative-AI-report ingestion, runtime AI, persistence of derived signals, automatic recommendation/action, cloud deployment, customer/private evidence, paid dependencies, Release 1.0, or acceptance on `main` until Product review and merge complete.
+This accepted authority does **not** include canonical wire schema changes, database/table/migration expansion, provider/API/OAuth/network retrieval, Generative-AI-report ingestion, runtime AI, persistence of derived signals, automatic recommendation/action, cloud deployment, customer/private evidence, paid dependencies, or Release 1.0. It does not reserve or authorize a later semantic release.
 
-See [Release 0.24 candidate guide section](search-analytics-signal-pack.md) and [proposed ADR 0024](decisions/0024-search-performance-web-modality.md).
+See [accepted Release 0.24 guide section](search-analytics-signal-pack.md) and [accepted ADR 0024](decisions/0024-search-performance-web-modality.md).

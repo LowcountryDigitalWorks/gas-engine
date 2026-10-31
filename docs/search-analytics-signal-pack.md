@@ -201,9 +201,9 @@ git diff --check
 
 Because Release 0.10 changes no canonical wire schema, generated JSON Schemas must remain byte-for-byte unchanged.
 
-## Release 0.24 candidate — Search Performance web modality (Issue #136)
+## Release 0.24 accepted — Search Performance web modality (Issue #136 / PR #143)
 
-This section documents the **proposed** Release 0.24 candidate on branch `feat/136-search-performance-web-modality-r0`. It is **not** accepted on protected `main` until Product review and merge.
+This section documents **accepted** Release 0.24, merged through PR #143 at protected-main `b484fe8ed13d197726680582872bf09335a58d2d` and tree `b1e3fe40242c43e976e38d1fb599affee402390a`. Accepted package baseline is `0.24.0`.
 
 ### Purpose
 
@@ -249,8 +249,8 @@ Neutral mechanics, SERP validation requirement text, and absence of recommendati
 
 Release 0.22 claim ceilings cannot treat a modality discontinuity as continuity; tests prove fail-closed behavior when follow-up modality differs from baseline under otherwise aligned evidence.
 
-### Explicit exclusions (candidate)
+### Explicit exclusions (accepted)
 
-No combined modality, no Generative-AI-report ingestion path, no canonical wire schema or persistence change, no provider/network/OAuth, no runtime AI, no automatic SEO judgment, and no action authority.
+No combined modality, no Generative-AI-report ingestion path, no canonical wire schema or persistence change, no provider/network/OAuth, no runtime AI, no automatic SEO judgment, and no action authority. Acceptance does not reserve or authorize a later semantic release.
 
-See [ADR 0024](decisions/0024-search-performance-web-modality.md). Generated JSON Schemas must remain unchanged for this candidate.
+See [accepted ADR 0024](decisions/0024-search-performance-web-modality.md). Generated JSON Schemas remain unchanged for this accepted release.
