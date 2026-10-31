@@ -129,7 +129,7 @@ The semantic state vocabulary is exactly:
 
 The first three mean only that the compared **organic result universes** are similar, different, or ambiguous under the exact source and policy. They never mean same/different user intent.
 
-`not_ready` is returned instead of a manufactured zero when required evidence is unsafe, including missing/failed/partial/truncated evidence, insufficient eligible organic depth, source/method/locale/language/device/surface/schema/time mismatch, mixed organic rank semantics, snapshot-count mismatch, unmet repeated-snapshot policy, or too few comparable query pairs.
+`not_ready` is returned instead of a manufactured zero when required evidence is unsafe, including missing/failed/partial/truncated evidence, insufficient eligible organic depth, unresolved Google `/goto/` redirect destination URLs in the organic top-K window, source/method/locale/language/device/surface/schema/time mismatch, mixed organic rank semantics, snapshot-count mismatch, unmet repeated-snapshot policy, or too few comparable query pairs.
 
 ## Human/action ceiling
 
