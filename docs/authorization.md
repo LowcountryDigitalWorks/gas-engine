@@ -301,3 +301,17 @@ Accepted behavior is limited to:
 This accepted authority does **not** include a live SERP or DataForSEO request, provider API/OAuth/account work, custom crawler/scraper, network client, provider SDK, runtime AI/LLM/embeddings/query generation, database/table/migration/canonical-schema change, scheduler/background worker, cloud runtime, UI framework, customer/private evidence, paid dependency/resource, automatic recommendation/priority/approval, or split/merge/consolidate/redirect/canonical/create/delete/rewrite/publish/action authority. Release 0.23 acceptance does not reserve or authorize Release 0.24.
 
 See [accepted Release 0.23 guide](serp-intent-validation.md) and [accepted ADR 0023](decisions/0023-serp-intent-validation-profile.md). Any future semantic expansion requires separately bounded authority, validation, and independent review.
+
+## Release 0.24 candidate boundary (Issue #136)
+
+Issue #136 authorizes a **candidate only** (not merged acceptance) for Search Performance web modality over the accepted 0.10 adapter/analysis baseline. The candidate may:
+
+- adapt sanitized `ldw.search-analytics-evidence.v1` minor 1 with `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`;
+- preserve minor 0 exactly as accepted without modality fields;
+- enforce fail-closed rejection of `combined` and sidecar-only modality relabel;
+- propagate validated minor 1 modality into Page Focus source projection and deterministic report identity;
+- keep Release 0.11/0.22 compatibility and measurement-interpretation ceilings across modality boundaries.
+
+This candidate authority does **not** include canonical wire schema changes, database/table/migration expansion, provider/API/OAuth/network retrieval, Generative-AI-report ingestion, runtime AI, persistence of derived signals, automatic recommendation/action, cloud deployment, customer/private evidence, paid dependencies, Release 1.0, or acceptance on `main` until Product review and merge complete.
+
+See [Release 0.24 candidate guide section](search-analytics-signal-pack.md) and [proposed ADR 0024](decisions/0024-search-performance-web-modality.md).
