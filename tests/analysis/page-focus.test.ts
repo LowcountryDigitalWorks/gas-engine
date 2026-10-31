@@ -11,8 +11,15 @@ import {
   PAGE_FOCUS_VALIDATION_REQUIREMENT,
   PageFocusError,
   type PageFocusAssignment,
+  type PageFocusMinor1Source,
   type PageFocusPolicy,
+  type PageFocusSource,
 } from '../../src/analysis/page-focus.js';
+import { SearchAnalyticsSignalError } from '../../src/analysis/search-analytics.js';
+import type {
+  SearchAnalyticsMinor1AdaptedRow,
+  SearchAnalyticsMinor1Semantics,
+} from '../../src/adapters/search-analytics.js';
 import type { Scope } from '../../src/persistence/repository.js';
 import { batch } from '../persistence/helpers.js';
 
@@ -518,4 +525,129 @@ test('assignment/policy data cannot mint authority and Alpha/Beta scopes remain 
     }),
     (error: unknown) => error instanceof PageFocusError && error.code === 'invalid_input',
   );
+});
+
+const LEGACY_PAGE_FOCUS_SOURCE_KEYS = [
+  'adapter',
+  'collectionId',
+  'coverage',
+  'freshness',
+  'period',
+  'property',
+  'providerConnectionId',
+  'providerId',
+  'scope',
+  'sourceSchema',
+] as const;
+
+function minor1FocusArtifact(webModality: 'text_based' | 'multimodal'): MutableJson {
+  const value = focusArtifact();
+  value.schemaMinorVersion = 1;
+  value.reportFamily = 'search-performance';
+  value.webModality = webModality;
+  return value;
+}
+
+function neutralClusterShape(report: ReturnType<typeof analyze>) {
+  return report.clusters.map((cluster) => ({
+    clusterId: cluster.clusterId,
+    queryCount: cluster.queryCount,
+    clicks: cluster.clicks,
+    impressions: cluster.impressions,
+    ctr: cluster.ctr,
+    supportShare: cluster.supportShare,
+    range: cluster.averagePositionRange,
+  }));
+}
+
+function assertMinor1Universe(source: PageFocusSource, webModality: 'text_based' | 'multimodal'): void {
+  assert.equal(Object.hasOwn(source, 'schemaMinorVersion'), false);
+  const minor1 = source as PageFocusMinor1Source;
+  assert.deepEqual(
+    {
+      reportFamily: minor1.reportFamily,
+      searchType: minor1.searchType,
+      webModality: minor1.webModality,
+    },
+    {
+      reportFamily: 'search-performance',
+      searchType: 'web',
+      webModality,
+    },
+  );
+}
+
+test('minor1 text_based and multimodal Page Focus keep neutral mechanics and expose distinct source universes', () => {
+  const legacy = analyze(adapt());
+  const textBasedWindow = adapt(minor1FocusArtifact('text_based'));
+  const multimodalWindow = adapt(minor1FocusArtifact('multimodal'));
+  assert.deepEqual(
+    textBasedWindow.rows.map((row) => ({ query: row.query, page: row.page })),
+    multimodalWindow.rows.map((row) => ({ query: row.query, page: row.page })),
+  );
+
+  const textBased = analyze(textBasedWindow);
+  const multimodal = analyze(multimodalWindow);
+
+  assert.equal(textBased.state, 'candidate');
+  assert.equal(multimodal.state, 'candidate');
+  assert.equal(textBased.serpValidationRequired, true);
+  assert.equal(multimodal.serpValidationRequired, true);
+  assert.equal(textBased.validationRequirement, PAGE_FOCUS_VALIDATION_REQUIREMENT);
+  assert.equal(multimodal.validationRequirement, PAGE_FOCUS_VALIDATION_REQUIREMENT);
+  assert.equal(Object.hasOwn(textBased, 'recommendation'), false);
+  assert.equal(Object.hasOwn(multimodal, 'action'), false);
+  assert.deepEqual(textBased.pageTotals, legacy.pageTotals);
+  assert.deepEqual(multimodal.pageTotals, legacy.pageTotals);
+  assert.deepEqual(neutralClusterShape(textBased), neutralClusterShape(legacy));
+  assert.deepEqual(neutralClusterShape(multimodal), neutralClusterShape(legacy));
+  if (textBased.state === 'candidate' && multimodal.state === 'candidate' && legacy.state === 'candidate') {
+    assert.deepEqual(textBased.dominantEvidenceCluster, legacy.dominantEvidenceCluster);
+    assert.deepEqual(multimodal.dominantEvidenceCluster, legacy.dominantEvidenceCluster);
+  }
+
+  assertMinor1Universe(textBased.source, 'text_based');
+  assertMinor1Universe(multimodal.source, 'multimodal');
+  assert.notEqual(textBased.id, multimodal.id);
+  assert.notEqual(textBased.source.collectionId, multimodal.source.collectionId);
+  assert.notEqual(textBased.id, legacy.id);
+});
+
+test('minor0 Page Focus output keeps the legacy source shape with no guessed modality', () => {
+  const report = analyze(adapt());
+  assert.deepEqual(Object.keys(report.source).sort(), [...LEGACY_PAGE_FOCUS_SOURCE_KEYS].sort());
+  assert.equal(Object.hasOwn(report.source, 'reportFamily'), false);
+  assert.equal(Object.hasOwn(report.source, 'searchType'), false);
+  assert.equal(Object.hasOwn(report.source, 'webModality'), false);
+  assert.equal(Object.hasOwn(report.source, 'schemaMinorVersion'), false);
+  assert.equal(Object.hasOwn(report, 'schemaMinorVersion'), false);
+  assert.equal(report.state, 'candidate');
+  assert.equal(report.serpValidationRequired, true);
+});
+
+test('Page Focus sidecar/canonical modality mismatch fails closed through search-window validation', () => {
+  const textBased = adapt(minor1FocusArtifact('text_based'));
+  const multimodalSemantics: SearchAnalyticsMinor1Semantics = {
+    ...textBased.semantics,
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  };
+  const relabeledRows = textBased.rows.map((row): SearchAnalyticsMinor1AdaptedRow => ({
+    ...row,
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  }));
+
+  for (const forged of [
+    { ...textBased, semantics: multimodalSemantics },
+    { ...textBased, rows: relabeledRows },
+    { ...textBased, semantics: multimodalSemantics, rows: relabeledRows },
+  ]) {
+    assert.throws(
+      () => analyze(forged),
+      (error: unknown) => error instanceof SearchAnalyticsSignalError
+        && error.code === 'invalid_window'
+        && !(error instanceof PageFocusError),
+    );
+  }
 });

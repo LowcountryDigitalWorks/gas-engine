@@ -3,10 +3,14 @@ import { identifier, version } from '../contracts/primitives.js';
 import type { Contract } from '../contracts/wire.js';
 import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
 import {
+  SEARCH_ANALYTICS_REPORT_FAMILY,
   type SearchAnalyticsAdaptationResult,
   type SearchAnalyticsCoverage,
   type SearchAnalyticsFreshness,
   type SearchAnalyticsMetricKey,
+  type SearchAnalyticsMinor1Semantics,
+  type SearchAnalyticsSemantics,
+  type SearchAnalyticsWebModality,
 } from '../adapters/search-analytics.js';
 import {
   validateSearchAnalyticsWindow,
@@ -105,23 +109,36 @@ export interface PageFocusClusterEvidenceRef {
   readonly supportShare: number;
 }
 
+interface PageFocusSourceCore {
+  readonly scope: Contract<'collection'>['scope'];
+  readonly providerId: string;
+  readonly providerConnectionId?: string;
+  readonly collectionId: string;
+  readonly property: string;
+  readonly adapter: Contract<'collection'>['adapter'];
+  readonly sourceSchema: Contract<'collection'>['sourceSchema'];
+  readonly period: {
+    readonly requested: Readonly<{ start: string; end: string }>;
+    readonly effective: Readonly<{ start: string; end: string }>;
+  };
+  readonly freshness: SearchAnalyticsFreshness;
+  readonly coverage: SearchAnalyticsCoverage;
+}
+
+/** Ordinary Search Performance universe. Present only on validated minor1 reports. */
+export interface PageFocusSearchUniverse {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly searchType: 'web';
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
+export type PageFocusLegacySource = PageFocusSourceCore;
+export type PageFocusMinor1Source = PageFocusSourceCore & PageFocusSearchUniverse;
+export type PageFocusSource = PageFocusLegacySource | PageFocusMinor1Source;
+
 interface PageFocusReportBase {
   readonly id: string;
-  readonly source: {
-    readonly scope: Contract<'collection'>['scope'];
-    readonly providerId: string;
-    readonly providerConnectionId?: string;
-    readonly collectionId: string;
-    readonly property: string;
-    readonly adapter: Contract<'collection'>['adapter'];
-    readonly sourceSchema: Contract<'collection'>['sourceSchema'];
-    readonly period: {
-      readonly requested: Readonly<{ start: string; end: string }>;
-      readonly effective: Readonly<{ start: string; end: string }>;
-    };
-    readonly freshness: SearchAnalyticsFreshness;
-    readonly coverage: SearchAnalyticsCoverage;
-  };
+  readonly source: PageFocusSource;
   readonly page: string;
   readonly pageId: string;
   readonly policy: PageFocusPolicy;
@@ -346,6 +363,18 @@ function clusterRef(cluster: PageFocusClusterSummary): PageFocusClusterEvidenceR
   };
 }
 
+function validatedSearchUniverse(semantics: SearchAnalyticsSemantics): PageFocusSearchUniverse | undefined {
+  const hasReportFamily = Object.hasOwn(semantics, 'reportFamily');
+  const hasWebModality = Object.hasOwn(semantics, 'webModality');
+  if (!hasReportFamily && !hasWebModality) return undefined;
+  const minor1 = semantics as SearchAnalyticsMinor1Semantics;
+  return {
+    reportFamily: minor1.reportFamily,
+    searchType: minor1.searchType,
+    webModality: minor1.webModality,
+  };
+}
+
 /**
  * Analyze one exact Release 0.10 page using caller-supplied cluster semantics.
  * Pure/local only: no cluster inference, provider access, persistence, recommendation,
@@ -371,33 +400,40 @@ export function analyzePageFocusCandidate(input: unknown): PageFocusReport {
       return queryOrder !== 0 ? queryOrder : asciiCompare(left.clusterId, right.clusterId);
     });
 
+  const searchUniverse = validatedSearchUniverse(window.semantics);
   const id = `gsc.page-focus:${hashCanonicalJson({
     algorithm: 'gas-page-focus-report-v1',
     collectionId: window.collection.id,
     pageId: request.pageId,
     assignments: canonicalAssignments,
     policy: request.policy,
+    ...(searchUniverse === undefined ? {} : { searchUniverse }),
   })}`;
+
+  const sourceCore: PageFocusSourceCore = {
+    scope: structuredClone(window.collection.scope),
+    providerId: window.collection.providerId,
+    ...(window.collection.providerConnectionId === undefined
+      ? {}
+      : { providerConnectionId: window.collection.providerConnectionId }),
+    collectionId: window.collection.id,
+    property: window.semantics.property,
+    adapter: structuredClone(window.collection.adapter),
+    sourceSchema: structuredClone(window.collection.sourceSchema),
+    period: {
+      requested: structuredClone(window.semantics.requestedWindow),
+      effective: structuredClone(window.semantics.effectiveWindow),
+    },
+    freshness: structuredClone(window.semantics.freshness),
+    coverage: structuredClone(window.semantics.coverage),
+  };
+  const source: PageFocusSource = searchUniverse === undefined
+    ? sourceCore
+    : { ...sourceCore, ...searchUniverse };
 
   const base: PageFocusReportBase = {
     id,
-    source: {
-      scope: structuredClone(window.collection.scope),
-      providerId: window.collection.providerId,
-      ...(window.collection.providerConnectionId === undefined
-        ? {}
-        : { providerConnectionId: window.collection.providerConnectionId }),
-      collectionId: window.collection.id,
-      property: window.semantics.property,
-      adapter: structuredClone(window.collection.adapter),
-      sourceSchema: structuredClone(window.collection.sourceSchema),
-      period: {
-        requested: structuredClone(window.semantics.requestedWindow),
-        effective: structuredClone(window.semantics.effectiveWindow),
-      },
-      freshness: structuredClone(window.semantics.freshness),
-      coverage: structuredClone(window.semantics.coverage),
-    },
+    source,
     page,
     pageId: request.pageId,
     policy: structuredClone(request.policy),
