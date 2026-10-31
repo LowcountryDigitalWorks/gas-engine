@@ -211,7 +211,7 @@ Extend the accepted Release 0.10 boundary with sanitized `ldw.search-analytics-e
 
 ### Minor 0 preservation
 
-Minor 0 behavior, field shape, and compatibility semantics remain exactly as accepted in Release 0.10. Minor 0 rows and window semantics **must not** gain `reportFamily`, `searchType`, or `webModality`.
+Minor 0 behavior, field shape, compatibility semantics, and **protected-main canonical identity material** (collection, idempotency, source, observation, cohort, and method configuration identities for the same sanitized fixture and trusted config) remain exactly as accepted in Release 0.10 / protected `main` at Release 0.23. Minor 0 collection seed semantics **must not** add fields that main did not hash (including `schemaMinorVersion: 0`). Minor 0 rows and window semantics **must not** gain `reportFamily`, `searchType`, or `webModality`.
 
 ### Minor 1 source contract
 
@@ -234,6 +234,10 @@ Canonical mapping remains four observations per row. Collection method configura
 - `text_based` versus `multimodal` under minor 1.
 
 Matched metrics alone do not establish comparability.
+
+### Signal pack (Release 0.10 reuse)
+
+Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`). Validated minor 1 signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`; signal deterministic identity includes that universe when present. Signals are still application-local, non-persisted, and provider-neutral.
 
 ### Page Focus (Release 0.12 reuse)
 

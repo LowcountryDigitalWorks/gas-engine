@@ -307,7 +307,7 @@ See [accepted Release 0.23 guide](serp-intent-validation.md) and [accepted ADR 0
 Issue #136 authorizes a **candidate only** (not merged acceptance) for Search Performance web modality over the accepted 0.10 adapter/analysis baseline. The candidate may:
 
 - adapt sanitized `ldw.search-analytics-evidence.v1` minor 1 with `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`;
-- preserve minor 0 exactly as accepted without modality fields;
+- preserve minor 0 exactly as accepted without modality fields and with protected-main canonical identity parity for minor 0 seed/collection/source/observation ids;
 - enforce fail-closed rejection of `combined` and sidecar-only modality relabel;
 - propagate validated minor 1 modality into Page Focus source projection and deterministic report identity;
 - keep Release 0.11/0.22 compatibility and measurement-interpretation ceilings across modality boundaries.
