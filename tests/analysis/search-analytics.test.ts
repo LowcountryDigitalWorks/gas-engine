@@ -504,6 +504,65 @@ test('same-modality minor1 windows pass compatibility and emit deterministic sha
   assert.ok(report.signals.some((signal) => signal.kind === 'window_delta' && signal.cohort.query === 'synthetic shared'));
 });
 
+test('minor1 sidecar agreement cannot relabel canonical search modality', () => {
+  const textBased = adaptMinor1(minor1TextFixtureText, () => {});
+  assert.doesNotThrow(() => validateSearchAnalyticsWindow(textBased));
+  const multimodal = adaptMinor1(minor1MultimodalFixtureText, () => {});
+  assert.notEqual(textBased.collectionId, multimodal.collectionId);
+
+  const semanticsOnly: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    semantics: { ...textBased.semantics, reportFamily: 'search-performance', webModality: 'multimodal' },
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(semanticsOnly), 'invalid_window');
+
+  const rowsOnly: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    rows: textBased.rows.map((row) => ({
+      ...row,
+      reportFamily: 'search-performance' as const,
+      webModality: 'multimodal' as const,
+    })),
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(rowsOnly), 'invalid_window');
+
+  const methodForged = structuredClone(textBased);
+  const otherMethod = structuredClone(multimodal.batches[0]!.collection.method);
+  for (const batch of methodForged.batches) {
+    (batch.collection as { method: typeof otherMethod }).method = structuredClone(otherMethod);
+  }
+  expectSignalError(() => validateSearchAnalyticsWindow(methodForged), 'invalid_window');
+
+  const cohortForged = structuredClone(textBased);
+  for (const batch of cohortForged.batches) {
+    for (const observation of batch.observations) {
+      const dimensions = observation.record.cohort.context.dimensions as {
+        configuration?: { id: string; version: string };
+      };
+      dimensions.configuration = { id: 'gsc-web-modality', version: 'multimodal' };
+    }
+  }
+  expectSignalError(() => validateSearchAnalyticsWindow(cohortForged), 'invalid_window');
+
+  const agreedSidecar: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    semantics: { ...textBased.semantics, reportFamily: 'search-performance', webModality: 'multimodal' },
+    rows: textBased.rows.map((row) => ({
+      ...row,
+      reportFamily: 'search-performance' as const,
+      webModality: 'multimodal' as const,
+    })),
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(agreedSidecar), 'invalid_window');
+  expectSignalError(
+    () => requireSearchAnalyticsCompatibility(
+      validateSearchAnalyticsWindow(textBased),
+      validateSearchAnalyticsWindow(multimodal),
+    ),
+    'incompatible_windows',
+  );
+});
+
 test('Release 0.11 search-change composition fails closed when follow-up modality differs from baseline', () => {
   const baseline = adapt(baselineFixture());
   const followValue = currentFixture();
