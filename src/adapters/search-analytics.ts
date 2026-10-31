@@ -19,11 +19,20 @@ import { INGESTION_PART_BOUNDS, parseCollectionBatch } from '../persistence/vali
 
 export const SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION = 'ldw.search-analytics-evidence.v1' as const;
 export const SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION = 0 as const;
+export const SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION = 1 as const;
 export const SEARCH_ANALYTICS_PROVIDER_ID = 'google-search-console' as const;
 export const SEARCH_ANALYTICS_ADAPTER_ID = 'ldw-search-analytics-sanitized' as const;
 export const SEARCH_ANALYTICS_MAPPING_VERSION = '1.0.0' as const;
+export const SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION = '1.1.0' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_ID = 'ldw.search-analytics-evidence' as const;
 export const SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION = 'v1.0' as const;
+export const SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION = 'v1.1' as const;
+export const SEARCH_ANALYTICS_REPORT_FAMILY = 'search-performance' as const;
+export type SearchAnalyticsWebModality = 'text_based' | 'multimodal';
+export type SearchAnalyticsMinor1Context = {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+};
 export const SEARCH_ANALYTICS_MAX_ROWS = 384 as const;
 export const SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE = 1e-12 as const;
 export const MAX_SEARCH_ANALYTICS_INPUT_BYTES = MAX_HASH_INPUT_BYTES;
@@ -85,7 +94,7 @@ export interface SearchAnalyticsFreshness {
   readonly freshThrough: string;
 }
 
-export interface SearchAnalyticsSemantics {
+export interface SearchAnalyticsLegacySemantics {
   readonly property: string;
   readonly observedAt: string;
   readonly exportedAt: string;
@@ -99,7 +108,14 @@ export interface SearchAnalyticsSemantics {
   readonly coverage: SearchAnalyticsCoverage;
 }
 
-export interface SearchAnalyticsAdaptedRow {
+export interface SearchAnalyticsMinor1Semantics extends SearchAnalyticsLegacySemantics {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
+export type SearchAnalyticsSemantics = SearchAnalyticsLegacySemantics | SearchAnalyticsMinor1Semantics;
+
+export interface SearchAnalyticsLegacyAdaptedRow {
   readonly rowIdentity: string;
   readonly query: string;
   readonly page: string;
@@ -110,6 +126,13 @@ export interface SearchAnalyticsAdaptedRow {
   readonly sourceRecordId: string;
   readonly observationIds: Readonly<Record<SearchAnalyticsMetricKey, string>>;
 }
+
+export interface SearchAnalyticsMinor1AdaptedRow extends SearchAnalyticsLegacyAdaptedRow {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
+export type SearchAnalyticsAdaptedRow = SearchAnalyticsLegacyAdaptedRow | SearchAnalyticsMinor1AdaptedRow;
 
 export interface SearchAnalyticsAdaptationResult {
   /** SHA-256 of the exact sanitized source bytes. Diagnostic integrity only; never authority or semantic identity. */
@@ -171,9 +194,7 @@ const rowSchema = z.strictObject({
   averagePosition: canonicalNonNegativeNumber,
 });
 
-const artifactSchema = z.strictObject({
-  schemaVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION),
-  schemaMinorVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION),
+const artifactBodySchema = {
   provider: z.literal(SEARCH_ANALYTICS_PROVIDER_ID),
   property: boundedProperty,
   observedAt: timestamp,
@@ -187,7 +208,25 @@ const artifactSchema = z.strictObject({
   filters: z.array(filterSchema).max(16),
   coverage: coverageSchema,
   rows: z.array(rowSchema).max(SEARCH_ANALYTICS_MAX_ROWS),
+};
+
+const webModalitySchema = z.enum(['text_based', 'multimodal']);
+
+const artifactSchemaMinor0 = z.strictObject({
+  schemaVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION),
+  schemaMinorVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION),
+  ...artifactBodySchema,
 });
+
+const artifactSchemaMinor1 = z.strictObject({
+  schemaVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION),
+  schemaMinorVersion: z.literal(SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION),
+  reportFamily: z.literal(SEARCH_ANALYTICS_REPORT_FAMILY),
+  webModality: webModalitySchema,
+  ...artifactBodySchema,
+});
+
+const artifactSchema = z.union([artifactSchemaMinor0, artifactSchemaMinor1]);
 
 const configSchema = z.strictObject({
   scope: scopeSchema,
@@ -201,6 +240,23 @@ const configSchema = z.strictObject({
 type SearchAnalyticsArtifact = z.infer<typeof artifactSchema>;
 type ParsedConfig = z.infer<typeof configSchema>;
 type ParsedRow = z.infer<typeof rowSchema>;
+
+function isMinor1Artifact(artifact: SearchAnalyticsArtifact): artifact is z.infer<typeof artifactSchemaMinor1> {
+  return artifact.schemaMinorVersion === SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION;
+}
+
+function minor1ContextFromArtifact(artifact: SearchAnalyticsArtifact): SearchAnalyticsMinor1Context | undefined {
+  if (!isMinor1Artifact(artifact)) return undefined;
+  return { reportFamily: artifact.reportFamily, webModality: artifact.webModality };
+}
+
+function mappingVersionForArtifact(artifact: SearchAnalyticsArtifact): typeof SEARCH_ANALYTICS_MAPPING_VERSION | typeof SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION {
+  return isMinor1Artifact(artifact) ? SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION : SEARCH_ANALYTICS_MAPPING_VERSION;
+}
+
+function sourceSchemaVersionForArtifact(artifact: SearchAnalyticsArtifact): typeof SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION | typeof SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION {
+  return isMinor1Artifact(artifact) ? SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION : SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION;
+}
 
 interface PreparedRow {
   readonly row: SearchAnalyticsAdaptedRow;
@@ -224,12 +280,22 @@ export function searchAnalyticsDimensionIdentity(
   query: string,
   page: string,
   searchType: 'web',
+  minor1Context?: SearchAnalyticsMinor1Context,
 ): { queryId: string; pageId: string; rowIdentity: string; querySurface: string } {
   const queryHash = hashCanonicalJson({ query });
+  const rowMaterial = minor1Context === undefined
+    ? { query, page, searchType }
+    : {
+      query,
+      page,
+      searchType,
+      reportFamily: minor1Context.reportFamily,
+      webModality: minor1Context.webModality,
+    };
   return {
     queryId: `gsc.query:${queryHash}`,
     pageId: derivedIdentifier('gsc.page', { page }),
-    rowIdentity: derivedIdentifier('gsc.row', { query, page, searchType }),
+    rowIdentity: derivedIdentifier('gsc.row', rowMaterial),
     querySurface: `gsc-query:${queryHash}`,
   };
 }
@@ -239,8 +305,19 @@ export function searchAnalyticsCohortId(
   page: string,
   searchType: 'web',
   metricId: string,
+  minor1Context?: SearchAnalyticsMinor1Context,
 ): string {
-  return derivedIdentifier('gsc.cohort', { query, page, searchType, metricId });
+  const material = minor1Context === undefined
+    ? { query, page, searchType, metricId }
+    : {
+      query,
+      page,
+      searchType,
+      metricId,
+      reportFamily: minor1Context.reportFamily,
+      webModality: minor1Context.webModality,
+    };
+  return derivedIdentifier('gsc.cohort', material);
 }
 
 export function searchAnalyticsMethod(
@@ -248,19 +325,34 @@ export function searchAnalyticsMethod(
   dimensions: readonly ['query', 'page'],
   filterGroupType: 'and',
   filters: readonly SearchAnalyticsFilter[],
+  minor1Context?: SearchAnalyticsMinor1Context,
 ): Contract<'collection'>['method'] {
-  const configurationDigest = hashCanonicalJson({
-    provider: SEARCH_ANALYTICS_PROVIDER_ID,
-    searchType,
-    dimensions,
-    filterGroupType,
-    filters,
-  });
+  const configurationMaterial = minor1Context === undefined
+    ? {
+      provider: SEARCH_ANALYTICS_PROVIDER_ID,
+      searchType,
+      dimensions,
+      filterGroupType,
+      filters,
+    }
+    : {
+      provider: SEARCH_ANALYTICS_PROVIDER_ID,
+      searchType,
+      dimensions,
+      filterGroupType,
+      filters,
+      reportFamily: minor1Context.reportFamily,
+      webModality: minor1Context.webModality,
+    };
+  const configurationDigest = hashCanonicalJson(configurationMaterial);
+  const mappingVersion = minor1Context === undefined
+    ? SEARCH_ANALYTICS_MAPPING_VERSION
+    : SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION;
   return {
     id: 'ldw-gsc-search-analytics',
-    version: SEARCH_ANALYTICS_MAPPING_VERSION,
+    version: mappingVersion,
     configurationId: `gsc-config:${configurationDigest}`,
-    configurationRevision: 1,
+    configurationRevision: minor1Context === undefined ? 1 : 2,
   };
 }
 
@@ -293,12 +385,38 @@ function parseInput(bytes: Uint8Array): { artifact: SearchAnalyticsArtifact; inp
     fail('invalid_source', 'Sanitized search-analytics input must be an object.');
   }
   const envelope = decoded as Record<string, unknown>;
-  if (envelope['schemaVersion'] !== SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION
-      || envelope['schemaMinorVersion'] !== SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION) {
+  if (envelope['schemaVersion'] !== SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION) {
     fail(
       'unsupported_schema',
-      `Only ${SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION} minor ${SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION} is supported.`,
+      `Only ${SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION} is supported.`,
     );
+  }
+  const rawMinor = envelope['schemaMinorVersion'];
+  if (rawMinor !== SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION
+      && rawMinor !== SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION) {
+    fail(
+      'unsupported_schema',
+      `Only ${SEARCH_ANALYTICS_INPUT_SCHEMA_VERSION} minor ${SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION} or ${SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION} is supported.`,
+    );
+  }
+  if (typeof rawMinor === 'number' && rawMinor === SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION) {
+    const reportFamily = envelope['reportFamily'];
+    if (reportFamily === undefined || reportFamily === null || (typeof reportFamily === 'string' && reportFamily.trim() === '')) {
+      fail('invalid_source', 'Search-analytics minor 1 requires reportFamily search-performance.');
+    }
+    if (reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY) {
+      fail('invalid_source', 'Search-analytics minor 1 reportFamily must be search-performance.');
+    }
+    const modality = envelope['webModality'];
+    if (modality === undefined || modality === null || (typeof modality === 'string' && modality.trim() === '')) {
+      fail('invalid_source', 'Search-analytics minor 1 requires webModality text_based or multimodal.');
+    }
+    if (modality === 'combined') {
+      fail('invalid_source', 'Search-analytics webModality combined is not supported.');
+    }
+    if (modality !== 'text_based' && modality !== 'multimodal') {
+      fail('invalid_source', 'Search-analytics minor 1 webModality must be text_based or multimodal.');
+    }
   }
   if (Array.isArray(envelope['rows']) && envelope['rows'].length > SEARCH_ANALYTICS_MAX_ROWS) {
     fail('too_many_rows', `Search-analytics artifact exceeds the exact ${SEARCH_ANALYTICS_MAX_ROWS}-row bound.`);
@@ -410,9 +528,16 @@ function sourceDigest(
   row: ParsedRow,
 ): string {
   try {
+    const minor1 = minor1ContextFromArtifact(artifact);
     return hashCanonicalJson({
       schemaVersion: artifact.schemaVersion,
-      schemaMinorVersion: artifact.schemaMinorVersion,
+      ...(minor1 === undefined
+        ? { schemaMinorVersion: artifact.schemaMinorVersion }
+        : {
+          schemaMinorVersion: artifact.schemaMinorVersion,
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+        }),
       provider: artifact.provider,
       property: artifact.property,
       observedAt: artifact.observedAt,
@@ -441,8 +566,13 @@ function makePreparedRows(
   runDigest: string,
   durationSeconds: number,
 ): PreparedRow[] {
+  const minor1 = minor1ContextFromArtifact(artifact);
+  const mappingVersion = mappingVersionForArtifact(artifact);
+  const dimensionConfiguration = minor1 === undefined
+    ? { id: 'gsc-search-type' as const, version: artifact.searchType }
+    : { id: 'gsc-web-modality' as const, version: minor1.webModality };
   return rows.map((sourceRow) => {
-    const dimensions = searchAnalyticsDimensionIdentity(sourceRow.query, sourceRow.page, artifact.searchType);
+    const dimensions = searchAnalyticsDimensionIdentity(sourceRow.query, sourceRow.page, artifact.searchType, minor1);
     const digest = sourceDigest(artifact, filters, sourceRow);
     const sourceRecordId = dimensions.rowIdentity;
     const identity: Contract<'sourceRecord'>['identity'] = {
@@ -490,26 +620,26 @@ function makePreparedRows(
         cohort: {
           schemaVersion: '1.0',
           kind: 'cohort',
-          id: searchAnalyticsCohortId(sourceRow.query, sourceRow.page, artifact.searchType, spec.id),
+          id: searchAnalyticsCohortId(sourceRow.query, sourceRow.page, artifact.searchType, spec.id, minor1),
           revision: 1,
           context: {
             scope: config.scope,
             subject: { kind: 'page', reference: dimensions.pageId },
             metric: {
               id: spec.id,
-              meaningVersion: SEARCH_ANALYTICS_MAPPING_VERSION,
+              meaningVersion: mappingVersion,
               valueType: 'number',
               unit: spec.unit,
             },
             dimensions: {
               providerId: SEARCH_ANALYTICS_PROVIDER_ID,
               surface: dimensions.querySurface,
-              configuration: { id: 'gsc-search-type', version: artifact.searchType },
+              configuration: dimensionConfiguration,
             },
             method: collection.method,
             timeWindowRules: {
               id: 'gsc-aggregate-window',
-              version: SEARCH_ANALYTICS_MAPPING_VERSION,
+              version: mappingVersion,
               alignment: 'rolling',
               durationSeconds,
               timezone: 'UTC',
@@ -537,17 +667,31 @@ function makePreparedRows(
     });
 
     return {
-      row: {
-        rowIdentity: dimensions.rowIdentity,
-        query: sourceRow.query,
-        page: sourceRow.page,
-        searchType: artifact.searchType,
-        queryId: dimensions.queryId,
-        pageId: dimensions.pageId,
-        sourceId,
-        sourceRecordId,
-        observationIds,
-      },
+      row: minor1 === undefined
+        ? {
+          rowIdentity: dimensions.rowIdentity,
+          query: sourceRow.query,
+          page: sourceRow.page,
+          searchType: artifact.searchType,
+          queryId: dimensions.queryId,
+          pageId: dimensions.pageId,
+          sourceId,
+          sourceRecordId,
+          observationIds,
+        }
+        : {
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+          rowIdentity: dimensions.rowIdentity,
+          query: sourceRow.query,
+          page: sourceRow.page,
+          searchType: artifact.searchType,
+          queryId: dimensions.queryId,
+          pageId: dimensions.pageId,
+          sourceId,
+          sourceRecordId,
+          observationIds,
+        },
       source: { id: sourceId, record: source },
       observations,
     };
@@ -634,18 +778,28 @@ export function adaptSearchAnalyticsEvidence(
   const durationSeconds = validateSemantics(artifact, config);
   const filters = normalizedFilters(artifact);
   const rows = normalizedRows(artifact);
-  const method = searchAnalyticsMethod(artifact.searchType, artifact.dimensions, artifact.filterGroupType, filters);
+  const minor1 = minor1ContextFromArtifact(artifact);
+  const mappingVersion = mappingVersionForArtifact(artifact);
+  const sourceSchemaVersion = sourceSchemaVersionForArtifact(artifact);
+  const method = searchAnalyticsMethod(artifact.searchType, artifact.dimensions, artifact.filterGroupType, filters, minor1);
   const completeness = canonicalCompleteness(artifact, rows.length);
 
   const seedDigest = hashCanonicalJson({
     algorithm: 'gas-search-analytics-seed-v1',
-    adapter: { id: SEARCH_ANALYTICS_ADAPTER_ID, version: SEARCH_ANALYTICS_MAPPING_VERSION },
-    sourceSchema: { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION },
+    adapter: { id: SEARCH_ANALYTICS_ADAPTER_ID, version: mappingVersion },
+    sourceSchema: { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: sourceSchemaVersion },
     scope: config.scope,
     providerId: SEARCH_ANALYTICS_PROVIDER_ID,
     providerConnectionId: config.providerConnectionId,
     expectedProperty: config.expectedProperty,
     semantics: {
+      ...(minor1 === undefined
+        ? {}
+        : {
+          schemaMinorVersion: artifact.schemaMinorVersion,
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+        }),
       property: artifact.property,
       observedAt: artifact.observedAt,
       exportedAt: artifact.exportedAt,
@@ -679,8 +833,8 @@ export function adaptSearchAnalyticsEvidence(
     scope: config.scope,
     providerId: SEARCH_ANALYTICS_PROVIDER_ID,
     providerConnectionId: config.providerConnectionId,
-    adapter: { id: SEARCH_ANALYTICS_ADAPTER_ID, version: SEARCH_ANALYTICS_MAPPING_VERSION },
-    sourceSchema: { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION },
+    adapter: { id: SEARCH_ANALYTICS_ADAPTER_ID, version: mappingVersion },
+    sourceSchema: { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: sourceSchemaVersion },
     method,
     sourceTime: artifact.effectiveWindow,
     startedAt: artifact.observedAt,
@@ -692,7 +846,7 @@ export function adaptSearchAnalyticsEvidence(
 
   const prepared = makePreparedRows(artifact, config, filters, rows, collection, runDigest, durationSeconds);
   const batches = packRows(prepared, idempotencyKey, collection);
-  const semantics: SearchAnalyticsSemantics = {
+  const legacySemantics: SearchAnalyticsLegacySemantics = {
     property: artifact.property,
     observedAt: artifact.observedAt,
     exportedAt: artifact.exportedAt,
@@ -705,6 +859,13 @@ export function adaptSearchAnalyticsEvidence(
     filters,
     coverage: artifact.coverage,
   };
+  const semantics: SearchAnalyticsSemantics = minor1 === undefined
+    ? legacySemantics
+    : {
+      ...legacySemantics,
+      reportFamily: minor1.reportFamily,
+      webModality: minor1.webModality,
+    };
 
   return {
     inputSha256,

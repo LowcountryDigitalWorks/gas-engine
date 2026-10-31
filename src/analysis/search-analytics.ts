@@ -4,20 +4,27 @@ import type { Contract } from '../contracts/wire.js';
 import {
   SEARCH_ANALYTICS_ADAPTER_ID,
   SEARCH_ANALYTICS_MAPPING_VERSION,
+  SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION,
   SEARCH_ANALYTICS_MAX_ROWS,
   SEARCH_ANALYTICS_METRIC_SPECS,
   SEARCH_ANALYTICS_PROVIDER_ID,
   SEARCH_ANALYTICS_SOURCE_SCHEMA_ID,
   SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION,
+  SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION,
+  SEARCH_ANALYTICS_REPORT_FAMILY,
   searchAnalyticsCohortId,
   searchAnalyticsDimensionIdentity,
   searchAnalyticsMethod,
+  type SearchAnalyticsMinor1Context,
+  type SearchAnalyticsMinor1AdaptedRow,
+  type SearchAnalyticsMinor1Semantics,
   type SearchAnalyticsAdaptationResult,
   type SearchAnalyticsAdaptedRow,
   type SearchAnalyticsCoverage,
   type SearchAnalyticsFreshness,
   type SearchAnalyticsMetricKey,
   type SearchAnalyticsSemantics,
+  type SearchAnalyticsWebModality,
 } from '../adapters/search-analytics.js';
 import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
 import { parseCollectionBatch } from '../persistence/validation.js';
@@ -102,6 +109,11 @@ export interface SearchAnalyticsSignalEvidenceRef {
   readonly observationIds: readonly [string, string, string, string];
 }
 
+export interface SearchAnalyticsSignalSourceUniverse {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
 export interface SearchAnalyticsSignal {
   readonly id: string;
   readonly kind: SearchAnalyticsSignalKind;
@@ -113,6 +125,7 @@ export interface SearchAnalyticsSignal {
     readonly page?: string;
     readonly pageId?: string;
     readonly pages?: readonly { page: string; pageId: string }[];
+    readonly sourceUniverse?: SearchAnalyticsSignalSourceUniverse;
   };
   readonly periods: {
     readonly baseline?: { requested: SearchAnalyticsSemantics['requestedWindow']; effective: SearchAnalyticsSemantics['effectiveWindow'] };
@@ -198,6 +211,40 @@ function expectedCompleteness(semantics: SearchAnalyticsSemantics, rowCount: num
   };
 }
 
+function minor1ContextFromSemantics(semantics: SearchAnalyticsSemantics): SearchAnalyticsMinor1Context | undefined {
+  const hasReportFamily = Object.hasOwn(semantics, 'reportFamily');
+  const hasWebModality = Object.hasOwn(semantics, 'webModality');
+  if (!hasReportFamily && !hasWebModality) {
+    return undefined;
+  }
+  if (!hasReportFamily || !hasWebModality) {
+    fail('invalid_window', 'Search-analytics minor 1 semantics must include reportFamily and webModality together.');
+  }
+  const minor1 = semantics as SearchAnalyticsMinor1Semantics;
+  if (minor1.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
+      || (minor1.webModality !== 'text_based' && minor1.webModality !== 'multimodal')) {
+    fail('invalid_window', 'Search-analytics minor 1 semantics are incomplete or invalid.');
+  }
+  return { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
+}
+
+function minor1ContextFromRow(row: SearchAnalyticsAdaptedRow): SearchAnalyticsMinor1Context | undefined {
+  const hasReportFamily = Object.hasOwn(row, 'reportFamily');
+  const hasWebModality = Object.hasOwn(row, 'webModality');
+  if (!hasReportFamily && !hasWebModality) {
+    return undefined;
+  }
+  if (!hasReportFamily || !hasWebModality) {
+    fail('invalid_window', 'Search-analytics minor 1 rows must include reportFamily and webModality together.');
+  }
+  const minor1 = row as SearchAnalyticsMinor1AdaptedRow;
+  if (minor1.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
+      || (minor1.webModality !== 'text_based' && minor1.webModality !== 'multimodal')) {
+    fail('invalid_window', 'Search-analytics minor 1 row modality is incomplete or invalid.');
+  }
+  return { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
+}
+
 export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationResult): ValidatedSearchAnalyticsWindow {
   if (input.providerId !== SEARCH_ANALYTICS_PROVIDER_ID
       || input.rows.length > SEARCH_ANALYTICS_MAX_ROWS
@@ -229,14 +276,22 @@ export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationRe
   }
 
   const collection = first.collection;
+  const minor1 = minor1ContextFromSemantics(input.semantics);
+  const expectedMappingVersion = minor1 === undefined
+    ? SEARCH_ANALYTICS_MAPPING_VERSION
+    : SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION;
+  const expectedSourceSchemaVersion = minor1 === undefined
+    ? SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION
+    : SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION;
   const expectedMethod = searchAnalyticsMethod(
     input.semantics.searchType,
     input.semantics.dimensions,
     input.semantics.filterGroupType,
     input.semantics.filters,
+    minor1,
   );
-  const expectedAdapter = { id: SEARCH_ANALYTICS_ADAPTER_ID, version: SEARCH_ANALYTICS_MAPPING_VERSION };
-  const expectedSourceSchema = { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION };
+  const expectedAdapter = { id: SEARCH_ANALYTICS_ADAPTER_ID, version: expectedMappingVersion };
+  const expectedSourceSchema = { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: expectedSourceSchemaVersion };
   if (collection.providerId !== SEARCH_ANALYTICS_PROVIDER_ID
       || !Object.hasOwn(collection, 'providerConnectionId')
       || !same(collection.adapter, expectedAdapter)
@@ -275,7 +330,16 @@ export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationRe
   const seenRows = new Set<string>();
   const validatedRows: ValidatedSearchAnalyticsRow[] = input.rows.map((row) => {
     if (row.searchType !== 'web') fail('invalid_window', 'Search-analytics row search type is unsupported.');
-    const expectedDimensions = searchAnalyticsDimensionIdentity(row.query, row.page, row.searchType);
+    const rowMinor1 = minor1ContextFromRow(row);
+    if ((minor1 === undefined) !== (rowMinor1 === undefined)
+        || (minor1 !== undefined && rowMinor1 !== undefined
+          && (minor1.webModality !== rowMinor1.webModality || minor1.reportFamily !== rowMinor1.reportFamily))) {
+      fail('invalid_window', 'Search-analytics row modality does not match window semantics.');
+    }
+    const expectedDimensions = searchAnalyticsDimensionIdentity(row.query, row.page, row.searchType, rowMinor1);
+    const expectedConfiguration = rowMinor1 === undefined
+      ? { id: 'gsc-search-type', version: 'web' }
+      : { id: 'gsc-web-modality', version: rowMinor1.webModality };
     if (row.rowIdentity !== expectedDimensions.rowIdentity
         || row.queryId !== expectedDimensions.queryId
         || row.pageId !== expectedDimensions.pageId
@@ -304,13 +368,14 @@ export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationRe
       if (resolved === undefined
           || resolved.sourceId !== row.sourceId
           || resolved.record.provenance.source.sourceRecordId !== row.sourceRecordId
-          || resolved.record.cohort.id !== searchAnalyticsCohortId(row.query, row.page, row.searchType, spec.id)
+          || resolved.record.cohort.id !== searchAnalyticsCohortId(row.query, row.page, row.searchType, spec.id, rowMinor1)
           || resolved.record.cohort.context.subject.kind !== 'page'
           || resolved.record.cohort.context.subject.reference !== row.pageId
           || resolved.record.cohort.context.dimensions.surface !== expectedDimensions.querySurface
-          || resolved.record.cohort.context.dimensions.configuration?.id !== 'gsc-search-type'
-          || resolved.record.cohort.context.dimensions.configuration?.version !== 'web'
+          || resolved.record.cohort.context.dimensions.configuration?.id !== expectedConfiguration.id
+          || resolved.record.cohort.context.dimensions.configuration?.version !== expectedConfiguration.version
           || resolved.record.cohort.context.metric.id !== spec.id
+          || resolved.record.cohort.context.metric.meaningVersion !== expectedMappingVersion
           || resolved.record.cohort.context.metric.unit !== spec.unit
           || resolved.record.cohort.context.metric.valueType !== 'number'
           || !same(resolved.record.cohort.context.method, collection.method)
@@ -347,6 +412,15 @@ function coverageCompatibility(value: SearchAnalyticsCoverage): unknown {
 export function requireSearchAnalyticsCompatibility(baseline: ValidatedSearchAnalyticsWindow, current: ValidatedSearchAnalyticsWindow): void {
   if (baseline.collection.id === current.collection.id) {
     fail('incompatible_windows', 'Baseline and current search-analytics collections must be distinct.');
+  }
+  const baselineMinor1 = minor1ContextFromSemantics(baseline.semantics);
+  const currentMinor1 = minor1ContextFromSemantics(current.semantics);
+  if ((baselineMinor1 === undefined) !== (currentMinor1 === undefined)) {
+    fail('incompatible_windows', 'Baseline and current search-analytics web modality contexts are incompatible.');
+  }
+  if (baselineMinor1 !== undefined && currentMinor1 !== undefined
+      && baselineMinor1.webModality !== currentMinor1.webModality) {
+    fail('incompatible_windows', 'Baseline and current search-analytics web modalities are incompatible.');
   }
   const sameStream = same(baseline.collection.scope, current.collection.scope)
     && baseline.collection.providerId === current.collection.providerId
@@ -397,6 +471,35 @@ function signalId(material: unknown): string {
   return `gsc.signal:${hashCanonicalJson(material)}`;
 }
 
+function signalSourceUniverse(sidecar: SearchAnalyticsAdaptedRow): SearchAnalyticsSignalSourceUniverse | undefined {
+  if (!Object.hasOwn(sidecar, 'webModality')) return undefined;
+  const minor1 = sidecar as SearchAnalyticsMinor1AdaptedRow;
+  return {
+    reportFamily: minor1.reportFamily,
+    webModality: minor1.webModality,
+  };
+}
+
+function overlapSourceUniverse(
+  semantics: SearchAnalyticsSemantics,
+  rows: readonly ValidatedSearchAnalyticsRow[],
+): SearchAnalyticsSignalSourceUniverse | undefined {
+  const minor1 = minor1ContextFromSemantics(semantics);
+  const fromSemantics = minor1 === undefined
+    ? undefined
+    : { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
+  for (const row of rows) {
+    const fromRow = signalSourceUniverse(row.sidecar);
+    const matches = fromSemantics === undefined
+      ? fromRow === undefined
+      : fromRow?.reportFamily === fromSemantics.reportFamily && fromRow.webModality === fromSemantics.webModality;
+    if (!matches) {
+      fail('invalid_window', 'Search-analytics overlap rows do not match the validated source universe.');
+    }
+  }
+  return fromSemantics;
+}
+
 function baseSignal(
   kind: SearchAnalyticsSignalKind,
   row: ValidatedSearchAnalyticsRow,
@@ -406,12 +509,14 @@ function baseSignal(
   baseline?: ValidatedSearchAnalyticsWindow,
   baselineRow?: ValidatedSearchAnalyticsRow,
 ): SearchAnalyticsSignal {
+  const sourceUniverse = signalSourceUniverse(row.sidecar);
   const identityMaterial = {
     kind,
     ...(baseline === undefined ? {} : { baselineCollectionId: baseline.collection.id }),
     currentCollectionId: current.collection.id,
     rowIdentity: row.sidecar.rowIdentity,
     policy,
+    ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
   };
   return {
     id: signalId(identityMaterial),
@@ -423,6 +528,7 @@ function baseSignal(
       searchType: 'web',
       page: row.sidecar.page,
       pageId: row.sidecar.pageId,
+      ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
     },
     periods: {
       ...(baseline === undefined ? {} : { baseline: period(baseline.semantics) }),
@@ -583,6 +689,7 @@ export function analyzeSearchAnalyticsSignals(
     const overlapPolicy = policy(policies.overlap.id, policies.overlap.version, {
       minimumImpressions: policies.overlap.minimumImpressions,
     });
+    const sourceUniverse = overlapSourceUniverse(current.semantics, rows);
     signals.push({
       id: signalId({
         kind: 'query_page_overlap_candidate',
@@ -590,6 +697,7 @@ export function analyzeSearchAnalyticsSignals(
         queryId,
         rows: rows.map((row) => row.sidecar.rowIdentity),
         policy: overlapPolicy,
+        ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
       }),
       kind: 'query_page_overlap_candidate',
       providerId: SEARCH_ANALYTICS_PROVIDER_ID,
@@ -598,6 +706,7 @@ export function analyzeSearchAnalyticsSignals(
         queryId,
         searchType: 'web',
         pages: rows.map((row) => ({ page: row.sidecar.page, pageId: row.sidecar.pageId })),
+        ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
       },
       periods: { current: period(current.semantics) },
       freshness: { current: current.semantics.freshness },

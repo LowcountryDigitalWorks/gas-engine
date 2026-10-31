@@ -12,6 +12,7 @@ import {
   SEARCH_CHANGE_METHODOLOGY,
   SearchChangeError,
 } from '../../src/analysis/search-change.js';
+import { SearchAnalyticsSignalError } from '../../src/analysis/search-analytics.js';
 import { parseContract } from '../../src/domain/validate.js';
 import type { Scope } from '../../src/persistence/repository.js';
 import {
@@ -509,4 +510,60 @@ test('prepared measurements persist through Release 0.8; recommendation scope, h
   const storedOutcome = await recordHumanOutcome(review, alpha, { outcome: humanOutcome });
   assert.equal(storedOutcome.assessment.direction, 'unchanged');
   assert.equal(Object.hasOwn(prepared, 'outcome'), false);
+});
+
+function minor1Window(value: MutableJson, webModality: 'text_based' | 'multimodal'): SearchAnalyticsAdaptationResult {
+  value.schemaMinorVersion = 1;
+  value.reportFamily = 'search-performance';
+  value.webModality = webModality;
+  return adapt(value);
+}
+
+test('minor1 modality mismatch cannot prepare a comparable ready search-change measurement', () => {
+  const textBaseline = minor1Window(fixture(), 'text_based');
+  const multimodalFollow = minor1Window(followUpFixture(), 'multimodal');
+  const minor0Baseline = adapt(fixture());
+  const textFollow = minor1Window(followUpFixture(), 'text_based');
+  const agreedSidecar: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textFollow),
+    semantics: {
+      ...textFollow.semantics,
+      reportFamily: 'search-performance',
+      webModality: 'multimodal',
+    },
+    rows: textFollow.rows.map((row) => ({
+      ...row,
+      reportFamily: 'search-performance' as const,
+      webModality: 'multimodal' as const,
+    })),
+  };
+
+  for (const [baseline, followUp] of [
+    [textBaseline, multimodalFollow],
+    [minor0Baseline, textFollow],
+  ] as const) {
+    assert.throws(
+      () => composeSearchChangeOutcomeCohort(invocation(baseline, followUp)),
+      (error: unknown) => error instanceof SearchAnalyticsSignalError && error.code === 'incompatible_windows',
+    );
+  }
+  assert.throws(
+    () => composeSearchChangeOutcomeCohort(invocation(textBaseline, agreedSidecar)),
+    (error: unknown) => error instanceof SearchAnalyticsSignalError && error.code === 'invalid_window',
+  );
+});
+
+test('same-modality minor1 search change keeps ordinary comparable readiness', () => {
+  const baseline = minor1Window(fixture(), 'text_based');
+  const followUp = minor1Window(followUpFixture(), 'text_based');
+  const result = composeSearchChangeOutcomeCohort(invocation(baseline, followUp));
+  assert.deepEqual(result.readiness, { state: 'ready_for_human_assessment' });
+  assert.equal(result.baseline.measurement.result.state, 'measured');
+  assert.equal(result.followUp.measurement.result.state, 'measured');
+  assert.equal(result.baseline.measurement.comparability.state, 'comparable');
+  assert.equal(result.followUp.measurement.comparability.state, 'comparable');
+  assert.equal(result.baseline.measurement.cohort.context.dimensions.configuration?.version, 'text_based');
+  assert.equal(result.followUp.measurement.cohort.context.dimensions.configuration?.version, 'text_based');
+  assert.equal(Object.hasOwn(result, 'outcome'), false);
+  assert.equal(Object.hasOwn(result, 'recommendation'), false);
 });

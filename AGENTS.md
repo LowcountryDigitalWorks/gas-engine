@@ -255,3 +255,17 @@ Release 0.23 is **accepted and merged through Issue #120 / PR #121** at protecte
 - accepted package version is `0.23.0`.
 
 See [accepted Release 0.23 guide](docs/serp-intent-validation.md) and [ADR 0023](docs/decisions/0023-serp-intent-validation-profile.md). Release 0.23 was accepted after exact-head machine validation, Product semantic review, one fresh independence-clean IR, zero unresolved threads, and protected-main merge. Any future semantic expansion requires separately bounded authority/review; this acceptance does not reserve or authorize Release 0.24.
+
+## Release 0.24 candidate boundary (Issue #136 — not accepted)
+
+Release 0.24 candidate on `feat/136-search-performance-web-modality-r0` extends accepted Release 0.10 search analytics with minor 1 **Search Performance web** modality only. Preserve:
+
+- minor 0 legacy adaptation/output shape unchanged (no fabricated `webModality`) and protected-main canonical identity parity for minor 0 seed/collection/source/observation material;
+- minor 1 requires `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`; **`combined` is rejected**;
+- minor 0↔minor 1 and text↔multimodal incompatibility for compatibility, search-change, and measurement-interpretation continuity;
+- Page Focus minor 1 `source` exposes exact modality and binds report identity; minor 0 Page Focus keeps legacy source keys only;
+- minor 1 row and overlap Search Analytics signals expose `cohort.sourceUniverse` and bind signal identity; minor 0 signal cohort JSON shape unchanged;
+- sidecar/canonical modality mismatch fails closed through `validateSearchAnalyticsWindow(...)`;
+- no canonical wire schema, persistence/migration, provider/network/OAuth, Generative-AI-report path, runtime AI, recommendation, or action authority.
+
+Candidate package version is `0.24.0`. See [Release 0.24 candidate guide section](docs/search-analytics-signal-pack.md) and [ADR 0024](docs/decisions/0024-search-performance-web-modality.md). Do not treat this section as accepted `main` authority until Product merge.

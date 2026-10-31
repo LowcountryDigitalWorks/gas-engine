@@ -7,8 +7,13 @@ import {
   type SearchAnalyticsAdaptationResult,
 } from '../../src/adapters/search-analytics.js';
 import {
+  composeSearchChangeOutcomeCohort,
+} from '../../src/analysis/search-change.js';
+import {
   analyzeSearchAnalyticsSignals,
+  requireSearchAnalyticsCompatibility,
   SearchAnalyticsSignalError,
+  validateSearchAnalyticsWindow,
   type SearchAnalyticsSignalErrorCode,
   type SearchAnalyticsSignalPolicies,
 } from '../../src/analysis/search-analytics.js';
@@ -16,6 +21,8 @@ import { canonicalJson } from '../../src/lib/canonical-json.js';
 
 type MutableJson = Record<string, any>;
 const fixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.0.json', 'utf8');
+const minor1TextFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-text-based.json', 'utf8');
+const minor1MultimodalFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-multimodal.json', 'utf8');
 
 function fixture(): MutableJson {
   return JSON.parse(fixtureText) as MutableJson;
@@ -416,4 +423,257 @@ test('policy input fails closed for reversed bands and invalid decay ratio', () 
     () => analyzeSearchAnalyticsSignals(baseline, current, ratio),
     'invalid_input',
   );
+});
+
+function adaptMinor1(
+  baseText: string,
+  mutate: (value: MutableJson) => void,
+  baseConfig: SearchAnalyticsAdapterConfig = alphaConfig,
+): SearchAnalyticsAdaptationResult {
+  const value = JSON.parse(baseText) as MutableJson;
+  mutate(value);
+  return adapt(value, baseConfig);
+}
+
+test('minor0 and minor1 windows are incompatible through the authoritative compatibility gate', () => {
+  const baseline = validateSearchAnalyticsWindow(adapt(baselineFixture()));
+  const minor1Current = adaptMinor1(minor1TextFixtureText, (value) => {
+    value.observedAt = currentFixture().observedAt;
+    value.exportedAt = currentFixture().exportedAt;
+    value.requestedWindow = structuredClone(currentFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(currentFixture().effectiveWindow);
+    value.freshness = structuredClone(currentFixture().freshness);
+    value.rows = structuredClone(currentFixture().rows);
+  });
+  const current = validateSearchAnalyticsWindow(minor1Current);
+  expectSignalError(
+    () => requireSearchAnalyticsCompatibility(baseline, current),
+    'incompatible_windows',
+  );
+  expectSignalError(
+    () => analyzeSearchAnalyticsSignals(adapt(baselineFixture()), minor1Current, policies),
+    'incompatible_windows',
+  );
+});
+
+test('text_based and multimodal minor1 windows are incompatible even when row metrics match', () => {
+  const baseline = adaptMinor1(minor1TextFixtureText, (value) => {
+    value.observedAt = baselineFixture().observedAt;
+    value.exportedAt = baselineFixture().exportedAt;
+    value.requestedWindow = structuredClone(baselineFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(baselineFixture().effectiveWindow);
+    value.freshness = structuredClone(baselineFixture().freshness);
+    value.rows = structuredClone(baselineFixture().rows);
+  });
+  const current = adaptMinor1(minor1MultimodalFixtureText, (value) => {
+    value.observedAt = currentFixture().observedAt;
+    value.exportedAt = currentFixture().exportedAt;
+    value.requestedWindow = structuredClone(currentFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(currentFixture().effectiveWindow);
+    value.freshness = structuredClone(currentFixture().freshness);
+    value.rows = structuredClone(currentFixture().rows);
+  });
+  expectSignalError(
+    () => analyzeSearchAnalyticsSignals(baseline, current, policies),
+    'incompatible_windows',
+  );
+});
+
+test('same-modality minor1 windows pass compatibility and emit deterministic shared-row signals', () => {
+  const baseline = adaptMinor1(minor1TextFixtureText, (value) => {
+    value.observedAt = baselineFixture().observedAt;
+    value.exportedAt = baselineFixture().exportedAt;
+    value.requestedWindow = structuredClone(baselineFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(baselineFixture().effectiveWindow);
+    value.freshness = structuredClone(baselineFixture().freshness);
+    value.rows = structuredClone(baselineFixture().rows);
+  });
+  const current = adaptMinor1(minor1TextFixtureText, (value) => {
+    value.observedAt = currentFixture().observedAt;
+    value.exportedAt = currentFixture().exportedAt;
+    value.requestedWindow = structuredClone(currentFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(currentFixture().effectiveWindow);
+    value.freshness = structuredClone(currentFixture().freshness);
+    value.rows = structuredClone(currentFixture().rows);
+  });
+  assert.doesNotThrow(() => requireSearchAnalyticsCompatibility(
+    validateSearchAnalyticsWindow(baseline),
+    validateSearchAnalyticsWindow(current),
+  ));
+  const report = analyzeSearchAnalyticsSignals(baseline, current, policies);
+  assert.ok(report.signals.some((signal) => signal.kind === 'window_delta' && signal.cohort.query === 'synthetic shared'));
+});
+
+const LEGACY_SIGNAL_COHORT_KEYS = ['query', 'queryId', 'searchType', 'page', 'pageId'] as const;
+
+test('minor0 SearchAnalyticsSignal cohort preserves accepted Release 0.10 JSON shape', () => {
+  const report = analyzeSearchAnalyticsSignals(adapt(baselineFixture()), adapt(currentFixture()), policies);
+  const signal = report.signals.find((item) => item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  assert.ok(signal);
+  assert.deepEqual(Object.keys(signal.cohort).sort(), [...LEGACY_SIGNAL_COHORT_KEYS].sort());
+  assert.equal(Object.hasOwn(signal.cohort, 'sourceUniverse'), false);
+  const overlap = report.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  assert.ok(overlap);
+  assert.deepEqual(Object.keys(overlap.cohort).sort(), ['pages', 'query', 'queryId', 'searchType']);
+  assert.equal(Object.hasOwn(overlap.cohort, 'sourceUniverse'), false);
+  assert.equal(overlap.cohort.searchType, 'web');
+});
+
+function minor1WindowPair(
+  fixtureText: string,
+  mutateBaseline: (value: MutableJson) => void,
+  mutateCurrent: (value: MutableJson) => void,
+) {
+  const baseline = adaptMinor1(fixtureText, (value) => {
+    value.observedAt = baselineFixture().observedAt;
+    value.exportedAt = baselineFixture().exportedAt;
+    value.requestedWindow = structuredClone(baselineFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(baselineFixture().effectiveWindow);
+    value.freshness = structuredClone(baselineFixture().freshness);
+    value.rows = structuredClone(baselineFixture().rows);
+    mutateBaseline(value);
+  });
+  const current = adaptMinor1(fixtureText, (value) => {
+    value.observedAt = currentFixture().observedAt;
+    value.exportedAt = currentFixture().exportedAt;
+    value.requestedWindow = structuredClone(currentFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(currentFixture().effectiveWindow);
+    value.freshness = structuredClone(currentFixture().freshness);
+    value.rows = structuredClone(currentFixture().rows);
+    mutateCurrent(value);
+  });
+  return { baseline, current };
+}
+
+test('minor1 signals expose source universe and modality-aware deterministic identity', () => {
+  const textBased = minor1WindowPair(minor1TextFixtureText, () => {}, () => {});
+  const multimodal = minor1WindowPair(minor1MultimodalFixtureText, () => {}, () => {});
+
+  const textReport = analyzeSearchAnalyticsSignals(textBased.baseline, textBased.current, policies);
+  const multimodalReport = analyzeSearchAnalyticsSignals(multimodal.baseline, multimodal.current, policies);
+
+  const textSignal = textReport.signals.find((item) =>
+    item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  const multimodalSignal = multimodalReport.signals.find((item) =>
+    item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  assert.ok(textSignal);
+  assert.ok(multimodalSignal);
+
+  assert.deepEqual(textSignal.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'text_based',
+  });
+  assert.deepEqual(multimodalSignal.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  });
+  assert.notEqual(textSignal.id, multimodalSignal.id);
+
+  const textOverlap = textReport.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  const multimodalOverlap = multimodalReport.signals.find((item) =>
+    item.kind === 'query_page_overlap_candidate' && item.cohort.query === 'synthetic overlap');
+  assert.ok(textOverlap);
+  assert.ok(multimodalOverlap);
+  assert.deepEqual(textOverlap.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'text_based',
+  });
+  assert.deepEqual(multimodalOverlap.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  });
+  assert.equal(textOverlap.values.pageCount, multimodalOverlap.values.pageCount);
+  assert.notEqual(textOverlap.id, multimodalOverlap.id);
+
+  const repeat = analyzeSearchAnalyticsSignals(textBased.baseline, textBased.current, policies);
+  assert.equal(repeat.signals.find((item) => item.id === textSignal.id)?.id, textSignal.id);
+});
+
+test('minor1 sidecar agreement cannot relabel canonical search modality', () => {
+  const textBased = adaptMinor1(minor1TextFixtureText, () => {});
+  assert.doesNotThrow(() => validateSearchAnalyticsWindow(textBased));
+  const multimodal = adaptMinor1(minor1MultimodalFixtureText, () => {});
+  assert.notEqual(textBased.collectionId, multimodal.collectionId);
+
+  const semanticsOnly: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    semantics: { ...textBased.semantics, reportFamily: 'search-performance', webModality: 'multimodal' },
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(semanticsOnly), 'invalid_window');
+
+  const rowsOnly: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    rows: textBased.rows.map((row) => ({
+      ...row,
+      reportFamily: 'search-performance' as const,
+      webModality: 'multimodal' as const,
+    })),
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(rowsOnly), 'invalid_window');
+
+  const methodForged = structuredClone(textBased);
+  const otherMethod = structuredClone(multimodal.batches[0]!.collection.method);
+  for (const batch of methodForged.batches) {
+    (batch.collection as { method: typeof otherMethod }).method = structuredClone(otherMethod);
+  }
+  expectSignalError(() => validateSearchAnalyticsWindow(methodForged), 'invalid_window');
+
+  const cohortForged = structuredClone(textBased);
+  for (const batch of cohortForged.batches) {
+    for (const observation of batch.observations) {
+      const dimensions = observation.record.cohort.context.dimensions as {
+        configuration?: { id: string; version: string };
+      };
+      dimensions.configuration = { id: 'gsc-web-modality', version: 'multimodal' };
+    }
+  }
+  expectSignalError(() => validateSearchAnalyticsWindow(cohortForged), 'invalid_window');
+
+  const agreedSidecar: SearchAnalyticsAdaptationResult = {
+    ...structuredClone(textBased),
+    semantics: { ...textBased.semantics, reportFamily: 'search-performance', webModality: 'multimodal' },
+    rows: textBased.rows.map((row) => ({
+      ...row,
+      reportFamily: 'search-performance' as const,
+      webModality: 'multimodal' as const,
+    })),
+  };
+  expectSignalError(() => validateSearchAnalyticsWindow(agreedSidecar), 'invalid_window');
+  expectSignalError(
+    () => requireSearchAnalyticsCompatibility(
+      validateSearchAnalyticsWindow(textBased),
+      validateSearchAnalyticsWindow(multimodal),
+    ),
+    'incompatible_windows',
+  );
+});
+
+test('Release 0.11 search-change composition fails closed when follow-up modality differs from baseline', () => {
+  const baseline = adapt(baselineFixture());
+  const followValue = currentFixture();
+  followValue.schemaMinorVersion = 1;
+  followValue.reportFamily = 'search-performance';
+  followValue.webModality = 'text_based';
+  const followUp = adapt(followValue);
+  const row = baseline.rows.find((item) => item.query === 'synthetic shared');
+  assert.ok(row);
+  assert.throws(() => composeSearchChangeOutcomeCohort({
+    annotation: {
+      id: 'synthetic-modality-drift',
+      occurredAt: '2026-09-16T00:00:00.000Z',
+      recordedAt: '2026-09-16T09:00:00.000Z',
+      summary: 'Synthetic Release 0.11 modality drift proof.',
+    },
+    baseline,
+    baselineRowIdentity: row.rowIdentity,
+    metric: 'clicks',
+    dueWindow: {
+      start: currentFixture().requestedWindow.start,
+      end: currentFixture().requestedWindow.end,
+    },
+    evaluatedAt: '2026-09-16T09:00:00.000Z',
+    followUp,
+  }));
 });

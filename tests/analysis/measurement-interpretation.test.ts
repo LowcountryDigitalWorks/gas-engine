@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import type { Contract } from '../../src/contracts/wire.js';
+import {
+  adaptSearchAnalyticsEvidence,
+  type SearchAnalyticsAdapterConfig,
+} from '../../src/adapters/search-analytics.js';
+import { composeSearchChangeOutcomeCohort } from '../../src/analysis/search-change.js';
 import {
   interpretMeasurement,
   MeasurementInterpretationError,
@@ -327,6 +333,119 @@ test('duplicate observation references with different values fail closed regardl
     (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input');
   assert.throws(() => interpretMeasurement(input({ measurements: [reversed, followUp] })),
     (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input');
+});
+
+test('Release 0.22 cannot claim-upgrade a modality discontinuity or invent a measurement', () => {
+  const fixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.0.json', 'utf8');
+  const dueWindow = { start: '2026-09-23T00:00:00.000Z', end: '2026-09-30T00:00:00.000Z' };
+  const config: SearchAnalyticsAdapterConfig = {
+    scope: { tenantId: 'tenant-alpha', siteId: 'site-alpha', siteScopeRevisionId: 'synthetic-scope-alpha-r1' },
+    expectedProperty: 'sc-domain:example.test',
+    providerConnectionId: 'synthetic-gsc-interpretation-connection',
+    collectedAt: '2026-10-01T08:06:00.000Z',
+    receivedAt: '2026-10-01T08:07:00.000Z',
+    availability: { state: 'available', reference: 'synthetic-interpretation-artifact' },
+  };
+  function windowFor(webModality: 'text_based' | 'multimodal', followUp: boolean) {
+    const value = JSON.parse(fixtureText) as Record<string, unknown>;
+    value.schemaMinorVersion = 1;
+    value.reportFamily = 'search-performance';
+    value.webModality = webModality;
+    if (followUp) {
+      value.observedAt = '2026-10-01T08:00:00.000Z';
+      value.exportedAt = '2026-10-01T08:05:00.000Z';
+      value.requestedWindow = dueWindow;
+      value.effectiveWindow = dueWindow;
+      value.freshness = { dataState: 'final', freshThrough: dueWindow.end };
+    }
+    const exported = Date.parse(String(value.exportedAt));
+    return adaptSearchAnalyticsEvidence(Buffer.from(JSON.stringify(value)), {
+      ...config,
+      collectedAt: new Date(exported + 60_000).toISOString(),
+      receivedAt: new Date(exported + 120_000).toISOString(),
+    });
+  }
+  function compose(webModality: 'text_based' | 'multimodal') {
+    const baseline = windowFor(webModality, false);
+    const followUp = windowFor(webModality, true);
+    const row = baseline.rows.find((item) => item.query === 'synthetic alpha search');
+    assert.ok(row);
+    return composeSearchChangeOutcomeCohort({
+      annotation: {
+        id: `synthetic-modality-${webModality}`,
+        occurredAt: '2026-09-16T00:00:00.000Z',
+        recordedAt: '2026-09-16T09:00:00.000Z',
+        summary: 'Synthetic minor1 search change for Release 0.22 propagation.',
+      },
+      baseline,
+      followUp,
+      baselineRowIdentity: row.rowIdentity,
+      metric: 'clicks',
+      dueWindow,
+      evaluatedAt: '2026-10-01T09:00:00.000Z',
+    });
+  }
+  const textBased = compose('text_based');
+  const multimodal = compose('multimodal');
+  assert.equal(textBased.readiness.state, 'ready_for_human_assessment');
+  const metric = textBased.baseline.measurement.cohort.context.metric;
+  const method = textBased.baseline.measurement.cohort.context.method;
+  const methodContext = {
+    providerId: textBased.baseline.measurement.cohort.context.dimensions.providerId,
+    metricId: metric.id,
+    metricDefinitionVersion: metric.meaningVersion,
+    methodId: method.id,
+    methodVersion: method.version,
+    metricClass: 'search_analytics' as const,
+  };
+  const favorable = {
+    designClass: 'annotated_pre_post' as const,
+    exposure: {
+      state: 'sufficiently_exposed' as const,
+      methodId: 'synthetic-exposure',
+      methodVersion: '1.0.0',
+      evidenceReference: 'synthetic-exposure-evidence',
+    },
+    methodContext: { baseline: methodContext, followUp: methodContext },
+    quality: { preliminary: false, partial: false, truncated: false, anonymized: false },
+  };
+  const ordinary = interpretMeasurement({
+    ...favorable,
+    measurements: [textBased.baseline.measurement, textBased.followUp.measurement],
+  });
+  assert.equal(ordinary.claimCeiling, 'temporal_association_only');
+  assert.equal(ordinary.readiness, 'ready');
+  assert.deepEqual(ordinary.allowedClaimCodes, ['observed_temporal_change']);
+  assert.ok(ordinary.prohibitedOverclaimCodes.includes('causal_attribution'));
+
+  const stitchedFollowUp = {
+    ...structuredClone(multimodal.followUp.measurement),
+    relationship: { role: 'follow_up' as const, baselineMeasurementId: textBased.baseline.measurement.id },
+  };
+  const blocked = interpretMeasurement({
+    ...favorable,
+    designClass: 'randomized_or_balanced_split_test',
+    methodContext: {
+      ...favorable.methodContext,
+      balancedOrRandomized: true,
+      controlCount: 10,
+      testCount: 10,
+    },
+    measurements: [textBased.baseline.measurement, stitchedFollowUp],
+  });
+  assert.equal(blocked.claimCeiling, 'not_interpretable');
+  assert.equal(blocked.readiness, 'blocked');
+  assert.ok(blocked.comparability.reasons.includes('canonical_cohort_discontinuous'));
+  assert.deepEqual(blocked.allowedClaimCodes, ['no_change_claim_supported']);
+
+  assert.throws(
+    () => interpretMeasurement({ ...favorable, searchChange: textBased }),
+    (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input',
+  );
+  assert.throws(
+    () => interpretMeasurement({ ...favorable, measurements: [textBased.baseline, textBased.followUp] }),
+    (error: unknown) => error instanceof MeasurementInterpretationError && error.code === 'invalid_input',
+  );
 });
 
 test('result relationships and result state are retained as canonical gates', () => {
