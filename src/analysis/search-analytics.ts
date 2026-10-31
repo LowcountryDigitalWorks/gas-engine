@@ -11,13 +11,13 @@ import {
   SEARCH_ANALYTICS_SOURCE_SCHEMA_ID,
   SEARCH_ANALYTICS_SOURCE_SCHEMA_VERSION,
   SEARCH_ANALYTICS_MINOR1_SOURCE_SCHEMA_VERSION,
-  SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION,
-  SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION,
   SEARCH_ANALYTICS_REPORT_FAMILY,
   searchAnalyticsCohortId,
   searchAnalyticsDimensionIdentity,
   searchAnalyticsMethod,
   type SearchAnalyticsMinor1Context,
+  type SearchAnalyticsMinor1AdaptedRow,
+  type SearchAnalyticsMinor1Semantics,
   type SearchAnalyticsAdaptationResult,
   type SearchAnalyticsAdaptedRow,
   type SearchAnalyticsCoverage,
@@ -205,37 +205,37 @@ function expectedCompleteness(semantics: SearchAnalyticsSemantics, rowCount: num
 }
 
 function minor1ContextFromSemantics(semantics: SearchAnalyticsSemantics): SearchAnalyticsMinor1Context | undefined {
-  if (semantics.schemaMinorVersion === SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION) {
-    if (semantics.reportFamily !== undefined || semantics.webModality !== undefined) {
-      fail('invalid_window', 'Search-analytics minor 0 semantics must not carry web modality.');
-    }
+  const hasReportFamily = Object.hasOwn(semantics, 'reportFamily');
+  const hasWebModality = Object.hasOwn(semantics, 'webModality');
+  if (!hasReportFamily && !hasWebModality) {
     return undefined;
   }
-  if (semantics.schemaMinorVersion !== SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION) {
-    fail('invalid_window', 'Search-analytics schema minor version is unsupported.');
+  if (!hasReportFamily || !hasWebModality) {
+    fail('invalid_window', 'Search-analytics minor 1 semantics must include reportFamily and webModality together.');
   }
-  if (semantics.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
-      || (semantics.webModality !== 'text_based' && semantics.webModality !== 'multimodal')) {
+  const minor1 = semantics as SearchAnalyticsMinor1Semantics;
+  if (minor1.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
+      || (minor1.webModality !== 'text_based' && minor1.webModality !== 'multimodal')) {
     fail('invalid_window', 'Search-analytics minor 1 semantics are incomplete or invalid.');
   }
-  return { reportFamily: semantics.reportFamily, webModality: semantics.webModality };
+  return { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
 }
 
 function minor1ContextFromRow(row: SearchAnalyticsAdaptedRow): SearchAnalyticsMinor1Context | undefined {
-  if (row.schemaMinorVersion === SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION) {
-    if (row.reportFamily !== undefined || row.webModality !== undefined) {
-      fail('invalid_window', 'Search-analytics minor 0 rows must not carry web modality.');
-    }
+  const hasReportFamily = Object.hasOwn(row, 'reportFamily');
+  const hasWebModality = Object.hasOwn(row, 'webModality');
+  if (!hasReportFamily && !hasWebModality) {
     return undefined;
   }
-  if (row.schemaMinorVersion !== SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION) {
-    fail('invalid_window', 'Search-analytics row schema minor version is unsupported.');
+  if (!hasReportFamily || !hasWebModality) {
+    fail('invalid_window', 'Search-analytics minor 1 rows must include reportFamily and webModality together.');
   }
-  if (row.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
-      || (row.webModality !== 'text_based' && row.webModality !== 'multimodal')) {
+  const minor1 = row as SearchAnalyticsMinor1AdaptedRow;
+  if (minor1.reportFamily !== SEARCH_ANALYTICS_REPORT_FAMILY
+      || (minor1.webModality !== 'text_based' && minor1.webModality !== 'multimodal')) {
     fail('invalid_window', 'Search-analytics minor 1 row modality is incomplete or invalid.');
   }
-  return { reportFamily: row.reportFamily, webModality: row.webModality };
+  return { reportFamily: minor1.reportFamily, webModality: minor1.webModality };
 }
 
 export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationResult): ValidatedSearchAnalyticsWindow {
@@ -323,9 +323,6 @@ export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationRe
   const seenRows = new Set<string>();
   const validatedRows: ValidatedSearchAnalyticsRow[] = input.rows.map((row) => {
     if (row.searchType !== 'web') fail('invalid_window', 'Search-analytics row search type is unsupported.');
-    if (row.schemaMinorVersion !== input.semantics.schemaMinorVersion) {
-      fail('invalid_window', 'Search-analytics row and semantics minor versions must match.');
-    }
     const rowMinor1 = minor1ContextFromRow(row);
     if ((minor1 === undefined) !== (rowMinor1 === undefined)
         || (minor1 !== undefined && rowMinor1 !== undefined
@@ -408,9 +405,6 @@ function coverageCompatibility(value: SearchAnalyticsCoverage): unknown {
 export function requireSearchAnalyticsCompatibility(baseline: ValidatedSearchAnalyticsWindow, current: ValidatedSearchAnalyticsWindow): void {
   if (baseline.collection.id === current.collection.id) {
     fail('incompatible_windows', 'Baseline and current search-analytics collections must be distinct.');
-  }
-  if (baseline.semantics.schemaMinorVersion !== current.semantics.schemaMinorVersion) {
-    fail('incompatible_windows', 'Baseline and current search-analytics schema minor versions are incompatible.');
   }
   const baselineMinor1 = minor1ContextFromSemantics(baseline.semantics);
   const currentMinor1 = minor1ContextFromSemantics(current.semantics);

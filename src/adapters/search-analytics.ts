@@ -94,10 +94,7 @@ export interface SearchAnalyticsFreshness {
   readonly freshThrough: string;
 }
 
-export interface SearchAnalyticsSemantics {
-  readonly schemaMinorVersion: typeof SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION | typeof SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION;
-  readonly reportFamily?: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
-  readonly webModality?: SearchAnalyticsWebModality;
+export interface SearchAnalyticsLegacySemantics {
   readonly property: string;
   readonly observedAt: string;
   readonly exportedAt: string;
@@ -111,10 +108,14 @@ export interface SearchAnalyticsSemantics {
   readonly coverage: SearchAnalyticsCoverage;
 }
 
-export interface SearchAnalyticsAdaptedRow {
-  readonly schemaMinorVersion: typeof SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR_VERSION | typeof SEARCH_ANALYTICS_INPUT_SCHEMA_MINOR1_VERSION;
-  readonly reportFamily?: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
-  readonly webModality?: SearchAnalyticsWebModality;
+export interface SearchAnalyticsMinor1Semantics extends SearchAnalyticsLegacySemantics {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
+export type SearchAnalyticsSemantics = SearchAnalyticsLegacySemantics | SearchAnalyticsMinor1Semantics;
+
+export interface SearchAnalyticsLegacyAdaptedRow {
   readonly rowIdentity: string;
   readonly query: string;
   readonly page: string;
@@ -125,6 +126,13 @@ export interface SearchAnalyticsAdaptedRow {
   readonly sourceRecordId: string;
   readonly observationIds: Readonly<Record<SearchAnalyticsMetricKey, string>>;
 }
+
+export interface SearchAnalyticsMinor1AdaptedRow extends SearchAnalyticsLegacyAdaptedRow {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
+export type SearchAnalyticsAdaptedRow = SearchAnalyticsLegacyAdaptedRow | SearchAnalyticsMinor1AdaptedRow;
 
 export interface SearchAnalyticsAdaptationResult {
   /** SHA-256 of the exact sanitized source bytes. Diagnostic integrity only; never authority or semantic identity. */
@@ -654,19 +662,31 @@ function makePreparedRows(
     });
 
     return {
-      row: {
-        schemaMinorVersion: artifact.schemaMinorVersion,
-        ...(minor1 === undefined ? {} : { reportFamily: minor1.reportFamily, webModality: minor1.webModality }),
-        rowIdentity: dimensions.rowIdentity,
-        query: sourceRow.query,
-        page: sourceRow.page,
-        searchType: artifact.searchType,
-        queryId: dimensions.queryId,
-        pageId: dimensions.pageId,
-        sourceId,
-        sourceRecordId,
-        observationIds,
-      },
+      row: minor1 === undefined
+        ? {
+          rowIdentity: dimensions.rowIdentity,
+          query: sourceRow.query,
+          page: sourceRow.page,
+          searchType: artifact.searchType,
+          queryId: dimensions.queryId,
+          pageId: dimensions.pageId,
+          sourceId,
+          sourceRecordId,
+          observationIds,
+        }
+        : {
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+          rowIdentity: dimensions.rowIdentity,
+          query: sourceRow.query,
+          page: sourceRow.page,
+          searchType: artifact.searchType,
+          queryId: dimensions.queryId,
+          pageId: dimensions.pageId,
+          sourceId,
+          sourceRecordId,
+          observationIds,
+        },
       source: { id: sourceId, record: source },
       observations,
     };
@@ -816,9 +836,7 @@ export function adaptSearchAnalyticsEvidence(
 
   const prepared = makePreparedRows(artifact, config, filters, rows, collection, runDigest, durationSeconds);
   const batches = packRows(prepared, idempotencyKey, collection);
-  const semantics: SearchAnalyticsSemantics = {
-    schemaMinorVersion: artifact.schemaMinorVersion,
-    ...(minor1 === undefined ? {} : { reportFamily: minor1.reportFamily, webModality: minor1.webModality }),
+  const legacySemantics: SearchAnalyticsLegacySemantics = {
     property: artifact.property,
     observedAt: artifact.observedAt,
     exportedAt: artifact.exportedAt,
@@ -831,6 +849,13 @@ export function adaptSearchAnalyticsEvidence(
     filters,
     coverage: artifact.coverage,
   };
+  const semantics: SearchAnalyticsSemantics = minor1 === undefined
+    ? legacySemantics
+    : {
+      ...legacySemantics,
+      reportFamily: minor1.reportFamily,
+      webModality: minor1.webModality,
+    };
 
   return {
     inputSha256,

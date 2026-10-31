@@ -11,6 +11,8 @@ import {
   SearchAnalyticsAdapterError,
   type SearchAnalyticsAdapterConfig,
   type SearchAnalyticsAdapterErrorCode,
+  type SearchAnalyticsMinor1AdaptedRow,
+  type SearchAnalyticsMinor1Semantics,
 } from '../../src/adapters/search-analytics.js';
 import { canonicalJson } from '../../src/lib/canonical-json.js';
 import { parseCollectionBatch } from '../../src/persistence/validation.js';
@@ -350,16 +352,71 @@ test('adapter executes under the repository no-network tripwire and introduces n
 const minor1TextFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-text-based.json', 'utf8');
 const minor1MultimodalFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-multimodal.json', 'utf8');
 
-test('minor0 regression preserves collection and row identities aside from explicit schemaMinorVersion 0', () => {
+const LEGACY_APPLICATION_SEMANTICS_KEYS = [
+  'coverage',
+  'dimensions',
+  'effectiveWindow',
+  'exportedAt',
+  'filterGroupType',
+  'filters',
+  'freshness',
+  'observedAt',
+  'property',
+  'requestedWindow',
+  'searchType',
+] as const;
+
+const LEGACY_APPLICATION_ROW_KEYS = [
+  'observationIds',
+  'page',
+  'pageId',
+  'query',
+  'queryId',
+  'rowIdentity',
+  'searchType',
+  'sourceId',
+  'sourceRecordId',
+] as const;
+
+test('minor0 application-local semantics and rows preserve accepted pre-0.24 field shape exactly', () => {
   const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
-  assert.equal(result.semantics.schemaMinorVersion, 0);
-  assert.equal(result.semantics.reportFamily, undefined);
-  assert.equal(result.semantics.webModality, undefined);
+  assert.deepEqual(Object.keys(result.semantics).sort(), [...LEGACY_APPLICATION_SEMANTICS_KEYS].sort());
+  assert.equal(Object.hasOwn(result.semantics, 'schemaMinorVersion'), false);
+  assert.equal(Object.hasOwn(result.semantics, 'reportFamily'), false);
+  assert.equal(Object.hasOwn(result.semantics, 'webModality'), false);
+  assert.deepEqual(result.semantics, {
+    property: 'sc-domain:example.test',
+    observedAt: '2026-09-16T08:00:00.000Z',
+    exportedAt: '2026-09-16T08:05:00.000Z',
+    requestedWindow: {
+      start: '2026-09-08T00:00:00.000Z',
+      end: '2026-09-15T00:00:00.000Z',
+    },
+    effectiveWindow: {
+      start: '2026-09-08T00:00:00.000Z',
+      end: '2026-09-15T00:00:00.000Z',
+    },
+    freshness: {
+      dataState: 'final',
+      freshThrough: '2026-09-15T00:00:00.000Z',
+    },
+    searchType: 'web',
+    dimensions: ['query', 'page'],
+    filterGroupType: 'and',
+    filters: [],
+    coverage: {
+      state: 'complete',
+      truncated: false,
+      anonymized: false,
+    },
+  });
   for (const row of result.rows) {
-    assert.equal(row.schemaMinorVersion, 0);
-    assert.equal(row.reportFamily, undefined);
-    assert.equal(row.webModality, undefined);
+    assert.deepEqual(Object.keys(row).sort(), [...LEGACY_APPLICATION_ROW_KEYS].sort());
+    assert.equal(Object.hasOwn(row, 'schemaMinorVersion'), false);
+    assert.equal(Object.hasOwn(row, 'reportFamily'), false);
+    assert.equal(Object.hasOwn(row, 'webModality'), false);
   }
+  assert.deepEqual(withoutExactInputHash(result), withoutExactInputHash(adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig)));
 });
 
 test('minor1 text_based and multimodal adapt with distinct mapping, source schema, method, and row identities', () => {
@@ -367,9 +424,16 @@ test('minor1 text_based and multimodal adapt with distinct mapping, source schem
   const multimodal = adaptSearchAnalyticsEvidence(Buffer.from(minor1MultimodalFixtureText, 'utf8'), trustedConfig);
 
   for (const result of [textBased, multimodal]) {
-    assert.equal(result.semantics.schemaMinorVersion, 1);
-    assert.equal(result.semantics.reportFamily, 'search-performance');
-    assert.ok(result.semantics.webModality === 'text_based' || result.semantics.webModality === 'multimodal');
+    const semantics = result.semantics as SearchAnalyticsMinor1Semantics;
+    assert.equal(Object.hasOwn(result.semantics, 'schemaMinorVersion'), false);
+    assert.equal(semantics.reportFamily, 'search-performance');
+    assert.ok(semantics.webModality === 'text_based' || semantics.webModality === 'multimodal');
+    for (const row of result.rows) {
+      const minor1Row = row as SearchAnalyticsMinor1AdaptedRow;
+      assert.equal(Object.hasOwn(row, 'schemaMinorVersion'), false);
+      assert.equal(minor1Row.reportFamily, semantics.reportFamily);
+      assert.equal(minor1Row.webModality, semantics.webModality);
+    }
     for (const batch of result.batches) {
       assert.deepEqual(batch.collection.adapter, { id: SEARCH_ANALYTICS_ADAPTER_ID, version: '1.1.0' });
       assert.deepEqual(batch.collection.sourceSchema, { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: 'v1.1' });
