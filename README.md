@@ -69,7 +69,7 @@ Internal automation does not prove commercial demand. LDW's audit-first/service-
 
 ## Local validation
 
-Use Node.js 24.19.0 and npm 11.17.0 (Node 24 only). Dependency installation needs the package registry or an existing cache; the checks use only local/synthetic inputs.
+`.nvmrc` and `package.json` are the canonical runtime pins: the current CI and developer runtime is exact Node 24.22.2, the supported Node engine is `>=24.22.1 <25`, and the npm baseline is 11.17.0. Dependency installation needs the package registry or an existing cache; the checks use only local/synthetic inputs.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
