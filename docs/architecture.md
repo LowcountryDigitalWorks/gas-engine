@@ -6,6 +6,8 @@ Release 0.1 defines the accepted direction for a bounded LDW internal managed-se
 
 **Release 0.9 is accepted and merged through PR #19** after Product ORCH2 exact-head review and independent review. It adds only a compact read-only local operator case view and printable static HTML preview over accepted Release 0.7/0.8 read surfaces. It adds no persistence/schema, write controls, server/listener, provider networking, runtime AI, framework, customer portal/evidence, action/remediation, or cloud resource. See [operator case-view guide](operator-case-view.md) and [ADR 0008](decisions/0008-operator-case-view.md).
 
+**The current accepted architecture is Releases 0.1–0.24** on `main`, package `0.24.0`. Sections below keep release-local history. Release 0.23 adds the accepted pure/local SERP Intent Validation seam, and Release 0.24 adds the accepted Search Performance web-modality seam. Release 1.0 remains separately gated. This baseline does not reserve or authorize a later semantic release. See [authorization](authorization.md), [roadmap](roadmap.md), [SERP intent validation](serp-intent-validation.md), and [search analytics signals](search-analytics-signal-pack.md).
+
 ## Objectives and operating model
 
 G.A.S. means **Generative / Answer / Search**. It is LDW's provider-neutral Search, SEO, and generative/AI visibility intelligence and managed-service decision-support engine. It consumes source-preserving evidence from replaceable sensors/platforms, owns deterministic provider-preserving normalization and interpretation, retains provenance/history, supports longitudinal and bounded cross-source analysis only when semantics support it, preserves human recommendation/decision authority, and measures outcomes without inventing universal scoring or action authority. Its value must be demonstrated through reduced recurring LDW delivery and reconciliation labor.
@@ -14,7 +16,7 @@ The intended lifecycle is:
 
 > OBSERVE → NORMALIZE → COMPARE → CORRELATE ONLY WHEN SEMANTICS SUPPORT IT → PRIORITIZE ONLY WITH AN EXPLICIT POLICY → RECOMMEND → APPROVE WHEN REQUIRED → ACT ONLY THROUGH SEPARATELY AUTHORIZED PATHS → RE-MEASURE → REPORT OUTCOME
 
-An observation does not establish a conclusion, a mechanical diff is not an inference, a human-authored recommendation is not an automatically generated ranking, and approval does not erase the need for separate execution authority. Accepted Releases through 0.8 implement contracts, local evidence persistence, authenticated bounded intake, deterministic WQT evidence adaptation, deterministic sanitized ZeroRank evidence adaptation, deterministic same-stream longitudinal comparison, and the bounded human review/measurement/outcome ledger. Release 0.8 adds human review history and explicit measurement/outcome records only. Cross-provider correlation, automatic prioritization, action/execution, UI, and cloud workflow remain future separately gated work.
+An observation does not establish a conclusion, a mechanical diff is not an inference, a human-authored recommendation is not an automatically generated ranking, and approval does not erase the need for separate execution authority. At Release 0.8 acceptance, the implemented proof was contracts, local evidence persistence, authenticated bounded intake, deterministic WQT evidence adaptation, deterministic sanitized ZeroRank evidence adaptation, deterministic same-stream longitudinal comparison, and the bounded human review/measurement/outcome ledger. The current accepted baseline is Releases 0.1–0.24. Cross-provider correlation, automatic prioritization, action/execution, and cloud workflow remain separately gated. Local read-only operator previews from Release 0.9 onward are not a customer portal or an execution path.
 
 ## Ownership and source-of-truth boundaries
 
@@ -24,7 +26,7 @@ An observation does not establish a conclusion, a mechanical diff is not an infe
 | Website Quality Toolkit (WQT) | Website-specific deterministic technical/site/technical-SEO sensing and normalization through SiteOne and Lighthouse | Consume its normalized evidence and scanner-native provenance; do not rebuild WQT, execute its scanners, or create a G.A.S. provider/network client. |
 | ZeroRank | Replaceable Generative observation/sensing | Consume the accepted sanitized Release 0.6 evidence boundary without polling ZeroRank from G.A.S.; its observations and scores remain provider evidence, not authoritative LDW truth. |
 | SuiteDash | Customer/company/client-workflow and service-enrollment experience | Do not duplicate CRM or client operations in G.A.S. |
-| Activepieces | Deterministic cross-system workflow/event transport where useful | Must not become the only durable G.A.S. evidence or system-of-record layer. G.A.S. does not call Activepieces at runtime in Releases 0.6–0.8. |
+| Activepieces | Deterministic cross-system workflow/event transport where useful | Must not become the only durable G.A.S. evidence or system-of-record layer. G.A.S. does not call Activepieces at runtime in the accepted 0.1–0.24 baseline. |
 | GitHub | Source, technical work, PR/review/release evidence, and separately governed automation paths | No parallel autonomous GitHub-writing mechanism. Private runtime evidence stays outside public GitHub. |
 
 G.A.S. is the intended durable record of its own normalization, deterministic comparison, human review decisions, and measurement/outcome history. It does not rewrite provider history, become the client-workflow authority, or treat a vendor score as an LDW conclusion. Sources may disagree; retain disagreement and provenance rather than overwrite it with unsupported consensus.
@@ -127,11 +129,11 @@ The bounded proof uses LDW-owned and synthetic evidence only. There is no produc
 - Sources: WQT and read-only sanitized ZeroRank evidence.
 - Second tenant: clearly synthetic, solely for testing/fixtures in authorized releases.
 
-The proof loop is now:
+The initial vertical-slice loop was:
 
 > INGEST → NORMALIZE → STORE → DIFF → HUMAN REVIEW HISTORY → EXPLICIT RE-MEASUREMENT → HUMAN-DECLARED OUTCOME → FUTURE DISPLAY
 
-Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams. Accepted Release 0.7 proves deterministic DIFF. Accepted Release 0.8 proves human review history plus measurement/outcome ledger behavior. Cross-provider correlation, automated prioritization/recommendation generation, actions, and display remain unimplemented.
+Accepted Release 0.4 proves authenticated INGEST of already-valid bounded parts. Accepted Releases 0.5 and 0.6 prove deterministic provider NORMALIZE/adaptation seams. Accepted Release 0.7 proves deterministic DIFF. Accepted Release 0.8 proves human review history plus measurement/outcome ledger behavior. At that initial slice, cross-provider correlation, automated prioritization/recommendation generation, actions, and display were unimplemented. Later accepted releases add local read-only display and bounded interpretation seams. Correlation, automatic recommendation generation, actions, and cloud execution remain separately gated.
 
 Accepted Release 0.9 proves a compact local read-only operator case view over explicit scope, baseline/current comparison, current recommendations, selected immutable recommendation history, canonical evidence, measurements, and human-declared outcomes. It is a standalone static HTML/print preview, not a deployed customer/operator portal. Accepted recommendations still require separate authority for any external execution.
 
@@ -139,7 +141,7 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 
 | Direction | Scope |
 | --- | --- |
-| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Release 0.7 deterministic longitudinal comparison; accepted Release 0.8 human review/measurement/outcome ledger; accepted Release 0.9 read-only local operator case/report preview; future correlation/action/cloud capabilities only under separate authority. |
+| Build | LDW-specific evidence/provenance model; tenant-safe application boundaries; accepted Releases 0.1–0.24, including longitudinal comparison, human review/measurement, local operator preview, SERP intent validation, and Search Performance web modality; future correlation/action/cloud capabilities only under separate authority. |
 | Adapt | WQT normalized evidence through accepted Release 0.5; sanitized read-only ZeroRank evidence through accepted Release 0.6. Keep both sensing systems replaceable and outside the G.A.S. runtime network boundary. |
 | Reuse where useful | Existing WQT sensors, upstream read-only ZeroRank sensing, Cloudflare, SuiteDash, Activepieces, GitHub, and maintained lightweight OSS libraries following dependency and licensing review. |
 | Defer until separately justified/authorized | Cross-provider/generic correlation beyond accepted bounded semantics, direction/severity/materiality/business-impact policy, automated prioritization/recommendation generation, Release 1.0+ cloud/deployment work, production identity provider, and live provider retrieval/integration for GSC, GA4, Bing Webmaster, Google Business Profile, Decloak correlation, R2, Queues, Workflows, Durable Objects, runtime AI, BYOK, MCP, Brand2Social actions, customer portal, and external remediation. Accepted sanitized GSC-style and Bing AI evidence semantics remain part of Releases 0.10 and 0.14. |
@@ -147,11 +149,11 @@ Accepted Release 0.9 proves a compact local read-only operator case view over ex
 
 ## Candidate cloud direction, portability, and cost
 
-Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.22 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness and Release 0.22 remains pure/local with no provider/model/network runtime. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
+Cloudflare **Workers, D1, and static operator assets** remain candidate architecture for a later bounded cloud proof. Accepted Releases 0.1–0.24 create no deployed cloud runtime, cloud database, or provider account; Release 0.20 proves local portability/recovery readiness, and Releases 0.22–0.24 remain pure/local with no provider/model/network runtime. R2, Queues, Workflows, and Durable Objects remain deferred until measured need.
 
 Keep evidence concepts and provider boundaries portable. Release 0.3 defines a minimal repository interface with local SQLite adapter; Release 0.4 consumes that interface rather than coupling application code to SQLite. Releases 0.5 and 0.6 emit provider-neutral `CollectionBatch` values. Release 0.7 adds only the bounded read-only `getCollectionSnapshot(...)` surface needed for coherent snapshots. Release 0.8 adds a separate provider-neutral review-ledger repository plus a local SQLite adapter/migration for exactly recommendation revisions, measurements, and outcomes. A future cloud adapter must preserve tenant ownership, immutable review history, evidence linkage, bounded reads, and comparability semantics.
 
-**Accepted Releases 0.1–0.22 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service; Releases 0.21 and 0.22 add no runtime provider/model/network dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval.
+**Accepted Releases 0.1–0.24 retain a $0 incremental recurring-cost boundary.** They provision no paid cloud/runtime service; Releases 0.21–0.24 add no runtime provider/model/network dependency. This is not a permanent cost guarantee or SLA. Release 1.0 cloud deployment remains separately gated, with current account headroom, exact resources, identity/auth design, retention/deletion, representative workload/cost estimates, and rollback/decommission planning assessed before approval. Acceptance of 0.24 does not reserve or authorize a later semantic release.
 
 ## Commercial and publication limits
 
@@ -192,7 +194,7 @@ The Release 0.14 operator renderer is an application-local read-only projection 
 
 ## Release 0.15 accepted service-brief seam
 
-Release 0.15 is an accepted application-local composition layer under Issue #51 and merged PR #52. The accepted architecture now includes Releases 0.1–0.15 while preserving the existing wire-contract, persistence, authority, network, and cloud boundaries.
+Release 0.15 is an accepted application-local composition layer under Issue #51 and merged PR #52. At Release 0.15 acceptance, the architecture included Releases 0.1–0.15 while preserving the existing wire-contract, persistence, authority, network, and cloud boundaries.
 
 ```text
 accepted repository reads + accepted Release 0.7–0.14 producer inputs
@@ -212,7 +214,7 @@ The accepted release does not add a new wire contract, persistence layer, networ
 
 ## Release 0.16 accepted human decision/measurement seam
 
-Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. The current accepted architecture includes Releases 0.1–0.22 while preserving the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
+Release 0.16 is an **accepted application-local layer** under Issue #54 and merged PR #55. At Release 0.16 acceptance, the architecture included Releases 0.1–0.16. The current accepted architecture is Releases 0.1–0.24, while this seam preserves the existing wire-contract, persistence, authority, network, cloud, and human-action boundaries.
 
 ```text
 original accepted Release 0.15 producer input
@@ -343,10 +345,26 @@ The external advisory is untrusted input. Validation proves only strict structur
 
 The HTML renderer rechecks packet/advisory integrity, escapes all dynamic prose/facts, uses restrictive CSP, and exposes no JavaScript, external asset, form, link-action, listener, or write control.
 
-Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, customer/private evidence transfer, or production-action authority. It did not itself authorize Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0. Issue #110 separately authorized the bounded Release 0.22 implementation described below, now accepted through PR #112. Release 0.23 remains unreserved and Release 1.0 remains separately gated.
+Release 0.21 introduces no database/table/migration, canonical public wire schema, network/model/provider client, credentials, scheduler, durable advisory store, new runtime dependency, cloud resource, customer/private evidence transfer, or production-action authority. It did not itself authorize Issue #49/#56/#81 implementation, Release 0.22, or Release 1.0. Issue #110 separately authorized the bounded Release 0.22 implementation described below, now accepted through PR #112. At Release 0.21 acceptance, Release 0.23 was still unreserved. Releases 0.23 and 0.24 are now accepted in the sections below. Release 1.0 remains separately gated.
 
 ## Release 0.22 accepted measurement interpretation seam
 
 Release 0.22 is **accepted and merged on `main` through PR #112** at squash merge `d69fb468c934aae41687b8d8f927ec2381cfcca9` and tree `4f8418391ea3941e19691d85d920f54ceb8a6b92`. Product exact-head review passed, post-merge Contracts run #470 / 39906956428 succeeded, Security Baseline run #11 / 39906956779 succeeded, and independence-clean review completed via business-operations#667 (review id `gas-110-pr112-91eb424c-correction-ir-v1`, disposition ACCEPT via PR business-operations#668).
 
 The accepted release implements a pure/local application-level Measurement Interpretation Profile over two existing Release 0.8 canonical measurements and caller-supplied design, exposure, source-quality, and method context. It reuses canonical measurement/cohort comparability and preserves exact external result provenance without statistical recomputation. Its bounded output gives deterministic readiness, one claim ceiling, allowed/prohibited claim codes, and reason/limitation codes. It does not change canonical measurement values, Release 0.11 search-change behavior, Release 0.16 human decision/outcome authority, canonical schemas, or persistence. For `ai_prompt_cohort_change_only`, both baseline and follow-up contexts must declare `ai_prompt_observation` metric semantics and preserve bounded `promptCount` (1–1,000,000), `promptSamplingCadenceId`, and `promptSamplingCadenceVersion` continuity. Missing required sampling context lowers the ceiling to descriptive observation; changed prompt count or cadence identity/version is a method discontinuity and blocks direct cohort comparison.
+
+## Release 0.23 accepted SERP Intent Validation seam
+
+Release 0.23 SERP Intent Validation Profile is **accepted and merged through Issue #120 / PR #121** at protected-main `c8405603dc60a8cbf941b45a8361784c938e4fb7` and tree `5c78b2cd1c8a1c003ac8856f0afb03912b4dd7bd`. It is a pure/local comparison of caller-supplied sanitized, public-safe SERP snapshots. The caller supplies an explicit versioned comparison policy: bounded top-K, comparable-pair floor, same/distinct overlap thresholds with an ambiguity band, collection-time skew, and optional repeated-borderline snapshot requirements. Comparability requires exact provider, method/version, location, language, device, search surface, and source-schema equality.
+
+Organic top-K evidence is exact URL intersection, union, Jaccard, and shared-URL identity, with conservative exact-string duplicate handling. Supplied registrable-domain overlap is reported separately and is not URL evidence. Typed result-shape counts stay descriptive. Unsafe or incomparable input fails closed as `not_ready`, including an unresolved Google `/goto/` redirect whose destination identity is not established (accepted Issue #141 / PR #142). Result states are `same_result_family_candidate`, `distinct_result_family_candidate`, `ambiguous`, or `not_ready`. The ceiling is human intent review and no automatic page change.
+
+The seam adds no live SERP or DataForSEO client, crawler, provider SDK, runtime AI, persistence or schema change, recommendation or action, cloud runtime, customer or private evidence, or spend. Release 0.23 acceptance did not itself authorize Release 0.24. See [SERP intent validation](serp-intent-validation.md) and [ADR 0023](decisions/0023-serp-intent-validation-profile.md).
+
+## Release 0.24 accepted Search Performance web-modality seam
+
+Release 0.24 is **accepted and merged through Issue #136 / PR #143** at protected-main `b484fe8ed13d197726680582872bf09335a58d2d` and tree `b1e3fe40242c43e976e38d1fb599affee402390a`. Package baseline `0.24.0`. Minor 1 adapts sanitized `ldw.search-analytics-evidence.v1` only for `reportFamily: search-performance`, `searchType: web`, and `webModality: text_based | multimodal`. `combined` is not accepted. Minor 0 keeps the exact legacy shape, including `searchType: web`, with no `reportFamily` or `webModality`, and its canonical identity stays the protected-main minor 0 identity.
+
+Cross-minor and cross-modality comparison fails closed. Page Focus and row plus overlap signals expose the validated source universe and bind it into identity. Release 0.11 search-change behavior and Release 0.22 measurement-interpretation ceilings stay in force across modality boundaries.
+
+The seam adds no provider network or OAuth client, schema or persistence change, runtime AI, recommendation or action, cloud runtime, customer or private evidence, or spend. Acceptance does not reserve or authorize a later semantic release. See [search analytics signals](search-analytics-signal-pack.md) and [ADR 0024](decisions/0024-search-performance-web-modality.md).
