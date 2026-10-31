@@ -24,6 +24,7 @@ import {
   type SearchAnalyticsFreshness,
   type SearchAnalyticsMetricKey,
   type SearchAnalyticsSemantics,
+  type SearchAnalyticsWebModality,
 } from '../adapters/search-analytics.js';
 import { canonicalJson, hashCanonicalJson } from '../lib/canonical-json.js';
 import { parseCollectionBatch } from '../persistence/validation.js';
@@ -108,6 +109,11 @@ export interface SearchAnalyticsSignalEvidenceRef {
   readonly observationIds: readonly [string, string, string, string];
 }
 
+export interface SearchAnalyticsSignalSourceUniverse {
+  readonly reportFamily: typeof SEARCH_ANALYTICS_REPORT_FAMILY;
+  readonly webModality: SearchAnalyticsWebModality;
+}
+
 export interface SearchAnalyticsSignal {
   readonly id: string;
   readonly kind: SearchAnalyticsSignalKind;
@@ -119,6 +125,7 @@ export interface SearchAnalyticsSignal {
     readonly page?: string;
     readonly pageId?: string;
     readonly pages?: readonly { page: string; pageId: string }[];
+    readonly sourceUniverse?: SearchAnalyticsSignalSourceUniverse;
   };
   readonly periods: {
     readonly baseline?: { requested: SearchAnalyticsSemantics['requestedWindow']; effective: SearchAnalyticsSemantics['effectiveWindow'] };
@@ -464,6 +471,15 @@ function signalId(material: unknown): string {
   return `gsc.signal:${hashCanonicalJson(material)}`;
 }
 
+function signalSourceUniverse(sidecar: SearchAnalyticsAdaptedRow): SearchAnalyticsSignalSourceUniverse | undefined {
+  if (!Object.hasOwn(sidecar, 'webModality')) return undefined;
+  const minor1 = sidecar as SearchAnalyticsMinor1AdaptedRow;
+  return {
+    reportFamily: minor1.reportFamily,
+    webModality: minor1.webModality,
+  };
+}
+
 function baseSignal(
   kind: SearchAnalyticsSignalKind,
   row: ValidatedSearchAnalyticsRow,
@@ -473,12 +489,14 @@ function baseSignal(
   baseline?: ValidatedSearchAnalyticsWindow,
   baselineRow?: ValidatedSearchAnalyticsRow,
 ): SearchAnalyticsSignal {
+  const sourceUniverse = signalSourceUniverse(row.sidecar);
   const identityMaterial = {
     kind,
     ...(baseline === undefined ? {} : { baselineCollectionId: baseline.collection.id }),
     currentCollectionId: current.collection.id,
     rowIdentity: row.sidecar.rowIdentity,
     policy,
+    ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
   };
   return {
     id: signalId(identityMaterial),
@@ -490,6 +508,7 @@ function baseSignal(
       searchType: 'web',
       page: row.sidecar.page,
       pageId: row.sidecar.pageId,
+      ...(sourceUniverse === undefined ? {} : { sourceUniverse }),
     },
     periods: {
       ...(baseline === undefined ? {} : { baseline: period(baseline.semantics) }),

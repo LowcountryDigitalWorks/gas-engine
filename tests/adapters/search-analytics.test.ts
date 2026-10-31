@@ -419,6 +419,68 @@ test('minor0 application-local semantics and rows preserve accepted pre-0.24 fie
   assert.deepEqual(withoutExactInputHash(result), withoutExactInputHash(adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig)));
 });
 
+const PROTECTED_MAIN_MINOR0_IDENTITIES = {
+  collectionId: 'gsc.collection:67c96c6643b7e05e0c54128f22822289bee55f586c04dd7471cae8e1eb354b5e',
+  idempotencyKey: 'gsc.idempotency:67c96c6643b7e05e0c54128f22822289bee55f586c04dd7471cae8e1eb354b5e',
+  alpha: {
+    rowIdentity: 'gsc.row:672f447d0752c5cf7bb55aee4808dd5661019db06b7030584711728730153a85',
+    sourceRecordId: 'gsc.row:672f447d0752c5cf7bb55aee4808dd5661019db06b7030584711728730153a85',
+    sourceId: 'gsc.src:d621004a7f969dbb4083abbc5285ccfd99372de7cf5098dd868e90859fc5b317',
+    observationIds: {
+      clicks: 'gsc.obs:6497a9a2131768ac0d4714b0f90d6701c72a4bbd665b3dc753bb9517e83e0634',
+      impressions: 'gsc.obs:23f87e39b90f1f953da8d076671b36d808017de45b012d3bc46bd7b138340c82',
+      ctr: 'gsc.obs:d49781d9af5690bc94c2d28c7b3e8a1a7e19c1969cab4f395751bd9cb1d0428b',
+      averagePosition: 'gsc.obs:721661535983d9c6c75a706ce32ee1a5d40389f44e1bdbe3d8b952175b793def',
+    },
+  },
+  beta: {
+    rowIdentity: 'gsc.row:66941e286f6e886d4dea0b402143ee733aa3b5dd989eac6d27528890a046c98c',
+    sourceRecordId: 'gsc.row:66941e286f6e886d4dea0b402143ee733aa3b5dd989eac6d27528890a046c98c',
+    sourceId: 'gsc.src:a691e4b6e0a560a7fd8b9480a8a7b49efdec55c0d64bb124a7dcf0b083e22e3a',
+    observationIds: {
+      clicks: 'gsc.obs:cc1f206c84ae7a1fca6aae534403dcef033ca98ccbf8bdb556edd391ba737c04',
+      impressions: 'gsc.obs:b9c2e9ee2ffd93c0d50a79e830d55bc25613af76754be6beb5e2241cfa1855b1',
+      ctr: 'gsc.obs:bf1cb4fb77eda5d610ad81dcdfa8e72ad0214f31ef3961cbfe2c8b2244d7ebc7',
+      averagePosition: 'gsc.obs:2d0f59d88e454990424b85050083b36099277bdd5567a158e7e1dda29eb54260',
+    },
+  },
+  methodConfigurationId: 'gsc-config:f132b9509f7983ea3f72566b22b59aab3342a78f56c55869532fe62cd961a1ed',
+  methodConfigurationRevision: 1,
+} as const;
+
+test('minor0 canonical identities match protected main Release 0.23 adapter material', () => {
+  const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
+  assert.equal(result.collectionId, PROTECTED_MAIN_MINOR0_IDENTITIES.collectionId);
+  assert.equal(result.idempotencyKey, PROTECTED_MAIN_MINOR0_IDENTITIES.idempotencyKey);
+
+  const alpha = result.rows.find((row) => row.query === 'synthetic alpha search');
+  const beta = result.rows.find((row) => row.query === 'synthetic beta search');
+  assert.ok(alpha);
+  assert.ok(beta);
+  assert.deepEqual(
+    {
+      rowIdentity: alpha.rowIdentity,
+      sourceRecordId: alpha.sourceRecordId,
+      sourceId: alpha.sourceId,
+      observationIds: alpha.observationIds,
+    },
+    PROTECTED_MAIN_MINOR0_IDENTITIES.alpha,
+  );
+  assert.deepEqual(
+    {
+      rowIdentity: beta.rowIdentity,
+      sourceRecordId: beta.sourceRecordId,
+      sourceId: beta.sourceId,
+      observationIds: beta.observationIds,
+    },
+    PROTECTED_MAIN_MINOR0_IDENTITIES.beta,
+  );
+
+  const method = result.batches[0]!.collection.method;
+  assert.equal(method.configurationId, PROTECTED_MAIN_MINOR0_IDENTITIES.methodConfigurationId);
+  assert.equal(method.configurationRevision, PROTECTED_MAIN_MINOR0_IDENTITIES.methodConfigurationRevision);
+});
+
 test('minor1 text_based and multimodal adapt with distinct mapping, source schema, method, and row identities', () => {
   const textBased = adaptSearchAnalyticsEvidence(Buffer.from(minor1TextFixtureText, 'utf8'), trustedConfig);
   const multimodal = adaptSearchAnalyticsEvidence(Buffer.from(minor1MultimodalFixtureText, 'utf8'), trustedConfig);

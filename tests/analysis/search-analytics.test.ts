@@ -504,6 +504,70 @@ test('same-modality minor1 windows pass compatibility and emit deterministic sha
   assert.ok(report.signals.some((signal) => signal.kind === 'window_delta' && signal.cohort.query === 'synthetic shared'));
 });
 
+const LEGACY_SIGNAL_COHORT_KEYS = ['query', 'queryId', 'searchType', 'page', 'pageId'] as const;
+
+test('minor0 SearchAnalyticsSignal cohort preserves accepted Release 0.10 JSON shape', () => {
+  const report = analyzeSearchAnalyticsSignals(adapt(baselineFixture()), adapt(currentFixture()), policies);
+  const signal = report.signals.find((item) => item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  assert.ok(signal);
+  assert.deepEqual(Object.keys(signal.cohort).sort(), [...LEGACY_SIGNAL_COHORT_KEYS].sort());
+  assert.equal(Object.hasOwn(signal.cohort, 'sourceUniverse'), false);
+});
+
+function minor1WindowPair(
+  fixtureText: string,
+  mutateBaseline: (value: MutableJson) => void,
+  mutateCurrent: (value: MutableJson) => void,
+) {
+  const baseline = adaptMinor1(fixtureText, (value) => {
+    value.observedAt = baselineFixture().observedAt;
+    value.exportedAt = baselineFixture().exportedAt;
+    value.requestedWindow = structuredClone(baselineFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(baselineFixture().effectiveWindow);
+    value.freshness = structuredClone(baselineFixture().freshness);
+    value.rows = structuredClone(baselineFixture().rows);
+    mutateBaseline(value);
+  });
+  const current = adaptMinor1(fixtureText, (value) => {
+    value.observedAt = currentFixture().observedAt;
+    value.exportedAt = currentFixture().exportedAt;
+    value.requestedWindow = structuredClone(currentFixture().requestedWindow);
+    value.effectiveWindow = structuredClone(currentFixture().effectiveWindow);
+    value.freshness = structuredClone(currentFixture().freshness);
+    value.rows = structuredClone(currentFixture().rows);
+    mutateCurrent(value);
+  });
+  return { baseline, current };
+}
+
+test('minor1 signals expose source universe and modality-aware deterministic identity', () => {
+  const textBased = minor1WindowPair(minor1TextFixtureText, () => {}, () => {});
+  const multimodal = minor1WindowPair(minor1MultimodalFixtureText, () => {}, () => {});
+
+  const textReport = analyzeSearchAnalyticsSignals(textBased.baseline, textBased.current, policies);
+  const multimodalReport = analyzeSearchAnalyticsSignals(multimodal.baseline, multimodal.current, policies);
+
+  const textSignal = textReport.signals.find((item) =>
+    item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  const multimodalSignal = multimodalReport.signals.find((item) =>
+    item.kind === 'window_delta' && item.cohort.query === 'synthetic shared');
+  assert.ok(textSignal);
+  assert.ok(multimodalSignal);
+
+  assert.deepEqual(textSignal.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'text_based',
+  });
+  assert.deepEqual(multimodalSignal.cohort.sourceUniverse, {
+    reportFamily: 'search-performance',
+    webModality: 'multimodal',
+  });
+  assert.notEqual(textSignal.id, multimodalSignal.id);
+
+  const repeat = analyzeSearchAnalyticsSignals(textBased.baseline, textBased.current, policies);
+  assert.equal(repeat.signals.find((item) => item.id === textSignal.id)?.id, textSignal.id);
+});
+
 test('minor1 sidecar agreement cannot relabel canonical search modality', () => {
   const textBased = adaptMinor1(minor1TextFixtureText, () => {});
   assert.doesNotThrow(() => validateSearchAnalyticsWindow(textBased));

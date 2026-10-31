@@ -531,8 +531,13 @@ function sourceDigest(
     const minor1 = minor1ContextFromArtifact(artifact);
     return hashCanonicalJson({
       schemaVersion: artifact.schemaVersion,
-      schemaMinorVersion: artifact.schemaMinorVersion,
-      ...(minor1 === undefined ? {} : { reportFamily: minor1.reportFamily, webModality: minor1.webModality }),
+      ...(minor1 === undefined
+        ? { schemaMinorVersion: artifact.schemaMinorVersion }
+        : {
+          schemaMinorVersion: artifact.schemaMinorVersion,
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+        }),
       provider: artifact.provider,
       property: artifact.property,
       observedAt: artifact.observedAt,
@@ -788,8 +793,13 @@ export function adaptSearchAnalyticsEvidence(
     providerConnectionId: config.providerConnectionId,
     expectedProperty: config.expectedProperty,
     semantics: {
-      schemaMinorVersion: artifact.schemaMinorVersion,
-      ...(minor1 === undefined ? {} : { reportFamily: minor1.reportFamily, webModality: minor1.webModality }),
+      ...(minor1 === undefined
+        ? {}
+        : {
+          schemaMinorVersion: artifact.schemaMinorVersion,
+          reportFamily: minor1.reportFamily,
+          webModality: minor1.webModality,
+        }),
       property: artifact.property,
       observedAt: artifact.observedAt,
       exportedAt: artifact.exportedAt,
