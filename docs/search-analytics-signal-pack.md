@@ -200,3 +200,57 @@ git diff --check
 ```
 
 Because Release 0.10 changes no canonical wire schema, generated JSON Schemas must remain byte-for-byte unchanged.
+
+## Release 0.24 candidate — Search Performance web modality (Issue #136)
+
+This section documents the **proposed** Release 0.24 candidate on branch `feat/136-search-performance-web-modality-r0`. It is **not** accepted on protected `main` until Product review and merge.
+
+### Purpose
+
+Extend the accepted Release 0.10 boundary with sanitized `ldw.search-analytics-evidence.v1` **minor 1** for Google Search Performance **web** reporting where upstream exports separate **text-based** and **multimodal** modalities. G.A.S. still does not call Search Console or any provider API.
+
+### Minor 0 preservation
+
+Minor 0 behavior, field shape, compatibility semantics, and **protected-main canonical identity material** (collection, idempotency, source, observation, cohort, and method configuration identities for the same sanitized fixture and trusted config) remain exactly as accepted in Release 0.10 / protected `main` at Release 0.23. Minor 0 collection seed semantics **must not** add fields that main did not hash (including `schemaMinorVersion: 0`). Minor 0 rows and window semantics keep the existing `searchType: 'web'` unchanged and **must not** gain `reportFamily` or `webModality`.
+
+### Minor 1 source contract
+
+Minor 1 requires, together:
+
+- `schemaMinorVersion: 1`;
+- `reportFamily: search-performance`;
+- `searchType: web`;
+- `webModality: text_based` **or** `multimodal` only.
+
+`webModality: combined` and any other value fail closed at adaptation. Each row carries matching minor 1 fields; row modality must match window semantics or validation fails closed (sidecar-only relabel is not sufficient).
+
+Canonical mapping remains four observations per row. Minor 1 `collection.method` remains `ldw-gsc-search-analytics` at version `1.1.0` with `configurationRevision: 2`. Its `configurationId` digest is bound to `reportFamily` and `webModality`, so text and multimodal streams are distinct compatible universes. Each canonical observation cohort uses `dimensions.configuration = { id: 'gsc-web-modality', version: <modality> }`.
+
+### Compatibility
+
+`validateSearchAnalyticsCompatibility(...)` and Release 0.11 search-change preparation treat as incompatible:
+
+- minor 0 versus minor 1;
+- `text_based` versus `multimodal` under minor 1.
+
+Matched metrics alone do not establish comparability.
+
+### Signal pack (Release 0.10 reuse)
+
+Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`), including the existing `searchType: 'web'`. Validated minor 1 row signals and `query_page_overlap_candidate` signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`, and bind that universe into signal deterministic identity. Signals are still application-local, non-persisted, and provider-preserving (`providerId` remains `google-search-console`; no provider client or network call).
+
+### Page Focus (Release 0.12 reuse)
+
+`analyzePageFocusCandidate(...)` on a validated minor 1 window projects `source.reportFamily`, `source.searchType`, and `source.webModality` from validated Search Analytics semantics. Report deterministic identity includes the search universe when present. Minor 0 Page Focus reports keep the legacy source key set with **no** modality fields.
+
+Neutral mechanics, SERP validation requirement text, and absence of recommendation/action authority are unchanged.
+
+### Measurement interpretation (Release 0.22 reuse)
+
+Release 0.22 claim ceilings cannot treat a modality discontinuity as continuity; tests prove fail-closed behavior when follow-up modality differs from baseline under otherwise aligned evidence.
+
+### Explicit exclusions (candidate)
+
+No combined modality, no Generative-AI-report ingestion path, no canonical wire schema or persistence change, no provider/network/OAuth, no runtime AI, no automatic SEO judgment, and no action authority.
+
+See [ADR 0024](decisions/0024-search-performance-web-modality.md). Generated JSON Schemas must remain unchanged for this candidate.

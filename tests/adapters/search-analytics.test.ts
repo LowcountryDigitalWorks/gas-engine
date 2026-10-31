@@ -11,6 +11,8 @@ import {
   SearchAnalyticsAdapterError,
   type SearchAnalyticsAdapterConfig,
   type SearchAnalyticsAdapterErrorCode,
+  type SearchAnalyticsMinor1AdaptedRow,
+  type SearchAnalyticsMinor1Semantics,
 } from '../../src/adapters/search-analytics.js';
 import { canonicalJson } from '../../src/lib/canonical-json.js';
 import { parseCollectionBatch } from '../../src/persistence/validation.js';
@@ -249,8 +251,25 @@ test('rejects malformed bytes, unsupported versions/types, invalid pages, and un
   expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(wrongMajor), trustedConfig), 'unsupported_schema');
 
   const wrongMinor = fixture();
-  wrongMinor.schemaMinorVersion = 1;
+  wrongMinor.schemaMinorVersion = 2;
   expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(wrongMinor), trustedConfig), 'unsupported_schema');
+
+  const minor1MissingModality = fixture();
+  minor1MissingModality.schemaMinorVersion = 1;
+  minor1MissingModality.reportFamily = 'search-performance';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1MissingModality), trustedConfig), 'invalid_source');
+
+  const minor1Combined = fixture();
+  minor1Combined.schemaMinorVersion = 1;
+  minor1Combined.reportFamily = 'search-performance';
+  minor1Combined.webModality = 'combined';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1Combined), trustedConfig), 'invalid_source');
+
+  const minor1WrongFamily = fixture();
+  minor1WrongFamily.schemaMinorVersion = 1;
+  minor1WrongFamily.reportFamily = 'page-focus';
+  minor1WrongFamily.webModality = 'text_based';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1WrongFamily), trustedConfig), 'invalid_source');
 
   const wrongProvider = fixture();
   wrongProvider.provider = 'bing-webmaster-tools';
@@ -328,4 +347,169 @@ test('adapter executes under the repository no-network tripwire and introduces n
   const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
   assert.equal(result.providerId, 'google-search-console');
   assert.ok(result.batches.length > 0);
+});
+
+const minor1TextFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-text-based.json', 'utf8');
+const minor1MultimodalFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-multimodal.json', 'utf8');
+
+const LEGACY_APPLICATION_SEMANTICS_KEYS = [
+  'coverage',
+  'dimensions',
+  'effectiveWindow',
+  'exportedAt',
+  'filterGroupType',
+  'filters',
+  'freshness',
+  'observedAt',
+  'property',
+  'requestedWindow',
+  'searchType',
+] as const;
+
+const LEGACY_APPLICATION_ROW_KEYS = [
+  'observationIds',
+  'page',
+  'pageId',
+  'query',
+  'queryId',
+  'rowIdentity',
+  'searchType',
+  'sourceId',
+  'sourceRecordId',
+] as const;
+
+test('minor0 application-local semantics and rows preserve accepted pre-0.24 field shape exactly', () => {
+  const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
+  assert.deepEqual(Object.keys(result.semantics).sort(), [...LEGACY_APPLICATION_SEMANTICS_KEYS].sort());
+  assert.equal(Object.hasOwn(result.semantics, 'schemaMinorVersion'), false);
+  assert.equal(Object.hasOwn(result.semantics, 'reportFamily'), false);
+  assert.equal(Object.hasOwn(result.semantics, 'webModality'), false);
+  assert.deepEqual(result.semantics, {
+    property: 'sc-domain:example.test',
+    observedAt: '2026-09-16T08:00:00.000Z',
+    exportedAt: '2026-09-16T08:05:00.000Z',
+    requestedWindow: {
+      start: '2026-09-08T00:00:00.000Z',
+      end: '2026-09-15T00:00:00.000Z',
+    },
+    effectiveWindow: {
+      start: '2026-09-08T00:00:00.000Z',
+      end: '2026-09-15T00:00:00.000Z',
+    },
+    freshness: {
+      dataState: 'final',
+      freshThrough: '2026-09-15T00:00:00.000Z',
+    },
+    searchType: 'web',
+    dimensions: ['query', 'page'],
+    filterGroupType: 'and',
+    filters: [],
+    coverage: {
+      state: 'complete',
+      truncated: false,
+      anonymized: false,
+    },
+  });
+  for (const row of result.rows) {
+    assert.deepEqual(Object.keys(row).sort(), [...LEGACY_APPLICATION_ROW_KEYS].sort());
+    assert.equal(Object.hasOwn(row, 'schemaMinorVersion'), false);
+    assert.equal(Object.hasOwn(row, 'reportFamily'), false);
+    assert.equal(Object.hasOwn(row, 'webModality'), false);
+  }
+  assert.deepEqual(withoutExactInputHash(result), withoutExactInputHash(adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig)));
+});
+
+const PROTECTED_MAIN_MINOR0_IDENTITIES = {
+  collectionId: 'gsc.collection:67c96c6643b7e05e0c54128f22822289bee55f586c04dd7471cae8e1eb354b5e',
+  idempotencyKey: 'gsc.idempotency:67c96c6643b7e05e0c54128f22822289bee55f586c04dd7471cae8e1eb354b5e',
+  alpha: {
+    rowIdentity: 'gsc.row:672f447d0752c5cf7bb55aee4808dd5661019db06b7030584711728730153a85',
+    sourceRecordId: 'gsc.row:672f447d0752c5cf7bb55aee4808dd5661019db06b7030584711728730153a85',
+    sourceId: 'gsc.src:d621004a7f969dbb4083abbc5285ccfd99372de7cf5098dd868e90859fc5b317',
+    observationIds: {
+      clicks: 'gsc.obs:6497a9a2131768ac0d4714b0f90d6701c72a4bbd665b3dc753bb9517e83e0634',
+      impressions: 'gsc.obs:23f87e39b90f1f953da8d076671b36d808017de45b012d3bc46bd7b138340c82',
+      ctr: 'gsc.obs:d49781d9af5690bc94c2d28c7b3e8a1a7e19c1969cab4f395751bd9cb1d0428b',
+      averagePosition: 'gsc.obs:721661535983d9c6c75a706ce32ee1a5d40389f44e1bdbe3d8b952175b793def',
+    },
+  },
+  beta: {
+    rowIdentity: 'gsc.row:66941e286f6e886d4dea0b402143ee733aa3b5dd989eac6d27528890a046c98c',
+    sourceRecordId: 'gsc.row:66941e286f6e886d4dea0b402143ee733aa3b5dd989eac6d27528890a046c98c',
+    sourceId: 'gsc.src:a691e4b6e0a560a7fd8b9480a8a7b49efdec55c0d64bb124a7dcf0b083e22e3a',
+    observationIds: {
+      clicks: 'gsc.obs:cc1f206c84ae7a1fca6aae534403dcef033ca98ccbf8bdb556edd391ba737c04',
+      impressions: 'gsc.obs:b9c2e9ee2ffd93c0d50a79e830d55bc25613af76754be6beb5e2241cfa1855b1',
+      ctr: 'gsc.obs:bf1cb4fb77eda5d610ad81dcdfa8e72ad0214f31ef3961cbfe2c8b2244d7ebc7',
+      averagePosition: 'gsc.obs:2d0f59d88e454990424b85050083b36099277bdd5567a158e7e1dda29eb54260',
+    },
+  },
+  methodConfigurationId: 'gsc-config:f132b9509f7983ea3f72566b22b59aab3342a78f56c55869532fe62cd961a1ed',
+  methodConfigurationRevision: 1,
+} as const;
+
+test('minor0 canonical identities match protected main Release 0.23 adapter material', () => {
+  const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
+  assert.equal(result.collectionId, PROTECTED_MAIN_MINOR0_IDENTITIES.collectionId);
+  assert.equal(result.idempotencyKey, PROTECTED_MAIN_MINOR0_IDENTITIES.idempotencyKey);
+
+  const alpha = result.rows.find((row) => row.query === 'synthetic alpha search');
+  const beta = result.rows.find((row) => row.query === 'synthetic beta search');
+  assert.ok(alpha);
+  assert.ok(beta);
+  assert.deepEqual(
+    {
+      rowIdentity: alpha.rowIdentity,
+      sourceRecordId: alpha.sourceRecordId,
+      sourceId: alpha.sourceId,
+      observationIds: alpha.observationIds,
+    },
+    PROTECTED_MAIN_MINOR0_IDENTITIES.alpha,
+  );
+  assert.deepEqual(
+    {
+      rowIdentity: beta.rowIdentity,
+      sourceRecordId: beta.sourceRecordId,
+      sourceId: beta.sourceId,
+      observationIds: beta.observationIds,
+    },
+    PROTECTED_MAIN_MINOR0_IDENTITIES.beta,
+  );
+
+  const method = result.batches[0]!.collection.method;
+  assert.equal(method.configurationId, PROTECTED_MAIN_MINOR0_IDENTITIES.methodConfigurationId);
+  assert.equal(method.configurationRevision, PROTECTED_MAIN_MINOR0_IDENTITIES.methodConfigurationRevision);
+});
+
+test('minor1 text_based and multimodal adapt with distinct mapping, source schema, method, and row identities', () => {
+  const textBased = adaptSearchAnalyticsEvidence(Buffer.from(minor1TextFixtureText, 'utf8'), trustedConfig);
+  const multimodal = adaptSearchAnalyticsEvidence(Buffer.from(minor1MultimodalFixtureText, 'utf8'), trustedConfig);
+
+  for (const result of [textBased, multimodal]) {
+    const semantics = result.semantics as SearchAnalyticsMinor1Semantics;
+    assert.equal(Object.hasOwn(result.semantics, 'schemaMinorVersion'), false);
+    assert.equal(semantics.reportFamily, 'search-performance');
+    assert.ok(semantics.webModality === 'text_based' || semantics.webModality === 'multimodal');
+    for (const row of result.rows) {
+      const minor1Row = row as SearchAnalyticsMinor1AdaptedRow;
+      assert.equal(Object.hasOwn(row, 'schemaMinorVersion'), false);
+      assert.equal(minor1Row.reportFamily, semantics.reportFamily);
+      assert.equal(minor1Row.webModality, semantics.webModality);
+    }
+    for (const batch of result.batches) {
+      assert.deepEqual(batch.collection.adapter, { id: SEARCH_ANALYTICS_ADAPTER_ID, version: '1.1.0' });
+      assert.deepEqual(batch.collection.sourceSchema, { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: 'v1.1' });
+      assert.equal(batch.collection.method.version, '1.1.0');
+      assert.equal(batch.collection.method.configurationRevision, 2);
+    }
+  }
+
+  assert.notEqual(textBased.collectionId, multimodal.collectionId);
+  assert.notEqual(textBased.rows[0]!.rowIdentity, multimodal.rows[0]!.rowIdentity);
+  assert.equal(textBased.rows[0]!.query, multimodal.rows[0]!.query);
+  assert.equal(textBased.rows[0]!.page, multimodal.rows[0]!.page);
+  assert.deepEqual(
+    allObservations(textBased).find((item) => item.id === textBased.rows[0]!.observationIds.clicks)?.value,
+    allObservations(multimodal).find((item) => item.id === multimodal.rows[0]!.observationIds.clicks)?.value,
+  );
 });

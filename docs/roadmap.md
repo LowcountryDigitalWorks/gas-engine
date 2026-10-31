@@ -339,3 +339,7 @@ Accepted flow:
 9. preserve fixed human-review and no-automatic-page-change ceilings.
 
 The accepted release does not authorize live SERP/DataForSEO access, provider credentials/networking, crawler/scraper behavior, runtime AI, persistence/schema expansion, scheduling, cloud deployment, customer/private evidence, paid dependencies, or any split/merge/consolidate/redirect/canonical/create/delete/rewrite/publish/action authority. Release 0.23 acceptance does not reserve or authorize Release 0.24.
+
+## Release 0.24 — candidate Search Performance web modality (Issue #136)
+
+Issue #136 tracks a **candidate** (not accepted) extending Release 0.10 with minor 1 Search Performance web `text_based` / `multimodal` semantics, Page Focus minor 1 source-universe visibility, compatibility/search-change/measurement-interpretation fail-closed behavior across modality boundaries, and explicit rejection of `combined`. Candidate package version `0.24.0`. Acceptance requires Product exact-head review, hosted Contracts/Security, independence-clean review, and protected-main merge; see [ADR 0024](decisions/0024-search-performance-web-modality.md) and the [Release 0.24 candidate section](search-analytics-signal-pack.md).
