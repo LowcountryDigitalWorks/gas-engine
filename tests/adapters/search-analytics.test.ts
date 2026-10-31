@@ -249,8 +249,25 @@ test('rejects malformed bytes, unsupported versions/types, invalid pages, and un
   expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(wrongMajor), trustedConfig), 'unsupported_schema');
 
   const wrongMinor = fixture();
-  wrongMinor.schemaMinorVersion = 1;
+  wrongMinor.schemaMinorVersion = 2;
   expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(wrongMinor), trustedConfig), 'unsupported_schema');
+
+  const minor1MissingModality = fixture();
+  minor1MissingModality.schemaMinorVersion = 1;
+  minor1MissingModality.reportFamily = 'search-performance';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1MissingModality), trustedConfig), 'invalid_source');
+
+  const minor1Combined = fixture();
+  minor1Combined.schemaMinorVersion = 1;
+  minor1Combined.reportFamily = 'search-performance';
+  minor1Combined.webModality = 'combined';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1Combined), trustedConfig), 'invalid_source');
+
+  const minor1WrongFamily = fixture();
+  minor1WrongFamily.schemaMinorVersion = 1;
+  minor1WrongFamily.reportFamily = 'page-focus';
+  minor1WrongFamily.webModality = 'text_based';
+  expectAdapterError(() => adaptSearchAnalyticsEvidence(bytes(minor1WrongFamily), trustedConfig), 'invalid_source');
 
   const wrongProvider = fixture();
   wrongProvider.provider = 'bing-webmaster-tools';
@@ -328,4 +345,45 @@ test('adapter executes under the repository no-network tripwire and introduces n
   const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
   assert.equal(result.providerId, 'google-search-console');
   assert.ok(result.batches.length > 0);
+});
+
+const minor1TextFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-text-based.json', 'utf8');
+const minor1MultimodalFixtureText = readFileSync('tests/fixtures/search-analytics-evidence-v1.1-multimodal.json', 'utf8');
+
+test('minor0 regression preserves collection and row identities aside from explicit schemaMinorVersion 0', () => {
+  const result = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
+  assert.equal(result.semantics.schemaMinorVersion, 0);
+  assert.equal(result.semantics.reportFamily, undefined);
+  assert.equal(result.semantics.webModality, undefined);
+  for (const row of result.rows) {
+    assert.equal(row.schemaMinorVersion, 0);
+    assert.equal(row.reportFamily, undefined);
+    assert.equal(row.webModality, undefined);
+  }
+});
+
+test('minor1 text_based and multimodal adapt with distinct mapping, source schema, method, and row identities', () => {
+  const textBased = adaptSearchAnalyticsEvidence(Buffer.from(minor1TextFixtureText, 'utf8'), trustedConfig);
+  const multimodal = adaptSearchAnalyticsEvidence(Buffer.from(minor1MultimodalFixtureText, 'utf8'), trustedConfig);
+
+  for (const result of [textBased, multimodal]) {
+    assert.equal(result.semantics.schemaMinorVersion, 1);
+    assert.equal(result.semantics.reportFamily, 'search-performance');
+    assert.ok(result.semantics.webModality === 'text_based' || result.semantics.webModality === 'multimodal');
+    for (const batch of result.batches) {
+      assert.deepEqual(batch.collection.adapter, { id: SEARCH_ANALYTICS_ADAPTER_ID, version: '1.1.0' });
+      assert.deepEqual(batch.collection.sourceSchema, { id: SEARCH_ANALYTICS_SOURCE_SCHEMA_ID, version: 'v1.1' });
+      assert.equal(batch.collection.method.version, '1.1.0');
+      assert.equal(batch.collection.method.configurationRevision, 2);
+    }
+  }
+
+  assert.notEqual(textBased.collectionId, multimodal.collectionId);
+  assert.notEqual(textBased.rows[0]!.rowIdentity, multimodal.rows[0]!.rowIdentity);
+  assert.equal(textBased.rows[0]!.query, multimodal.rows[0]!.query);
+  assert.equal(textBased.rows[0]!.page, multimodal.rows[0]!.page);
+  assert.deepEqual(
+    allObservations(textBased).find((item) => item.id === textBased.rows[0]!.observationIds.clicks)?.value,
+    allObservations(multimodal).find((item) => item.id === multimodal.rows[0]!.observationIds.clicks)?.value,
+  );
 });
