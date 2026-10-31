@@ -237,7 +237,7 @@ Matched metrics alone do not establish comparability.
 
 ### Signal pack (Release 0.10 reuse)
 
-Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`), including the existing `searchType: 'web'`. Validated minor 1 row signals and `query_page_overlap_candidate` signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`, and bind that universe into signal deterministic identity. Signals are still application-local, non-persisted, and provider-neutral.
+Minor 0 `SearchAnalyticsSignal` JSON cohort shape remains exactly the accepted Release 0.10 field set (no `sourceUniverse`), including the existing `searchType: 'web'`. Validated minor 1 row signals and `query_page_overlap_candidate` signals add `cohort.sourceUniverse` with `reportFamily: search-performance` and `webModality: text_based | multimodal`, and bind that universe into signal deterministic identity. Signals are still application-local, non-persisted, and provider-preserving (`providerId` remains `google-search-console`; no provider client or network call).
 
 ### Page Focus (Release 0.12 reuse)
 
