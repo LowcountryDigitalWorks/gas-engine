@@ -242,8 +242,7 @@ function safeUrl(text: string): void {
   }
 }
 
-/** Unresolved Google GoTo redirect URLs are not eligible resolved organic destination identity. */
-export function isUnresolvedGoogleGoToDestinationUrl(text: string): boolean {
+function isUnresolvedGoogleGoToDestinationUrl(text: string): boolean {
   let parsed: URL;
   try {
     parsed = new URL(text);

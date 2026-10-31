@@ -4,7 +4,6 @@ import {
   SERP_INTENT_LIMITATIONS,
   SERP_INTENT_PROFILE_VERSION,
   SerpIntentValidationError,
-  isUnresolvedGoogleGoToDestinationUrl,
   validateSerpIntentProfile,
   type SerpIntentPolicy,
   type SerpSnapshot,
@@ -418,9 +417,6 @@ test('module surface contains no provider/network/runtime side effect authority'
 const googleGoTo = 'https://www.google.com/goto/url?url=https%3A%2F%2Fdestination.test%2Fpage&sa=U';
 
 test('unresolved Google GoTo URLs in the organic top-K window are not_ready', () => {
-  assert.equal(isUnresolvedGoogleGoToDestinationUrl(googleGoTo), true);
-  assert.equal(isUnresolvedGoogleGoToDestinationUrl('https://destination.test/page'), false);
-
   const right = snapshot('query-b', [
     'https://a.test/one',
     googleGoTo,
