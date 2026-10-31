@@ -460,7 +460,13 @@ test('upstream-resolved direct destination URLs remain eligible organic evidence
   ]);
   const profile = validateSerpIntentProfile(input(sameRight, { right }));
   assert.equal(profile.state, 'same_result_family_candidate');
-  assert.ok(profile.comparisons[0]!.snapshots[0]!.exactUrlOverlap.rightTopKUrls.includes(resolved));
+  assert.deepEqual(profile.comparisons[0]!.snapshots[0]!.exactUrlOverlap.rightTopKUrls, [
+    'https://a.test/one',
+    resolved,
+    'https://c.test/three',
+    'https://d.test/four',
+    'https://e.test/five',
+  ]);
 });
 
 test('Google GoTo URLs beyond top-K do not block resolved organic comparison', () => {
