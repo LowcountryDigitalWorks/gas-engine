@@ -122,7 +122,8 @@ export type SerpIntentNotReadyReason =
   | 'incompatible_organic_rank_semantics'
   | 'too_few_comparable_query_pairs'
   | 'snapshot_count_mismatch'
-  | 'borderline_repeat_requirement_unmet';
+  | 'borderline_repeat_requirement_unmet'
+  | 'unresolved_result_destination';
 
 export class SerpIntentValidationError extends Error {
   override name = 'SerpIntentValidationError';
@@ -241,6 +242,20 @@ function safeUrl(text: string): void {
   }
 }
 
+/** Unresolved Google GoTo redirect URLs are not eligible resolved organic destination identity. */
+export function isUnresolvedGoogleGoToDestinationUrl(text: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(text);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+  const host = parsed.hostname.toLowerCase();
+  if (host !== 'www.google.com' && host !== 'google.com') return false;
+  return parsed.pathname === '/goto' || parsed.pathname.startsWith('/goto/');
+}
+
 function parseInput(input: unknown): z.infer<typeof invocationSchema> {
   const parsed = invocationSchema.safeParse(input);
   if (!parsed.success) fail('invalid_input', 'SERP intent validation input is invalid.');
@@ -298,22 +313,27 @@ function selectOrganic(snapshot: SerpSnapshot, topK: number): OrganicSelection |
     return left.index - right.index;
   });
 
-  const selected: typeof ordered = [];
+  const uniqueOrdered: typeof ordered = [];
   const seen = new Set<string>();
   for (const candidate of ordered) {
     const url = candidate.row.url!;
     if (seen.has(url)) continue;
     seen.add(url);
-    selected.push(candidate);
+    uniqueOrdered.push(candidate);
   }
 
-  if (selected.length < topK) return 'insufficient_eligible_organic_depth';
-  const top = selected.slice(0, topK);
+  if (uniqueOrdered.length < topK) return 'insufficient_eligible_organic_depth';
+  const top = uniqueOrdered.slice(0, topK);
+  for (const candidate of top) {
+    if (isUnresolvedGoogleGoToDestinationUrl(candidate.row.url!)) {
+      return 'unresolved_result_destination';
+    }
+  }
   const domainsAvailable = top.every(({ row }) => row.registrableDomain !== undefined);
   return {
     urls: top.map(({ row }) => row.url!),
     ...(domainsAvailable ? { domains: top.map(({ row }) => row.registrableDomain!) } : {}),
-    actualEligibleDepth: selected.length,
+    actualEligibleDepth: uniqueOrdered.length,
     ordering: anySameTypeRank ? 'provider_same_type_rank' : 'provider_result_order',
   };
 }

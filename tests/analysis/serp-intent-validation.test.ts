@@ -4,6 +4,7 @@ import {
   SERP_INTENT_LIMITATIONS,
   SERP_INTENT_PROFILE_VERSION,
   SerpIntentValidationError,
+  isUnresolvedGoogleGoToDestinationUrl,
   validateSerpIntentProfile,
   type SerpIntentPolicy,
   type SerpSnapshot,
@@ -412,4 +413,73 @@ test('module surface contains no provider/network/runtime side effect authority'
   assert.equal(profile.policy.urlComparison, 'exact');
   assert.equal(profile.policy.duplicateUrlPolicy, 'dedupe_exact_only');
   assert.equal(profile.policy.domainComparison, 'supplied_registrable_domain');
+});
+
+const googleGoTo = 'https://www.google.com/goto/url?url=https%3A%2F%2Fdestination.test%2Fpage&sa=U';
+
+test('unresolved Google GoTo URLs in the organic top-K window are not_ready', () => {
+  assert.equal(isUnresolvedGoogleGoToDestinationUrl(googleGoTo), true);
+  assert.equal(isUnresolvedGoogleGoToDestinationUrl('https://destination.test/page'), false);
+
+  const right = snapshot('query-b', [
+    'https://a.test/one',
+    googleGoTo,
+    'https://c.test/three',
+    'https://d.test/four',
+    'https://e.test/five',
+  ]);
+  const profile = validateSerpIntentProfile(input(sameRight, { right }));
+  assert.equal(profile.state, 'not_ready');
+  assert.ok(profile.reasons.includes('unresolved_result_destination'));
+  assert.equal(profile.comparisons.length, 0);
+});
+
+test('unresolved GoTo URLs do not contribute google.com registrable-domain overlap', () => {
+  const left = snapshot('query-a', sameLeft);
+  const right = snapshot('query-b', [
+    'https://a.test/other',
+    googleGoTo,
+    'https://c.test/other',
+    'https://d.test/other',
+    'https://e.test/other',
+  ]);
+  for (const row of right.results) {
+    if (row.url === googleGoTo) {
+      (row as Mutable<(typeof right.results)[number]>).registrableDomain = 'google.com';
+    }
+  }
+  const profile = validateSerpIntentProfile(input(sameRight, { left, right }));
+  assert.equal(profile.state, 'not_ready');
+  assert.ok(profile.reasons.includes('unresolved_result_destination'));
+});
+
+test('upstream-resolved direct destination URLs remain eligible organic evidence', () => {
+  const resolved = 'https://destination.test/resolved-page';
+  const right = snapshot('query-b', [
+    'https://a.test/one',
+    resolved,
+    'https://c.test/three',
+    'https://d.test/four',
+    'https://e.test/five',
+  ]);
+  const profile = validateSerpIntentProfile(input(sameRight, { right }));
+  assert.equal(profile.state, 'same_result_family_candidate');
+  assert.ok(profile.comparisons[0]!.snapshots[0]!.exactUrlOverlap.rightTopKUrls.includes(resolved));
+});
+
+test('Google GoTo URLs beyond top-K do not block resolved organic comparison', () => {
+  const right = snapshot('query-b', [
+    'https://a.test/one',
+    'https://b.test/two',
+    'https://c.test/three',
+    'https://d.test/four',
+    'https://e.test/five',
+    googleGoTo,
+  ]);
+  const profile = validateSerpIntentProfile(input(sameRight, { right }));
+  assert.equal(profile.state, 'same_result_family_candidate');
+  assert.equal(
+    profile.comparisons[0]!.snapshots[0]!.exactUrlOverlap.rightTopKUrls.includes(googleGoTo),
+    false,
+  );
 });
