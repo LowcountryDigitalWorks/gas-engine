@@ -244,6 +244,20 @@ test('cohort revision and dimensions/configuration changes are unmatched, never 
   assert.equal(report.summary.missingFromCurrent, 3);
 });
 
+test('forged cohort-dimension provider fails closed even when source provenance matches collection', () => {
+  const { baseline, current } = paired();
+  const before = add(baseline, 'provider-integrity', { state: 'observed', value: { type: 'number', value: 1 } });
+  const after = add(current, 'provider-integrity', { state: 'observed', value: { type: 'number', value: 1 } });
+  assert.equal(compareEvidenceSnapshots(baseline.snapshot, current.snapshot).summary.unchanged, 1);
+
+  after.cohort.context.dimensions.providerId = 'synthetic-other-provider';
+  expectDiffError(() => compareEvidenceSnapshots(baseline.snapshot, current.snapshot), 'invalid_snapshot');
+  after.cohort.context.dimensions.providerId = current.value.collection.providerId;
+
+  before.cohort.context.dimensions.providerId = 'synthetic-other-provider';
+  expectDiffError(() => compareEvidenceSnapshots(baseline.snapshot, current.snapshot), 'invalid_snapshot');
+});
+
 test('incompatible collection semantics fail as discontinuities before absence classification', () => {
   const mutations: Array<(current: Contract<'collection'>) => void> = [
     (current) => { current.providerId = 'synthetic-other-provider'; },
