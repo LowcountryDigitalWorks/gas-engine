@@ -162,6 +162,7 @@ function validateObservationOwnership(
     && same(observation.cohort.context.scope, collection.scope)
     && same(provenance.source.scope, collection.scope)
     && provenance.source.providerId === collection.providerId
+    && observation.cohort.context.dimensions.providerId === collection.providerId
     && sameOptionalProviderConnection(collection, provenance.source)
     && same(observation.cohort.context.method, collection.method)
     && same(provenance.adapter, collection.adapter)
