@@ -36,7 +36,7 @@ Canonical collection completeness and persisted multipart completion remain deli
 
 After collection compatibility is proven, the sole observation match key is the accepted `cohortIdentityHash(observation.cohort)`. That identity includes cohort ID/revision and the full semantic context: scope, subject, metric, declared dimensions, method, and time-window rules. Omitted dimensions are not wildcards.
 
-Release 0.7 does not add weaker subject-only, metric-only, provider-crossing, model-crossing, or configuration-crossing matching. If either snapshot contains more than one observation with the same cohort identity, the comparison fails closed as `ambiguous_cohort`; it never selects a latest record or silently deduplicates.
+Release 0.7 does not add weaker subject-only, metric-only, provider-crossing, model-crossing, or configuration-crossing matching. If either snapshot contains more than one observation with the same cohort identity, the comparison fails closed as `ambiguous_cohort`; it never selects a latest record or silently deduplicates. Before cohort matching, each observation's declared `cohort.context.dimensions.providerId` must also equal the collection provider already required by source provenance; a contradictory cohort provider fails closed as `invalid_snapshot` rather than becoming a separate or misleading provider observation.
 
 ## Delta states
 
