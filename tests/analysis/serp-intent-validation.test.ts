@@ -279,6 +279,24 @@ test('partial or duplicate same-type rank semantics fail closed', () => {
   assert.ok(duplicateProfile.reasons.includes('incompatible_organic_rank_semantics'));
 });
 
+test('missing provider same-type ranks inside the organic top-K fail closed', () => {
+  for (const rankSet of [[2, 3, 4, 5, 6], [1, 2, 4, 5, 6]]) {
+    const right = snapshot('query-b', sameRight);
+    right.results.forEach((row, index) => {
+      (row as Mutable<(typeof right.results)[number]>).sameTypeRank = rankSet[index]!;
+    });
+    const profile = validateSerpIntentProfile(input(sameRight, { right }));
+    assert.equal(profile.state, 'not_ready');
+    assert.ok(profile.reasons.includes('incompatible_organic_rank_semantics'));
+    assert.equal(profile.comparisons.length, 0);
+  }
+
+  const right = snapshot('query-b', [...sameRight, 'https://q.test/six']);
+  (right.results[5] as Mutable<(typeof right.results)[number]>).sameTypeRank = 7;
+  const validPrefix = validateSerpIntentProfile(input(sameRight, { right }));
+  assert.equal(validPrefix.state, 'same_result_family_candidate');
+});
+
 test('organic result rows without URLs fail closed as incompatible result typing', () => {
   const right = snapshot('query-b', sameRight);
   right.results.unshift({ type: 'organic', sameTypeRank: 99 });

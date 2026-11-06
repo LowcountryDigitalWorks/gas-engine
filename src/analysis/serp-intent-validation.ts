@@ -323,6 +323,15 @@ function selectOrganic(snapshot: SerpSnapshot, topK: number): OrganicSelection |
 
   if (uniqueOrdered.length < topK) return 'insufficient_eligible_organic_depth';
   const top = uniqueOrdered.slice(0, topK);
+  if (anySameTypeRank) {
+    // A gap before the last selected organic rank hides a potentially different
+    // top-K member. Later gaps do not invalidate an already-complete top-K.
+    const observedRanks = new Set(organic.map(({ row }) => row.sameTypeRank!));
+    const lastSelectedRank = top[top.length - 1]!.row.sameTypeRank!;
+    for (let rank = 1; rank <= lastSelectedRank; rank += 1) {
+      if (!observedRanks.has(rank)) return 'incompatible_organic_rank_semantics';
+    }
+  }
   for (const candidate of top) {
     if (isUnresolvedGoogleGoToDestinationUrl(candidate.row.url!)) {
       return 'unresolved_result_destination';

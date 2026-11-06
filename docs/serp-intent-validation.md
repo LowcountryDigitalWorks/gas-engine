@@ -76,7 +76,7 @@ Requested depth remains descriptive source context. It is **never** treated as p
 
 Only `type = organic` rows with an exact URL are eligible for URL comparison. Other feature classes remain available only in descriptive result-shape counts.
 
-When the provider supplies same-type rank on eligible organic rows, the profile uses that rank for organic ordering. A mixed ranked/unranked organic set fails closed rather than falling back to mixed absolute SERP position. Without same-type rank, caller/provider result order is preserved.
+When the provider supplies same-type rank on eligible organic rows, the profile uses that rank for organic ordering. A mixed ranked/unranked organic set fails closed rather than falling back to mixed absolute SERP position. Without same-type rank, caller/provider result order is preserved. To establish a genuine ranked top-K, the observed organic same-type ranks must also cover the full prefix from `1` through the rank of the last selected unique URL; a missing earlier rank returns `not_ready` rather than substituting a lower result. Gaps after that complete prefix do not change its selected top-K, and exact-URL deduplication does not erase observed rank evidence.
 
 Exact duplicate URLs are deduplicated. No broad URL canonicalization occurs: distinct exact strings such as `/page` and `/page/` remain distinct evidence.
 
