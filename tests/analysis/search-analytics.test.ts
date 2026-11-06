@@ -372,6 +372,33 @@ test('compatibility rejects filter, window, freshness, provider/source, and sear
   assert.throws(() => adapt(wrongSearchType));
 });
 
+test('canonical search observations recheck source metric integrity for legacy and modality-aware windows', () => {
+  const validWindows = [
+    adapt(currentFixture()),
+    adaptMinor1(minor1TextFixtureText, () => {}),
+  ];
+  const corruptions = [
+    { metric: 'gsc-clicks', value: 10_000 },
+    { metric: 'gsc-clicks', value: 1.5 },
+    { metric: 'gsc-impressions', value: 0 },
+    { metric: 'gsc-ctr', value: 0.9 },
+    { metric: 'gsc-average-position', value: 0 },
+  ];
+  for (const valid of validWindows) {
+    assert.doesNotThrow(() => validateSearchAnalyticsWindow(valid));
+    for (const corruption of corruptions) {
+      const tampered = structuredClone(valid);
+      const observation = tampered.batches
+        .flatMap((batch) => batch.observations)
+        .find((item) => item.record.cohort.context.metric.id === corruption.metric);
+      assert.ok(observation);
+      assert.equal(observation.record.value.state, 'observed');
+      (observation.record.value as any).value.value = corruption.value;
+      expectSignalError(() => validateSearchAnalyticsWindow(tampered), 'invalid_window');
+    }
+  }
+});
+
 test('synthetic Alpha/Beta trusted scopes cannot be compared as one signal stream', () => {
   const betaConfig: SearchAnalyticsAdapterConfig = {
     ...alphaConfig,

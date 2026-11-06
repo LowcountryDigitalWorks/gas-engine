@@ -68,7 +68,7 @@ The existing canonical model has no free-form query/page metadata bag. Release 0
 - `dimensions.configuration` = exact search type `web`;
 - collection method configuration hash = exact normalized dimensions/filter semantics.
 
-The application-local adapter result also preserves the exact query/page strings and deterministic source/observation references. Analysis validates those references against canonical observations before deriving a signal. This sidecar is not a new wire contract or persistence table.
+The application-local adapter result also preserves the exact query/page strings and deterministic source/observation references. Analysis validates those references against canonical observations before deriving a signal. At the analysis boundary, reconstructed canonical numeric observations also must retain the accepted source-row relationships (safe nonnegative integer clicks/impressions, positive impressions, clicks at most impressions, CTR matching clicks divided by impressions within the accepted tolerance, and valid average position). Damaged or forged adapted observations fail closed instead of silently generating impossible signals. This sidecar is not a new wire contract or persistence table.
 
 Exact query/page strings are not recoverable from the persisted hashed canonical identities alone. After process restart, exact-string reconstruction requires retaining or re-reading and re-adapting the sanitized source artifact, or otherwise retaining the adaptation result. The deterministic hashes are identities, not an anonymization guarantee.
 

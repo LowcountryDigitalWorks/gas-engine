@@ -6,6 +6,7 @@ import {
   SEARCH_ANALYTICS_MAPPING_VERSION,
   SEARCH_ANALYTICS_MINOR1_MAPPING_VERSION,
   SEARCH_ANALYTICS_MAX_ROWS,
+  SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE,
   SEARCH_ANALYTICS_METRIC_SPECS,
   SEARCH_ANALYTICS_PROVIDER_ID,
   SEARCH_ANALYTICS_SOURCE_SCHEMA_ID,
@@ -385,6 +386,22 @@ export function validateSearchAnalyticsWindow(input: SearchAnalyticsAdaptationRe
       }
       metrics[metricKey] = resolved.record.value.value.value;
       observationIds.push(observationId);
+    }
+
+    // Canonical observations are separately parsed, but their generic numeric
+    // wire shape does not enforce the source's cross-metric GSC relationships.
+    // Recheck at the analysis boundary so a damaged/forged adapted batch
+    // cannot turn impossible observations into deterministic search signals.
+    if (!Number.isSafeInteger(metrics.clicks)
+        || metrics.clicks < 0 || metrics.clicks > 1e15 || Object.is(metrics.clicks, -0)
+        || !Number.isSafeInteger(metrics.impressions)
+        || metrics.impressions <= 0 || metrics.impressions > 1e15
+        || !Number.isFinite(metrics.ctr) || metrics.ctr < 0 || metrics.ctr > 1 || Object.is(metrics.ctr, -0)
+        || !Number.isFinite(metrics.averagePosition) || metrics.averagePosition < 1
+        || metrics.averagePosition > 1e15 || Object.is(metrics.averagePosition, -0)
+        || metrics.clicks > metrics.impressions
+        || Math.abs(metrics.ctr - metrics.clicks / metrics.impressions) > SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE) {
+      fail('invalid_window', 'Search-analytics canonical observations violate source metric-integrity relationships.');
     }
 
     return {
