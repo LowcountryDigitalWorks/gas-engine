@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "ldw.wqt-domscan-sidecar.v1",
+  "provider": "domscan",
+  "evidenceOnly": true,
+  "gatePolicy": {
+    "qualityThresholdsApplied": false,
+    "domscanSidecar": true
+  },
+  "siteId": "synthetic-gas-domscan",
+  "origin": "https://fixture-dns.example.test",
+  "endpoint": "dns_security",
+  "inputObservedAt": "2026-11-07T12:00:00.000Z",
+  "checks": [
+    {
+      "code": "spf",
+      "classification": "present",
+      "valid": true
+    },
+    {
+      "code": "dkim",
+      "classification": "present"
+    },
+    {
+      "code": "dmarc",
+      "classification": "present",
+      "policy": "quarantine"
+    },
+    {
+      "code": "dnssec",
+      "classification": "absent"
+    },
+    {
+      "code": "caa",
+      "classification": "absent"
+    },
+    {
+      "code": "mta_sts",
+      "classification": "not_detected"
+    },
+    {
+      "code": "tls_rpt",
+      "classification": "absent"
+    },
+    {
+      "code": "zone_transfer",
+      "classification": "inconclusive"
+    }
+  ]
+}
