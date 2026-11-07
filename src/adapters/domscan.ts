@@ -10,7 +10,6 @@ import { parseContract } from '../domain/validate.js';
 import {
   canonicalJson,
   hashCanonicalJson,
-  MAX_HASH_INPUT_BYTES,
   sha256Bytes,
 } from '../lib/canonical-json.js';
 import type { CollectionBatch, Scope } from '../persistence/repository.js';
@@ -23,7 +22,15 @@ export const DOMSCAN_MAPPING_VERSION = '1.0.0' as const;
 export const DOMSCAN_SOURCE_SCHEMA_ID = 'ldw.wqt-domscan-sidecar' as const;
 export const DOMSCAN_SOURCE_SCHEMA_VERSION = 'v1' as const;
 export const DOMSCAN_METHOD_REVISION = 1 as const;
-export const MAX_DOMSCAN_INPUT_BYTES = MAX_HASH_INPUT_BYTES;
+/** Accepted WQT DomScan sidecar input bound (independent of global canonical hash bound). */
+export const MAX_DOMSCAN_INPUT_BYTES = 262_144 as const;
+
+const DOMSCAN_METHOD_TOKEN = /^[a-z][a-z0-9_]*$/;
+const DOMSCAN_CAVEAT_TOKEN = /^[a-z][a-z0-9_]{0,63}$/;
+const dmarcPolicySchema = z.enum(['none', 'quarantine', 'reject']);
+const agentOutcomeSchema = z.enum(['partial', 'complete', 'success', 'failed', 'error', 'unknown']);
+const domscanMethodTokenSchema = z.string().min(1).max(64).regex(DOMSCAN_METHOD_TOKEN);
+const domscanCaveatTokenSchema = z.string().min(1).max(64).regex(DOMSCAN_CAVEAT_TOKEN);
 
 export const DOMSCAN_DNS_CHECK_CODES = Object.freeze([
   'spf',
@@ -148,15 +155,15 @@ const dnsCheckSchema = z.object({
   code: z.enum(DOMSCAN_DNS_CHECK_CODES),
   classification: classificationSchema,
   valid: z.boolean().optional(),
-  policy: z.string().min(1).max(32).optional(),
+  policy: dmarcPolicySchema.optional(),
 }).strict();
 
 const agentSignalSchema = z.object({
   code: z.enum(DOMSCAN_AGENT_SIGNAL_CODES),
   classification: classificationSchema,
-  validation: z.string().min(1).max(64).optional(),
-  method: z.string().min(1).max(64).optional(),
-  caveats: z.array(z.string().min(1).max(64)).max(8).optional(),
+  validation: domscanMethodTokenSchema.optional(),
+  method: domscanMethodTokenSchema.optional(),
+  caveats: z.array(domscanCaveatTokenSchema).max(8).optional(),
 }).strict();
 
 const sourceNativeSchema = z.object({
@@ -183,7 +190,7 @@ const agentArtifactSchema = artifactBaseSchema.extend({
   endpoint: z.literal('agent_readiness'),
   requestedRootUrl: z.string().min(1).max(2_048),
   finalRootUrl: z.string().min(1).max(2_048),
-  outcome: z.string().min(1).max(32),
+  outcome: agentOutcomeSchema,
   signals: z.array(agentSignalSchema).length(DOMSCAN_AGENT_SIGNAL_CODES.length),
   sourceNative: sourceNativeSchema.optional(),
 }).strict();
@@ -208,7 +215,8 @@ type ParsedConfig = z.infer<typeof configSchema>;
 type ObservationValue =
   | { readonly state: 'observed'; readonly value: { readonly type: 'text'; readonly value: string } }
   | { readonly state: 'observed'; readonly value: { readonly type: 'boolean'; readonly value: boolean } }
-  | { readonly state: 'unknown'; readonly reason: string };
+  | { readonly state: 'unknown'; readonly reason: string }
+  | { readonly state: 'not_applicable'; readonly reason: string };
 
 interface ObservationSpec {
   readonly metricId: string;
@@ -264,8 +272,12 @@ function classificationValue(classification: DomscanClassification): Observation
   switch (classification) {
     case 'present':
     case 'absent':
-    case 'not_applicable':
       return { state: 'observed', value: { type: 'text', value: classification } };
+    case 'not_applicable':
+      return {
+        state: 'not_applicable',
+        reason: 'DomScan sidecar reports not_applicable classification for this bounded check or signal.',
+      };
     case 'not_detected':
       return {
         state: 'unknown',
@@ -307,6 +319,9 @@ function dmarcPolicyValue(
 }
 
 function parseInput(bytes: Uint8Array): { readonly artifact: DomscanArtifact; readonly inputSha256: string } {
+  if (bytes.byteLength > MAX_DOMSCAN_INPUT_BYTES) {
+    fail('input_too_large', `DomScan sidecar evidence exceeds ${MAX_DOMSCAN_INPUT_BYTES} bytes.`);
+  }
   let inputSha256: string;
   try {
     inputSha256 = sha256Bytes(bytes);
@@ -444,6 +459,7 @@ function normalizedRows(artifact: DomscanArtifact): Array<{
   readonly policy?: string;
   readonly method?: string;
   readonly validation?: string;
+  readonly caveats?: readonly string[];
 }> {
   if (artifact.endpoint === 'dns_security') {
     return artifact.checks.map((check) => ({
@@ -458,6 +474,7 @@ function normalizedRows(artifact: DomscanArtifact): Array<{
     classification: enforceAgentSignalSemantics(signal),
     ...(signal.method === undefined ? {} : { method: signal.method }),
     ...(signal.validation === undefined ? {} : { validation: signal.validation }),
+    ...(signal.caveats === undefined ? {} : { caveats: [...signal.caveats] }),
   }));
 }
 

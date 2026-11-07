@@ -14,7 +14,7 @@ Supported source contract:
 - provider: `domscan`
 - adapter: `ldw-domscan-sidecar-adapter`
 - mapping: `1.0.0`
-- input bound: 256 KiB
+- input bound: 262 144 bytes (256 KiB; independent of global hash bound)
 - endpoints: `dns_security` (8 checks) or `agent_readiness` (12 signals), one artifact per adaptation
 
 The parser is strict and rejects unknown fields, unsupported schema versions, invalid UTF-8/JSON, trusted identity mismatch, malformed origins/timestamps, duplicate or misordered checks/signals, inconsistent SPF/DMARC semantics, and artifacts outside byte bounds.
@@ -25,7 +25,7 @@ DomScan sidecar evidence is **method-bound public-domain DNS and agent-discovery
 
 - `present` and `absent` are observed provider-status text only.
 - `not_detected`, `unknown`, and `inconclusive` map to canonical unknown with deterministic reasons; they are not observed absence.
-- `not_applicable` remains observed not_applicable.
+- `not_applicable` maps to canonical observation `state: not_applicable` with a deterministic reason (not observed text).
 - `webmcp` with `runtime_required` stays unknown, never absent.
 - SPF `valid` and DMARC `policy` emit only when classification is consistently `present`.
 - Optional `sourceNative.agentReadinessScore` is carried only in source-integrity material; it is **not** a canonical performance or quality observation.

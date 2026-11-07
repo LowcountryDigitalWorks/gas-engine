@@ -81,6 +81,12 @@ test('DomScan dns_security sidecar adapts into bounded domscan canonical evidenc
   assert.ok(dmarc?.observationIds['domscan-dns-dmarc-policy']);
   const mta = result.rows.find((row) => row.code === 'mta_sts');
   assert.equal(mta?.classification, 'not_detected');
+  const mtaClassObs = part.observations.find(
+    (entry) =>
+      entry.record.cohort.context.dimensions.surface === 'domscan:mta_sts'
+      && entry.record.cohort.context.metric.id === 'domscan-dns-check-classification',
+  );
+  assert.equal(mtaClassObs?.record.value.state, 'unknown');
 });
 
 test('DomScan agent_readiness sidecar adapts twelve sorted signals without canonical score metric', () => {
@@ -96,6 +102,14 @@ test('DomScan agent_readiness sidecar adapts twelve sorted signals without canon
   assert.ok(!metrics.has('domscan-agent-readiness-score'));
   assert.ok(!metrics.has('agentReadinessScore'));
   assert.doesNotThrow(() => validateDomscanWindow(result));
+  const part = parseCollectionBatch(result.batches[0]!);
+  const catalogClass = part.observations.find(
+    (entry) =>
+      entry.record.cohort.context.dimensions.surface === 'domscan:api_catalog'
+      && entry.record.cohort.context.metric.id === 'domscan-agent-signal-classification',
+  );
+  assert.equal(catalogClass?.record.value.state, 'not_applicable');
+  assert.doesNotMatch(JSON.stringify(part), /@|mailto:/i);
 });
 
 test('JSON whitespace does not change semantic collection identity', () => {
@@ -124,8 +138,9 @@ test('rejects unknown fields, schema drift, and oversize input', () => {
   const wrongSchema = structuredClone(dnsFixture);
   wrongSchema.schemaVersion = 'ldw.wqt-domscan-sidecar.v2';
   assert.throws(() => adaptDomscanSidecarEvidence(bytes(wrongSchema), dnsConfig()), expectCode('unsupported_schema'));
-  const huge = Buffer.alloc(MAX_DOMSCAN_INPUT_BYTES + 1, 0x7b);
+  const huge = Buffer.alloc(MAX_DOMSCAN_INPUT_BYTES + 1, 0x20);
   assert.throws(() => adaptDomscanSidecarEvidence(huge, dnsConfig()), expectCode('input_too_large'));
+  assert.equal(MAX_DOMSCAN_INPUT_BYTES, 262_144);
   assert.throws(() => adaptDomscanSidecarEvidence(Buffer.from('{', 'utf8'), dnsConfig()), expectCode('invalid_json'));
   assert.throws(() => adaptDomscanSidecarEvidence(Buffer.from([0xff, 0xfe]), dnsConfig()), expectCode('invalid_utf8'));
 });
@@ -181,6 +196,45 @@ test('dns_security and agent_readiness collections are not mechanically comparab
     () => assertDomscanCollectionsComparable(dns.collection, agent.collection),
     expectCode('incompatible_collections'),
   );
+});
+
+test('rejects WQT-inconsistent DMARC policy, agent outcome, and method tokens', () => {
+  const badPolicy = structuredClone(dnsFixture) as MutableJson;
+  badPolicy.checks = (badPolicy.checks as MutableJson[]).map((check) =>
+    check.code === 'dmarc' ? { code: 'dmarc', classification: 'present', policy: 'monitor' } : check,
+  );
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(badPolicy), dnsConfig()), expectCode('invalid_source'));
+  const badOutcome = structuredClone(agentFixture);
+  badOutcome.outcome = 'mostly_ready';
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(badOutcome), agentConfig()), expectCode('invalid_source'));
+  const badMethod = structuredClone(agentFixture) as MutableJson;
+  const signals = badMethod.signals as MutableJson[];
+  const webmcp = signals.find((signal) => signal.code === 'webmcp') as MutableJson;
+  webmcp.method = 'Static_HTML';
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(badMethod), agentConfig()), expectCode('invalid_source'));
+  const badCaveat = structuredClone(agentFixture) as MutableJson;
+  const caveatSignals = badCaveat.signals as MutableJson[];
+  const webmcpCaveat = caveatSignals.find((signal) => signal.code === 'webmcp') as MutableJson;
+  webmcpCaveat.caveats = ['RUNTIME_OBSERVATION_REQUIRED'];
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(badCaveat), agentConfig()), expectCode('invalid_source'));
+  const emailCaveat = structuredClone(agentFixture) as MutableJson;
+  const emailSignals = emailCaveat.signals as MutableJson[];
+  const webmcpEmail = emailSignals.find((signal) => signal.code === 'webmcp') as MutableJson;
+  webmcpEmail.caveats = ['contact_team@example.test'];
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(emailCaveat), agentConfig()), expectCode('invalid_source'));
+});
+
+test('agent signal caveat changes shift semantic source and collection identity', () => {
+  const base = adaptDomscanSidecarEvidence(bytes(agentFixture), agentConfig());
+  const caveated = structuredClone(agentFixture) as MutableJson;
+  const signals = caveated.signals as MutableJson[];
+  const webmcp = signals.find((signal) => signal.code === 'webmcp') as MutableJson;
+  webmcp.caveats = ['runtime_observation_required', 'static_html_only'];
+  const changed = adaptDomscanSidecarEvidence(bytes(caveated), agentConfig());
+  assert.notEqual(base.collectionId, changed.collectionId);
+  const baseRow = base.rows.find((row) => row.code === 'webmcp');
+  const changedRow = changed.rows.find((row) => row.code === 'webmcp');
+  assert.notEqual(baseRow?.sourceId, changedRow?.sourceId);
 });
 
 test('provider connection mismatch is incompatible', () => {
