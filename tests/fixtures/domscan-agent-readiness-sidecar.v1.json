@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "ldw.wqt-domscan-sidecar.v1",
+  "provider": "domscan",
+  "evidenceOnly": true,
+  "gatePolicy": {
+    "qualityThresholdsApplied": false,
+    "domscanSidecar": true
+  },
+  "siteId": "synthetic-gas-domscan",
+  "origin": "https://fixture-agent.example.test",
+  "endpoint": "agent_readiness",
+  "requestedRootUrl": "https://fixture-agent.example.test/",
+  "finalRootUrl": "https://fixture-agent.example.test/",
+  "inputObservedAt": "2026-11-07T12:01:00.000Z",
+  "outcome": "partial",
+  "signals": [
+    {
+      "code": "agent_guide",
+      "classification": "unknown",
+      "method": "static_html"
+    },
+    {
+      "code": "agent_skills",
+      "classification": "not_detected",
+      "method": "static_html"
+    },
+    {
+      "code": "api_catalog",
+      "classification": "not_applicable",
+      "method": "static_html"
+    },
+    {
+      "code": "llms_txt",
+      "classification": "not_detected",
+      "method": "static_html"
+    },
+    {
+      "code": "markdown",
+      "classification": "present",
+      "method": "static_html"
+    },
+    {
+      "code": "mcp_server_card",
+      "classification": "absent",
+      "method": "static_html"
+    },
+    {
+      "code": "oauth",
+      "classification": "present",
+      "method": "static_html"
+    },
+    {
+      "code": "openapi",
+      "classification": "absent",
+      "method": "static_html"
+    },
+    {
+      "code": "remote_mcp",
+      "classification": "not_detected",
+      "method": "static_html"
+    },
+    {
+      "code": "sitemap_markdown",
+      "classification": "inconclusive",
+      "method": "static_html"
+    },
+    {
+      "code": "web_bot_auth",
+      "classification": "not_detected",
+      "method": "static_html"
+    },
+    {
+      "code": "webmcp",
+      "classification": "unknown",
+      "validation": "runtime_required",
+      "method": "static_html",
+      "caveats": [
+        "runtime_observation_required"
+      ]
+    }
+  ],
+  "sourceNative": {
+    "agentReadinessScore": 42
+  }
+}
