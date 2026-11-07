@@ -158,6 +158,34 @@ test('trusted identity mismatches fail closed', () => {
   assert.notEqual(alpha.collectionId, beta.collectionId);
 });
 
+test('rejects valid or policy fields on non-spf/dmarc dns checks', () => {
+  const dnssecPolicy = structuredClone(dnsFixture) as MutableJson;
+  dnssecPolicy.checks = (dnssecPolicy.checks as MutableJson[]).map((check) =>
+    check.code === 'dnssec' ? { code: 'dnssec', classification: 'absent', policy: 'reject' } : check,
+  );
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(dnssecPolicy), dnsConfig()), expectCode('invalid_source'));
+  const zoneValid = structuredClone(dnsFixture) as MutableJson;
+  zoneValid.checks = (zoneValid.checks as MutableJson[]).map((check) =>
+    check.code === 'zone_transfer' ? { code: 'zone_transfer', classification: 'inconclusive', valid: true } : check,
+  );
+  assert.throws(() => adaptDomscanSidecarEvidence(bytes(zoneValid), dnsConfig()), expectCode('invalid_source'));
+});
+
+test('trusted siteId with leading digit matches WQT opaque id pattern', () => {
+  const digitSite = structuredClone(dnsFixture) as MutableJson;
+  digitSite.siteId = '9synthetic-gas-domscan';
+  const config = { ...dnsConfig(), expectedSiteId: '9synthetic-gas-domscan' };
+  const result = adaptDomscanSidecarEvidence(bytes(digitSite), config);
+  assert.equal(result.semantics.siteId, '9synthetic-gas-domscan');
+  assert.doesNotThrow(() => validateDomscanWindow(result));
+  const uppercaseSite = structuredClone(dnsFixture) as MutableJson;
+  uppercaseSite.siteId = 'Bad_Site';
+  assert.throws(
+    () => adaptDomscanSidecarEvidence(bytes(uppercaseSite), { ...dnsConfig(), expectedSiteId: 'Bad_Site' }),
+    expectCode('invalid_source'),
+  );
+});
+
 test('dns check order, count, and SPF/DMARC policy consistency are enforced', () => {
   const dup = structuredClone(dnsFixture) as MutableJson;
   const checks = dup.checks as MutableJson[];

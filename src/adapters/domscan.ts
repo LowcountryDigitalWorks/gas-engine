@@ -25,6 +25,11 @@ export const DOMSCAN_METHOD_REVISION = 1 as const;
 /** Accepted WQT DomScan sidecar input bound (independent of global canonical hash bound). */
 export const MAX_DOMSCAN_INPUT_BYTES = 262_144 as const;
 
+/** Accepted WQT opaque site id (`SITE_ID_PATTERN` in WQT resolve-target). */
+export const DOMSCAN_SITE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+const domscanSiteIdSchema = z.string().regex(DOMSCAN_SITE_ID_PATTERN);
+
 const DOMSCAN_METHOD_TOKEN = /^[a-z][a-z0-9_]*$/;
 const DOMSCAN_CAVEAT_TOKEN = /^[a-z][a-z0-9_]{0,63}$/;
 const dmarcPolicySchema = z.enum(['none', 'quarantine', 'reject']);
@@ -156,7 +161,20 @@ const dnsCheckSchema = z.object({
   classification: classificationSchema,
   valid: z.boolean().optional(),
   policy: dmarcPolicySchema.optional(),
-}).strict();
+}).strict().superRefine((check, ctx) => {
+  if (check.code !== 'spf' && check.valid !== undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'DomScan dns_security valid is allowed only on spf checks.',
+    });
+  }
+  if (check.code !== 'dmarc' && check.policy !== undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'DomScan dns_security policy is allowed only on dmarc checks.',
+    });
+  }
+});
 
 const agentSignalSchema = z.object({
   code: z.enum(DOMSCAN_AGENT_SIGNAL_CODES),
@@ -175,7 +193,7 @@ const artifactBaseSchema = z.object({
   provider: z.literal(DOMSCAN_PROVIDER_ID),
   evidenceOnly: z.literal(true),
   gatePolicy: gatePolicySchema,
-  siteId: z.string().min(1).max(64).regex(/^[a-z][a-z0-9-]*$/),
+  siteId: domscanSiteIdSchema,
   origin: z.string().min(1).max(2_048),
   endpoint: z.enum(['dns_security', 'agent_readiness']),
   inputObservedAt: timestamp,
@@ -201,7 +219,7 @@ type DomscanArtifact = DnsArtifact | AgentArtifact;
 
 const configSchema = z.object({
   scope: scopeSchema,
-  expectedSiteId: z.string().min(1).max(64).regex(/^[a-z][a-z0-9-]*$/),
+  expectedSiteId: domscanSiteIdSchema,
   expectedOrigin: z.string().min(1).max(2_048),
   expectedEndpoint: z.enum(['dns_security', 'agent_readiness']),
   providerConnectionId: identifier,
