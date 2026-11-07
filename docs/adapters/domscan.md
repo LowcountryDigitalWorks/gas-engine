@@ -1,6 +1,6 @@
-# DomScan WQT sidecar adapter — Release 0.25 draft candidate
+# DomScan WQT sidecar adapter — accepted Release 0.25
 
-Status: **Release 0.25 draft candidate. Not accepted until Product review, independent review, merge, and post-merge verification.**
+Status: **Accepted for internal offline/local use**. Issue #155 / [PR #156](https://github.com/LowcountryDigitalWorks/gas-engine/pull/156) guarded-squash merged to main `f2d3098c227e42120af49140267048510f16bb30` after independent exact-head **H0/M0/L0** and successful post-merge [Contracts 42356580207](https://github.com/LowcountryDigitalWorks/gas-engine/actions/runs/42356580207) / [Security 42356580669](https://github.com/LowcountryDigitalWorks/gas-engine/actions/runs/42356580669). The accepted upstream WQT source is `ldw.wqt-domscan-sidecar.v1` from WQT #58 / PR #59. No live provider polling, customer-data ingestion or deployment is authorized.
 
 Issue: [#155](https://github.com/LowcountryDigitalWorks/gas-engine/issues/155)
 
