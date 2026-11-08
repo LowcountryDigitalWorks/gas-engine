@@ -93,6 +93,54 @@ test('adapts exact search-analytics v1/minor0 into deterministic canonical metri
   assert.deepEqual(ctr?.value, { state: 'observed', value: { type: 'number', value: 0 } });
 });
 
+
+// Cloudflare's edge-defined visits and crawler-matching HTTP requests are not
+// GSC query×page search performance or deduplicated humans. Keep source
+// report-family boundaries fail-closed even if future callers mix dashboards.
+test('Cloudflare visits and crawler requests cannot enter GSC search-analytics evidence', () => {
+  for (const minor of [0, 1]) {
+    const gsc = fixture();
+    if (minor === 1) {
+      gsc.schemaMinorVersion = 1;
+      gsc.reportFamily = 'search-performance';
+      gsc.webModality = 'text_based';
+    }
+    const expected = adaptSearchAnalyticsEvidence(bytes(gsc), trustedConfig);
+    assert.equal(expected.providerId, 'google-search-console');
+    assert.equal(allObservations(expected).length, 8);
+    assert.equal(expected.rows.every((row) => row.sourceId.startsWith('gsc.src:')), true);
+
+    const injections: Array<(artifact: MutableJson) => void> = [
+      (artifact) => { artifact.provider = 'cloudflare'; },
+      (artifact) => { artifact.reportFamily = 'cloudflare-edge-traffic'; },
+      (artifact) => { artifact.clientRequestHTTPHost = 'example.test'; },
+      (artifact) => { artifact.requestSource = 'eyeball'; },
+      (artifact) => { artifact.edgeRequests = 123; },
+      (artifact) => { artifact.sum = { visits: 17 }; },
+      (artifact) => { artifact.rows[0].visits = 17; },
+      (artifact) => { artifact.rows[0].edgeRequests = 123; },
+      (artifact) => { artifact.rows[0].userAgent = 'OAI-SearchBot'; },
+      (artifact) => { artifact.rows[0].clientRequestHTTPHost = 'cruise.example.test'; },
+    ];
+    for (const inject of injections) {
+      const candidate = structuredClone(gsc);
+      inject(candidate);
+      expectAdapterError(
+        () => adaptSearchAnalyticsEvidence(bytes(candidate), trustedConfig),
+        'invalid_source',
+      );
+    }
+
+    // A legitimate observed GSC zero remains a zero GSC click, not an edge
+    // visit, a missing metric, or a provider-wide absence claim.
+    const gscClicks = allObservations(expected)
+      .find((item) => item.id === expected.rows[0]!.observationIds.clicks);
+    assert.ok(gscClicks);
+    assert.equal(gscClicks.value.state, 'observed');
+    assert.equal(expected.rows[0]!.query, gsc.rows[0].query);
+  }
+});
+
 test('minor0 metric relationships fail closed while valid zero and CTR tolerance remain deterministic', () => {
   assert.equal(SEARCH_ANALYTICS_CTR_ABSOLUTE_TOLERANCE, 1e-12);
 
