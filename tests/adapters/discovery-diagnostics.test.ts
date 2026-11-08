@@ -197,10 +197,12 @@ test('Bing performance zeros, sitewide index totals and empty feeds cannot imper
   missing.rows = missing.rows.filter((row: MutableJson) => row.url !== 'https://example.test/clean');
   const adapted = adapt(missing);
   assert.equal(adapted.rows.some((row) => row.url === 'https://example.test/clean'), false);
+  const originalUrl = adapt(source).rows.find((row) => row.url === 'https://example.test/clean');
+  assert.ok(originalUrl?.kind === 'search_engine');
+  const withheldObservationIds = new Set(Object.values(originalUrl.observationIds));
   assert.equal(
     adapted.batches.flatMap((part) => part.observations)
-      .some((observation) => observation.record.cohort.context.subject.reference
-        === adapt(source).rows.find((row) => row.url === 'https://example.test/clean')?.urlId),
+      .some((observation) => withheldObservationIds.has(observation.record.id)),
     false,
   );
 
