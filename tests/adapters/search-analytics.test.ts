@@ -561,3 +561,58 @@ test('minor1 text_based and multimodal adapt with distinct mapping, source schem
     allObservations(multimodal).find((item) => item.id === multimodal.rows[0]!.observationIds.clicks)?.value,
   );
 });
+
+
+test('GSC byProperty and date-total reporting cannot masquerade as query-by-page evidence', () => {
+  // Raw Search Console property totals use a different aggregation grain from
+  // this accepted query x page adapter. A provider success (even with final
+  // data and numeric zero clicks) is not a lossless named-query/page export.
+  const nativePropertyReport = {
+    site: { site_url: trustedConfig.expectedProperty, permission_level: 'siteOwner' },
+    response_aggregation_type: 'byProperty',
+    rows: [{ clicks: 5, impressions: 303, ctr: 5 / 303, position: 5.12 }],
+  };
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(nativePropertyReport), trustedConfig),
+    'unsupported_schema',
+  );
+
+  const falselyWrappedProperty = fixture();
+  falselyWrappedProperty.coverage = { state: 'complete', truncated: false, anonymized: false };
+  falselyWrappedProperty.rows = [{
+    clicks: 5,
+    impressions: 303,
+    ctr: 5 / 303,
+    averagePosition: 5.12,
+  }];
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(falselyWrappedProperty), trustedConfig),
+    'invalid_source',
+  );
+
+  const aggregateDimensions = fixture();
+  aggregateDimensions.dimensions = [];
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(aggregateDimensions), trustedConfig),
+    'invalid_source',
+  );
+
+  // Google-native daily rows have dates, not query/page identities. Unreturned
+  // days must never be silently synthesized into this adapter as zero rows.
+  const falselyWrappedDaily = fixture();
+  falselyWrappedDaily.rows = [{
+    date: '2026-09-15',
+    clicks: 0,
+    impressions: 0,
+    ctr: 0,
+    averagePosition: 0,
+  }];
+  expectAdapterError(
+    () => adaptSearchAnalyticsEvidence(bytes(falselyWrappedDaily), trustedConfig),
+    'invalid_source',
+  );
+
+  const accepted = adaptSearchAnalyticsEvidence(bytes(fixture()), trustedConfig);
+  assert.equal(accepted.rows.length, 2);
+  assert.equal(accepted.semantics.coverage.state, 'complete');
+});
