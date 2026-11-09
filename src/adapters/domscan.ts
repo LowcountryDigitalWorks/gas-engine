@@ -694,29 +694,81 @@ function packRows(
   idempotencyKey: string,
   collection: Contract<'collection'>,
 ): CollectionBatch[] {
-  const batch = {
+  const makeBatch = (group: readonly PreparedRow[], part: number, parts: number) => ({
     idempotencyKey,
     collection,
-    part: 1,
-    parts: 1,
-    sources: prepared.map((item) => item.source),
-    observations: prepared.flatMap((item) => item.observations),
+    part,
+    parts,
+    sources: group.map((item) => item.source),
+    observations: group.flatMap((item) => item.observations),
+  });
+
+  // Preserve the exact accepted one-part representation whenever it fits.
+  // A valid trusted connection/reference may increase repeated canonical
+  // source/observation metadata beyond 65,536 bytes, even for 12 signals.
+  const single = makeBatch(prepared, 1, 1);
+  let needsParts = prepared.length > INGESTION_PART_BOUNDS.sourcesPerPart
+    || single.observations.length > INGESTION_PART_BOUNDS.observationsPerPart;
+  if (!needsParts) {
+    try {
+      canonicalJson(single);
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      needsParts = true;
+    }
+  }
+  if (!needsParts) {
+    try {
+      return [parseCollectionBatch(single)];
+    } catch {
+      fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
+    }
+  }
+
+  // Match the established G.A.S. multi-part contract, checking the worst
+  // possible part indices before selecting each deterministic row group.
+  const fitsWorstCase = (group: readonly PreparedRow[]): boolean => {
+    const observationCount = group.reduce((total, row) => total + row.observations.length, 0);
+    if (group.length > INGESTION_PART_BOUNDS.sourcesPerPart
+        || observationCount > INGESTION_PART_BOUNDS.observationsPerPart) return false;
+    try {
+      canonicalJson(makeBatch(group, INGESTION_PART_BOUNDS.parts, INGESTION_PART_BOUNDS.parts));
+      return true;
+    } catch (error) {
+      if (error instanceof RangeError) return false;
+      throw error;
+    }
   };
-  if (prepared.length > INGESTION_PART_BOUNDS.sourcesPerPart
-      || batch.observations.length > INGESTION_PART_BOUNDS.observationsPerPart) {
-    fail('row_too_large', 'DomScan sidecar evidence exceeds one bounded persistence part.');
+
+  const groups: PreparedRow[][] = [];
+  let current: PreparedRow[] = [];
+  for (const row of prepared) {
+    const candidate = [...current, row];
+    if (fitsWorstCase(candidate)) {
+      current = candidate;
+      continue;
+    }
+    if (current.length === 0) {
+      fail('row_too_large', 'One DomScan sidecar row cannot fit a bounded persistence part.');
+    }
+    groups.push(current);
+    current = [row];
+    if (!fitsWorstCase(current)) {
+      fail('row_too_large', 'One DomScan sidecar row cannot fit a bounded persistence part.');
+    }
   }
-  try {
-    canonicalJson(batch);
-  } catch (error) {
-    if (error instanceof RangeError) fail('row_too_large', 'DomScan sidecar evidence exceeds canonical byte bounds.');
-    throw error;
+  if (current.length > 0 || prepared.length === 0) groups.push(current);
+  if (groups.length > INGESTION_PART_BOUNDS.parts) {
+    fail('too_many_parts', 'DomScan sidecar evidence exceeds bounded persistence part count.');
   }
-  try {
-    return [parseCollectionBatch(batch)];
-  } catch {
-    fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
-  }
+
+  return groups.map((group, index) => {
+    try {
+      return parseCollectionBatch(makeBatch(group, index + 1, groups.length));
+    } catch {
+      fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
+    }
+  });
 }
 
 /**
@@ -814,20 +866,62 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
       || input.providerId !== DOMSCAN_PROVIDER_ID
       || !Array.isArray(input.rows)
       || !Array.isArray(input.batches)
-      || input.batches.length !== 1) {
+      || input.batches.length < 1
+      || input.batches.length > INGESTION_PART_BOUNDS.parts) {
     fail('invalid_output', 'DomScan adapted window has invalid bounded metadata.');
   }
-  let batch: CollectionBatch;
+
+  let parts: CollectionBatch[];
   try {
-    batch = parseCollectionBatch(input.batches[0]!);
+    parts = input.batches.map((part) => parseCollectionBatch(part));
   } catch {
     fail('invalid_output', 'DomScan adapted batch is not valid canonical evidence.');
   }
-  if (batch.collection.id !== input.collectionId || batch.idempotencyKey !== input.idempotencyKey) {
-    fail('invalid_output', 'DomScan adapted batch disagrees with window identity.');
+  const collection = parts[0]!.collection;
+  const canonicalCollection = canonicalJson(collection);
+  const sources = parts.flatMap((part) => part.sources);
+  const observations = parts.flatMap((part) => part.observations);
+  for (const [index, part] of parts.entries()) {
+    if (part.part !== index + 1
+        || part.parts !== parts.length
+        || part.collection.id !== input.collectionId
+        || part.idempotencyKey !== input.idempotencyKey
+        || canonicalJson(part.collection) !== canonicalCollection) {
+      fail('invalid_output', 'DomScan adapted parts disagree on order or collection identity.');
+    }
+  }
+
+  // The already-validated canonical source and observation rows must match
+  // the application-local row references exactly, with no lost or duplicated
+  // rows when the collection spans several bounded parts.
+  const sourceIds = new Map(sources.map((source) => [source.id, source]));
+  const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
+  if (sources.length !== input.rows.length
+      || sourceIds.size !== sources.length
+      || observationIds.size !== observations.length) {
+    fail('invalid_output', 'DomScan adapted parts have missing or duplicate canonical evidence.');
+  }
+  const referencedObservations = new Set<string>();
+  for (const row of input.rows) {
+    const source = sourceIds.get(row.sourceId);
+    if (source === undefined || source.record.identity.sourceRecordId !== row.sourceRecordId) {
+      fail('invalid_output', 'DomScan adapted row has no matching canonical source.');
+    }
+    for (const id of Object.values(row.observationIds)) {
+      const observation = observationIds.get(id);
+      if (observation === undefined
+          || observation.sourceId !== row.sourceId
+          || referencedObservations.has(id)) {
+        fail('invalid_output', 'DomScan adapted row has inconsistent observation references.');
+      }
+      referencedObservations.add(id);
+    }
+  }
+  if (referencedObservations.size !== observations.length) {
+    fail('invalid_output', 'DomScan adapted parts have unreferenced observations.');
   }
   return {
-    collection: structuredClone(batch.collection),
+    collection: structuredClone(collection),
     semantics: structuredClone(input.semantics),
     rows: structuredClone(input.rows),
   };
