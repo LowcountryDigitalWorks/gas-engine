@@ -150,6 +150,67 @@ test('schema/provider/configuration mismatch and strict unknown source fields fa
   );
 });
 
+
+test('Bing performance zeros, sitewide index totals and empty feeds cannot impersonate URL Inspection', () => {
+  // Source-family guard: a Bing 0-click/0-impression performance window and a
+  // sitewide in_index=10 crawl report do not say any particular URL is absent.
+  // Bing GET_FEEDS returning [] likewise does not prove a sitemap is missing.
+  const source = fixture('bing');
+
+  const unrelatedReportFields: Array<(artifact: MutableJson) => void> = [
+    (artifact) => { artifact.in_index = 10; },
+    (artifact) => { artifact.feeds = []; },
+    (artifact) => { artifact.searchPerformance = [{ date: '2026-11-03', clicks: 0, impressions: 0 }]; },
+    (artifact) => { artifact.rows[0].in_index = 10; },
+    (artifact) => { artifact.rows[0].clicks = 0; },
+    (artifact) => { artifact.rows[0].impressions = 0; },
+    (artifact) => { artifact.rows[0].feeds = []; },
+    (artifact) => {
+      artifact.rows = [{ date: '2026-11-03', clicks: 0, impressions: 0 }];
+    },
+  ];
+  for (const inject of unrelatedReportFields) {
+    const value = structuredClone(source);
+    inject(value);
+    assert.throws(
+      () => adapt(value),
+      expectCode('invalid_source'),
+      'Cross-report Bing evidence must be rejected, not projected to per-URL indexing.',
+    );
+  }
+
+  const explicitlyUnknown = fixture('bing');
+  explicitlyUnknown.rows = [{
+    url: 'https://example.test/uninspected',
+    indexStatus: 'unknown',
+    crawlState: 'unknown',
+    indexingPermission: 'unknown',
+  }];
+  const unknown = adapt(explicitlyUnknown).rows[0];
+  assert.ok(unknown?.kind === 'search_engine');
+  assert.equal(unknown.searchPresence, 'unknown');
+  assert.equal(unknown.crawlState, 'unknown');
+  assert.equal(unknown.indexingPermission, 'unknown');
+
+  // Omission of an exact URL never creates an absent row or observation.
+  const missing = fixture('bing');
+  missing.rows = missing.rows.filter((row: MutableJson) => row.url !== 'https://example.test/clean');
+  const adapted = adapt(missing);
+  assert.equal(adapted.rows.some((row) => row.url === 'https://example.test/clean'), false);
+  const originalUrl = adapt(source).rows.find((row) => row.url === 'https://example.test/clean');
+  assert.ok(originalUrl?.kind === 'search_engine');
+  const withheldObservationIds = new Set(Object.values(originalUrl.observationIds));
+  assert.equal(
+    adapted.batches.flatMap((part) => part.observations)
+      .some((observation) => withheldObservationIds.has(observation.record.id)),
+    false,
+  );
+
+  const explicitNotIndexed = adapt(source).rows.find((row) => row.url === 'https://example.test/diverge');
+  assert.ok(explicitNotIndexed?.kind === 'search_engine');
+  assert.equal(explicitNotIndexed.searchPresence, 'absent');
+});
+
 test('duplicate URL, chronology, row bounds and byte bounds fail closed without truncation', () => {
   const duplicate = fixture('bing');
   duplicate.rows.push(structuredClone(duplicate.rows[0]));
