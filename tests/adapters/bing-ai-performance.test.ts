@@ -334,3 +334,57 @@ test('Release 0.14 production sources contain no provider client, network, runti
   }
 });
 
+
+
+test('Bing Webmaster daily search totals cannot become AI citation metrics', () => {
+  // Bing Webmaster GET_SEARCH_PERFORMANCE(daily_totals) is owned-site search
+  // visibility, NOT sampled Bing AI citation/grounding evidence. A real 0/0
+  // search day therefore cannot become a zero-citation or AI-absence claim.
+  const searchPerformanceReport = {
+    report: 'daily_totals',
+    site_url: 'https://example.test/',
+    rows: [{
+      date: '2026-09-29T00:00:00Z',
+      clicks: 0,
+      impressions: 0,
+      query: null,
+      avg_click_position: null,
+      avg_impression_position: null,
+    }],
+  };
+  assert.throws(
+    () => adaptBingAiPerformanceEvidence(bytes(searchPerformanceReport), config(fixture())),
+    expectCode('unsupported_schema'),
+  );
+
+  const falseAiTimeSeries = fixture();
+  falseAiTimeSeries.timeSeries = [{
+    date: '2026-09-29',
+    clicks: 0,
+    impressions: 0,
+    query: null,
+  }];
+  assert.throws(() => adapt(falseAiTimeSeries), expectCode('invalid_source'));
+
+  const falseAiPages = fixture();
+  falseAiPages.pages = [{
+    url: 'https://example.test/',
+    clicks: 0,
+    impressions: 0,
+  }];
+  assert.throws(() => adapt(falseAiPages), expectCode('invalid_source'));
+
+  const falselyMergedSummary = fixture();
+  falselyMergedSummary.summary = {
+    totalCitations: 0,
+    clicks: 0,
+    impressions: 0,
+  };
+  assert.throws(() => adapt(falselyMergedSummary), expectCode('invalid_source'));
+
+  // Preserve the existing legitimate Bing AI sampled-export boundary.
+  const validAi = adapt(fixture());
+  assert.equal(validAi.semantics.sampledSummary, true);
+  assert.equal(validAi.providerId, 'bing-webmaster-ai-performance');
+  assert.ok(validAi.rows.some((row) => row.kind === 'grounding_query'));
+});
