@@ -907,7 +907,15 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
     if (source === undefined || source.record.identity.sourceRecordId !== row.sourceRecordId) {
       fail('invalid_output', 'DomScan adapted row has no matching canonical source.');
     }
+    if (row.observationIds === null
+        || typeof row.observationIds !== 'object'
+        || Array.isArray(row.observationIds)) {
+      fail('invalid_output', 'DomScan adapted row has invalid observation references.');
+    }
     for (const id of Object.values(row.observationIds)) {
+      if (typeof id !== 'string') {
+        fail('invalid_output', 'DomScan adapted row has invalid observation reference ID.');
+      }
       const observation = observationIds.get(id);
       if (observation === undefined
           || observation.sourceId !== row.sourceId
