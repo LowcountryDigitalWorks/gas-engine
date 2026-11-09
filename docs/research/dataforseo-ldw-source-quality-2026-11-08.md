@@ -24,7 +24,7 @@ The research used authenticated DataForSEO v3, `noAiMode=true` to preserve the f
 | `serp/google/organic/live/advanced` | 1 same-cohort Beaufort web-design query; local pack (3), AI overview and organic are distinct result types | 0.002000 |
 | `backlinks/summary/live` | LDW domain, live, include subdomains, exclude internal; four backlink counts / three referring main domains | 0.024036 |
 | `backlinks/backlinks/live` | LDW domain, same target, `as_is`, limit 10; three distinct referring pages observed, all `nofollow` | 0.024108 |
-| **Measured charges** | **Six successful billed tasks; no auto-recharge** | **0.089944** |
+| **Measured charges** | **Nine billed requests across six endpoint cohorts; no auto-recharge** | **0.089944** |
 
 The connected provider reported a **$0.10 USD per UTC day spending limit**. That cap was preserved, not increased. A malformed attempted Google Labs `bulk_search_volume/live` path returned `40402 Invalid Path` at $0; that path was not in the Google Labs documentation index (only an Amazon bulk-search-volume family was exposed). An unfiltered free Google SERP locations request exceeded a 64 MiB response transport ceiling. Use a specific provider-supported `location_name` instead: the Beaufort location resolved successfully in live SERP requests. These error states cost $0 but **are not SEO findings**.
 
