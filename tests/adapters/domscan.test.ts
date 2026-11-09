@@ -276,3 +276,57 @@ test('provider connection mismatch is incompatible', () => {
     expectCode('incompatible_collections'),
   );
 });
+
+
+test('valid long DomScan trusted identifiers split the same 12 signals into bounded parts', () => {
+  const accepted = adaptDomscanSidecarEvidence(bytes(agentFixture), agentConfig());
+  assert.equal(accepted.batches.length, 1, 'existing short-identity fixture must remain one part');
+  assert.doesNotThrow(() => validateDomscanWindow(accepted));
+
+  // Both strings are valid opaque G.A.S. identifiers (below 128 characters).
+  // Their repeated canonical provenance previously pushed a valid 12-signal
+  // WQT sidecar over the one-part 65,536-byte cap and caused row_too_large.
+  const longConfig: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const multipart = adaptDomscanSidecarEvidence(bytes(agentFixture), longConfig);
+  assert.ok(multipart.batches.length > 1, 'long but valid identifiers must use bounded parts');
+  assert.ok(multipart.batches.length <= 64);
+  assert.equal(multipart.rows.length, 12);
+  assert.equal(multipart.batches.flatMap((part) => part.sources).length, 12);
+  assert.equal(multipart.batches.flatMap((part) => part.observations).length, 24);
+
+  for (const [index, batch] of multipart.batches.entries()) {
+    assert.equal(batch.part, index + 1);
+    assert.equal(batch.parts, multipart.batches.length);
+    assert.equal(batch.collection.id, multipart.collectionId);
+    assert.equal(batch.idempotencyKey, multipart.idempotencyKey);
+    assert.ok(batch.sources.length <= 16);
+    assert.ok(batch.observations.length <= 32);
+    assert.doesNotThrow(() => parseCollectionBatch(batch));
+  }
+  assert.doesNotThrow(() => validateDomscanWindow(multipart));
+  const repeated = adaptDomscanSidecarEvidence(bytes(agentFixture, true), longConfig);
+  assert.equal(repeated.collectionId, multipart.collectionId);
+  assert.equal(repeated.idempotencyKey, multipart.idempotencyKey);
+  assert.deepEqual(repeated.batches, multipart.batches);
+
+  // No part may be reordered, silently lose an observation or claim a
+  // conflicting part index without fail-closed downstream validation.
+  const reversed = { ...multipart, batches: [...multipart.batches].reverse() };
+  assert.throws(() => validateDomscanWindow(reversed), expectCode('invalid_output'));
+  const wrongPart = {
+    ...multipart,
+    batches: multipart.batches.map((part, index) =>
+      index === 0 ? { ...part, part: 2 } : part),
+  };
+  assert.throws(() => validateDomscanWindow(wrongPart), expectCode('invalid_output'));
+  const droppedObservation = {
+    ...multipart,
+    batches: multipart.batches.map((part, index) =>
+      index === 0 ? { ...part, observations: part.observations.slice(1) } : part),
+  };
+  assert.throws(() => validateDomscanWindow(droppedObservation), expectCode('invalid_output'));
+});
