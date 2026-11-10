@@ -554,3 +554,53 @@ test('DomScan adapted classification and ordered endpoint codes must match canon
   };
   assert.throws(() => validateDomscanWindow(reordered), expectCode('invalid_output'));
 });
+
+
+test('paired origin, site ID, method identity and unverified outcome cannot launder DomScan metadata', () => {
+  const config: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const valid = adaptDomscanSidecarEvidence(bytes(agentFixture), config);
+  const accepted = validateDomscanWindow(valid);
+  assert.ok(valid.batches.length > 1);
+  assert.equal(valid.semantics.outcome, 'partial');
+  assert.equal(accepted.semantics.outcome, undefined,
+    'source-native outcome is not corroborated by canonical observations');
+  assert.equal(Object.hasOwn(accepted.semantics, 'outcome'), false);
+
+  const alternateOutcome = structuredClone(valid);
+  (alternateOutcome.semantics as unknown as MutableJson).outcome = 'complete';
+  const alternateValidated = validateDomscanWindow(alternateOutcome);
+  assert.equal(Object.hasOwn(alternateValidated.semantics, 'outcome'), false,
+    'even a valid alternative source-native outcome must not reach trusted consumers');
+  assert.deepEqual(alternateValidated, accepted);
+
+  const pairedOrigin = structuredClone(valid);
+  (pairedOrigin.semantics as unknown as MutableJson).trustedOrigin = 'https://other.example.test';
+  (pairedOrigin.semantics as unknown as MutableJson).artifactOrigin = 'https://other.example.test';
+  assert.throws(() => validateDomscanWindow(pairedOrigin), expectCode('invalid_output'));
+
+  const otherSite = structuredClone(valid);
+  (otherSite.semantics as unknown as MutableJson).siteId = 'synthetic-other-site';
+  assert.throws(() => validateDomscanWindow(otherSite), expectCode('invalid_output'));
+
+  for (const [field, bad] of [
+    ['version', '2.0.0'],
+    ['configurationId', 'synthetic-wrong-configuration'],
+    ['configurationRevision', 2],
+  ] as const) {
+    const altered = structuredClone(valid);
+    for (const part of altered.batches) {
+      (part.collection.method as unknown as MutableJson)[field] = bad;
+    }
+    assert.throws(() => validateDomscanWindow(altered), expectCode('invalid_output'),
+      `changed method ${field} must fail closed`);
+  }
+
+  const wrongSubject = structuredClone(valid);
+  const firstSubject = wrongSubject.batches[0]!.observations[0]!.record.cohort.context.subject;
+  (firstSubject as unknown as MutableJson).reference = 'synthetic-wrong-subject';
+  assert.throws(() => validateDomscanWindow(wrongSubject), expectCode('invalid_output'));
+});
