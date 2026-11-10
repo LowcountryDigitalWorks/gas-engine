@@ -537,9 +537,11 @@ test('DomScan adapted classification and ordered endpoint codes must match canon
   assert.notEqual(flipped, original);
   assert.throws(() => validateDomscanWindow(wrongClassification), expectCode('invalid_output'));
 
-  const relabeledUnknown = structuredClone(agent);
-  (relabeledUnknown.rows[0] as unknown as MutableJson).classification = 'unknown';
-  assert.throws(() => validateDomscanWindow(relabeledUnknown), expectCode('invalid_output'));
+  const relabeledPresent = structuredClone(agent);
+  const presentIndex = relabeledPresent.rows.findIndex((row) => row.classification === 'present');
+  assert.ok(presentIndex >= 0, 'fixture must include a present agent signal');
+  (relabeledPresent.rows[presentIndex] as unknown as MutableJson).classification = 'absent';
+  assert.throws(() => validateDomscanWindow(relabeledPresent), expectCode('invalid_output'));
 
   const missingClassificationMetric = structuredClone(dns);
   const ids = missingClassificationMetric.rows[0]!.observationIds as unknown as MutableJson;
