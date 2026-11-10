@@ -132,6 +132,21 @@ export interface DomscanSemantics {
   readonly availability: Contract<'sourceRecord'>['availability'];
 }
 
+
+// This local result is consumed by downstream analysis, not trusted merely
+// because its JSON is serializable. Never promote a source-native hint into an
+// established method or allow its identity/coverage metadata to drift.
+const windowSemanticsSchema = z.object({
+  endpoint: z.enum(['dns_security', 'agent_readiness']),
+  trustedOrigin: z.string().min(1).max(2_048),
+  artifactOrigin: z.string().min(1).max(2_048),
+  siteId: domscanSiteIdSchema,
+  inputObservedAt: timestamp,
+  outcome: agentOutcomeSchema.optional(),
+  providerMethodEstablished: z.literal(false),
+  availability: availabilitySchema,
+}).strict();
+
 export interface DomscanAdaptationResult {
   readonly providerId: typeof DOMSCAN_PROVIDER_ID;
   readonly endpoint: DomscanEndpoint;
@@ -887,20 +902,70 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   } catch {
     fail('invalid_output', 'DomScan adapted window contains unsafe row or semantic data.');
   }
-  if (input.providerId !== DOMSCAN_PROVIDER_ID
-      || !Array.isArray(input.batches)
-      || input.batches.length < 1
-      || input.batches.length > INGESTION_PART_BOUNDS.parts) {
+  if (input.providerId !== DOMSCAN_PROVIDER_ID) {
     fail('invalid_output', 'DomScan adapted window has invalid bounded metadata.');
+  }
+
+  // Inspect batch-array descriptors BEFORE traversal. Array.map would invoke
+  // an attacker-controlled indexed getter/proxy trap ahead of part validation.
+  // Each part is individually bounded; hashing the whole batch array would
+  // reject legitimate multi-part evidence above the single-part byte ceiling.
+  let batchSnapshot: readonly CollectionBatch[];
+  try {
+    const batchInput = input.batches;
+    if (!Array.isArray(batchInput)
+        || types.isProxy(batchInput)
+        || Object.getPrototypeOf(batchInput) !== Array.prototype
+        || batchInput.length < 1
+        || batchInput.length > INGESTION_PART_BOUNDS.parts
+        || Reflect.ownKeys(batchInput).length !== batchInput.length + 1) {
+      throw new TypeError('invalid batch container');
+    }
+    const snapshot: CollectionBatch[] = [];
+    for (let index = 0; index < batchInput.length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(batchInput, String(index));
+      if (descriptor === undefined || !descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) {
+        throw new TypeError('invalid batch element');
+      }
+      canonicalJson(descriptor.value);
+      snapshot.push(structuredClone(descriptor.value) as CollectionBatch);
+    }
+    batchSnapshot = snapshot;
+  } catch {
+    fail('invalid_output', 'DomScan adapted batch container must contain bounded plain data.');
   }
 
   let parts: CollectionBatch[];
   try {
-    parts = input.batches.map((part) => parseCollectionBatch(part));
+    parts = batchSnapshot.map((part) => parseCollectionBatch(part));
   } catch {
     fail('invalid_output', 'DomScan adapted batch is not valid canonical evidence.');
   }
   const collection = parts[0]!.collection;
+  const parsedSemantics = windowSemanticsSchema.safeParse(semanticsSnapshot);
+  if (!parsedSemantics.success) {
+    fail('invalid_output', 'DomScan adapted semantics have invalid shape or method authority.');
+  }
+  const semantics = parsedSemantics.data;
+  try {
+    validateHttpsOrigin(semantics.trustedOrigin, 'DomScan trusted origin');
+    validateHttpsOrigin(semantics.artifactOrigin, 'DomScan artifact origin');
+  } catch {
+    fail('invalid_output', 'DomScan adapted semantics contain invalid origin identity.');
+  }
+  if (input.endpoint !== semantics.endpoint
+      || semantics.artifactOrigin !== semantics.trustedOrigin
+      || collection.sourceTime.start !== semantics.inputObservedAt
+      || collection.sourceTime.end !== semantics.inputObservedAt
+      || collection.startedAt !== semantics.inputObservedAt
+      || collection.endedAt !== semantics.inputObservedAt
+      || collection.method.id !== (semantics.endpoint === 'dns_security'
+        ? 'ldw-domscan-dns-security' : 'ldw-domscan-agent-readiness')
+      || (semantics.endpoint === 'dns_security' && semantics.outcome !== undefined)
+      || (semantics.endpoint === 'agent_readiness' && semantics.outcome === undefined)) {
+    fail('invalid_output', 'DomScan adapted semantics disagree with canonical collection.');
+  }
+  const semanticAvailability = canonicalJson(semantics.availability);
   const canonicalCollection = canonicalJson(collection);
   const sources = parts.flatMap((part) => part.sources);
   const observations = parts.flatMap((part) => part.observations);
@@ -919,6 +984,9 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   // rows when the collection spans several bounded parts.
   const sourceIds = new Map(sources.map((source) => [source.id, source]));
   const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
+  if (sources.some((source) => canonicalJson(source.record.availability) !== semanticAvailability)) {
+    fail('invalid_output', 'DomScan adapted availability differs from canonical source records.');
+  }
   if (collection.completeness.state !== 'complete'
       || collection.completeness.expectedCount !== rowsSnapshot.length
       || collection.completeness.receivedCount !== rowsSnapshot.length
@@ -930,7 +998,13 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   const referencedObservations = new Set<string>();
   const rowIdentities = new Set<string>();
   for (const row of rowsSnapshot) {
-    if (row.rowIdentity !== row.sourceRecordId
+    const expectedIdentity = derivedIdentifier('domscan.row', {
+      endpoint: semantics.endpoint,
+      code: row.code,
+    });
+    if (row.endpoint !== semantics.endpoint
+        || row.rowIdentity !== expectedIdentity
+        || row.rowIdentity !== row.sourceRecordId
         || rowIdentities.has(row.rowIdentity)) {
       fail('invalid_output', 'DomScan adapted row identity is missing or duplicated.');
     }
