@@ -1,3 +1,4 @@
+import { types } from 'node:util';
 import { z } from 'zod';
 import {
   availability as availabilitySchema,
@@ -861,10 +862,32 @@ export interface ValidatedDomscanWindow {
 
 /** Revalidate an application-local DomScan adaptation before downstream analysis. */
 export function validateDomscanWindow(input: DomscanAdaptationResult): ValidatedDomscanWindow {
-  if (input === null
-      || typeof input !== 'object'
-      || input.providerId !== DOMSCAN_PROVIDER_ID
-      || !Array.isArray(input.rows)
+  // Snapshot the application-local, untrusted view exactly once. In particular,
+  // getters/Proxies must not return different row identities between checking
+  // uniqueness, recording it, and returning the validated result.
+  if (input === null || typeof input !== 'object' || types.isProxy(input)) {
+    fail('invalid_output', 'DomScan adapted window must be a plain data record.');
+  }
+  for (const key of ['providerId', 'endpoint', 'inputSha256', 'collectionId',
+    'idempotencyKey', 'semantics', 'rows', 'batches']) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+    if (descriptor === undefined || !Object.hasOwn(descriptor, 'value')) {
+      fail('invalid_output', 'DomScan adapted window requires own data fields.');
+    }
+  }
+  let rowsSnapshot: readonly DomscanAdaptedRow[];
+  let semanticsSnapshot: DomscanSemantics;
+  try {
+    // canonicalJson enforces the repository's no-Proxy/no-accessor/no-symbol
+    // data-only contract recursively. The bounded DomScan row set is tiny.
+    canonicalJson(input.rows);
+    canonicalJson(input.semantics);
+    rowsSnapshot = structuredClone(input.rows);
+    semanticsSnapshot = structuredClone(input.semantics);
+  } catch {
+    fail('invalid_output', 'DomScan adapted window contains unsafe row or semantic data.');
+  }
+  if (input.providerId !== DOMSCAN_PROVIDER_ID
       || !Array.isArray(input.batches)
       || input.batches.length < 1
       || input.batches.length > INGESTION_PART_BOUNDS.parts) {
@@ -897,16 +920,16 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   const sourceIds = new Map(sources.map((source) => [source.id, source]));
   const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
   if (collection.completeness.state !== 'complete'
-      || collection.completeness.expectedCount !== input.rows.length
-      || collection.completeness.receivedCount !== input.rows.length
-      || sources.length !== input.rows.length
+      || collection.completeness.expectedCount !== rowsSnapshot.length
+      || collection.completeness.receivedCount !== rowsSnapshot.length
+      || sources.length !== rowsSnapshot.length
       || sourceIds.size !== sources.length
       || observationIds.size !== observations.length) {
     fail('invalid_output', 'DomScan adapted parts have missing or duplicate canonical evidence.');
   }
   const referencedObservations = new Set<string>();
   const rowIdentities = new Set<string>();
-  for (const row of input.rows) {
+  for (const row of rowsSnapshot) {
     if (row.rowIdentity !== row.sourceRecordId
         || rowIdentities.has(row.rowIdentity)) {
       fail('invalid_output', 'DomScan adapted row identity is missing or duplicated.');
@@ -940,8 +963,8 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   }
   return {
     collection: structuredClone(collection),
-    semantics: structuredClone(input.semantics),
-    rows: structuredClone(input.rows),
+    semantics: semanticsSnapshot,
+    rows: rowsSnapshot,
   };
 }
 
