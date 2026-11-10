@@ -867,14 +867,41 @@ export function adaptDomscanSidecarEvidence(
     rows: prepared.map((item) => item.row),
     batches,
   };
-  adaptationTrust.set(result, structuredClone(config));
+  adaptationTrust.set(result, {
+    config: structuredClone(config),
+    content: contentFingerprint(result),
+  });
   return result;
 }
 
-// Only the adapter can establish an implicit in-process trust anchor.
-// Deserialized/cloned adaptation objects require an explicit, independently
-// authorized DomscanAdapterConfig at the validation boundary.
-const adaptationTrust = new WeakMap<DomscanAdaptationResult, ParsedConfig>();
+// Canonical batches may total more than the per-part 65,536 byte ceiling,
+// so fingerprint every bounded part independently. This snapshot is private,
+// immutable to callers and includes ALL semantic rows, values and provenance.
+interface DomscanContentFingerprint {
+  readonly metadata: string;
+  readonly semantics: string;
+  readonly rows: string;
+  readonly parts: readonly string[];
+}
+interface BoundDomscanTrust {
+  readonly config: ParsedConfig;
+  readonly content: DomscanContentFingerprint;
+}
+function contentFingerprint(input: DomscanAdaptationResult): DomscanContentFingerprint {
+  return {
+    metadata: hashCanonicalJson({
+      providerId: input.providerId,
+      endpoint: input.endpoint,
+      inputSha256: input.inputSha256,
+      collectionId: input.collectionId,
+      idempotencyKey: input.idempotencyKey,
+    }),
+    semantics: hashCanonicalJson(input.semantics),
+    rows: hashCanonicalJson(input.rows),
+    parts: input.batches.map((part) => hashCanonicalJson(part)),
+  };
+}
+const adaptationTrust = new WeakMap<DomscanAdaptationResult, BoundDomscanTrust>();
 
 export interface ValidatedDomscanWindow {
   readonly collection: Contract<'collection'>;
@@ -884,13 +911,15 @@ export interface ValidatedDomscanWindow {
 
 /**
  * Revalidate DomScan evidence using an independently authorized trust anchor.
- * An unmodified adaptation returned by this module carries private in-process
- * binding. A cloned/deserialized result requires trustedConfig explicitly;
- * self-consistent JSON alone cannot authorize a site or provider connection.
+ * Direct adapter results carry a private immutable trust+content binding.
+ * Detached/deserialized evidence requires BOTH separately trusted configuration
+ * AND the original trusted source bytes, so the expected complete content can
+ * be reconstructed. Configuration alone cannot authenticate mutable values.
  */
 export function validateDomscanWindow(
   input: DomscanAdaptationResult,
   trustedConfig?: DomscanAdapterConfig,
+  trustedSourceBytes?: Uint8Array,
 ): ValidatedDomscanWindow {
   // Snapshot the application-local, untrusted view exactly once. In particular,
   // getters/Proxies must not return different row identities between checking
@@ -905,16 +934,30 @@ export function validateDomscanWindow(
       fail('invalid_output', 'DomScan adapted window requires own data fields.');
     }
   }
-  let trusted: ParsedConfig;
-  if (trustedConfig !== undefined) {
-    trusted = parseConfig(trustedConfig);
-  } else {
-    const bound = adaptationTrust.get(input);
-    if (bound === undefined) {
-      fail('invalid_output', 'Detached DomScan evidence requires independently trusted configuration.');
+  let boundTrust: BoundDomscanTrust;
+  const bound = adaptationTrust.get(input);
+  if (bound !== undefined) {
+    boundTrust = bound;
+    if (trustedConfig !== undefined) {
+      const separatelyTrusted = parseConfig(trustedConfig);
+      if (canonicalJson(separatelyTrusted) !== canonicalJson(bound.config)) {
+        fail('invalid_output', 'Supplied DomScan trust disagrees with the original adapter configuration.');
+      }
     }
-    trusted = bound;
+  } else {
+    if (trustedConfig === undefined || trustedSourceBytes === undefined) {
+      fail('invalid_output', 'Detached DomScan evidence requires trusted config AND original source bytes.');
+    }
+    try {
+      const reference = adaptDomscanSidecarEvidence(trustedSourceBytes, trustedConfig);
+      const expected = adaptationTrust.get(reference);
+      if (expected === undefined) throw new TypeError('missing source binding');
+      boundTrust = expected;
+    } catch {
+      fail('invalid_output', 'Detached DomScan content could not be reconstructed from trusted source.');
+    }
   }
+  const trusted = boundTrust.config;
   let rowsSnapshot: readonly DomscanAdaptedRow[];
   let semanticsSnapshot: DomscanSemantics;
   try {
@@ -958,6 +1001,30 @@ export function validateDomscanWindow(
     batchSnapshot = snapshot;
   } catch {
     fail('invalid_output', 'DomScan adapted batch container must contain bounded plain data.');
+  }
+
+  // Source-record digest and collection ID alone are not a content integrity
+  // check. Reject a coordinated row + observation rewrite even when the
+  // attacker keeps the old digest/IDs and all parts remain syntactically valid.
+  try {
+    const expected = boundTrust.content;
+    const actualMetadata = hashCanonicalJson({
+      providerId: input.providerId,
+      endpoint: input.endpoint,
+      inputSha256: input.inputSha256,
+      collectionId: input.collectionId,
+      idempotencyKey: input.idempotencyKey,
+    });
+    if (actualMetadata !== expected.metadata
+        || hashCanonicalJson(rowsSnapshot) !== expected.rows
+        || hashCanonicalJson(semanticsSnapshot) !== expected.semantics
+        || batchSnapshot.length !== expected.parts.length
+        || batchSnapshot.some((part, index) => hashCanonicalJson(part) !== expected.parts[index])) {
+      fail('invalid_output', 'DomScan evidence differs from the independently bound content snapshot.');
+    }
+  } catch (error) {
+    if (error instanceof DomscanAdapterError) throw error;
+    fail('invalid_output', 'DomScan evidence failed bounded content integrity validation.');
   }
 
   let parts: CollectionBatch[];
