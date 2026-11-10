@@ -522,3 +522,31 @@ test('DomScan batch array accessors and Proxies are rejected without executing u
     expectCode('invalid_output'),
   );
 });
+
+
+test('DomScan adapted classification and ordered endpoint codes must match canonical evidence', () => {
+  const dns = adaptDomscanSidecarEvidence(bytes(dnsFixture), dnsConfig());
+  const agent = adaptDomscanSidecarEvidence(bytes(agentFixture), agentConfig());
+  assert.doesNotThrow(() => validateDomscanWindow(dns));
+  assert.doesNotThrow(() => validateDomscanWindow(agent));
+
+  const wrongClassification = structuredClone(dns);
+  const original = wrongClassification.rows[0]!.classification;
+  const flipped = original === 'absent' ? 'present' : 'absent';
+  (wrongClassification.rows[0] as unknown as MutableJson).classification = flipped;
+  assert.notEqual(flipped, original);
+  assert.throws(() => validateDomscanWindow(wrongClassification), expectCode('invalid_output'));
+
+  const relabeledUnknown = structuredClone(agent);
+  (relabeledUnknown.rows[0] as unknown as MutableJson).classification = 'unknown';
+  assert.throws(() => validateDomscanWindow(relabeledUnknown), expectCode('invalid_output'));
+
+  const missingClassificationMetric = structuredClone(dns);
+  const ids = missingClassificationMetric.rows[0]!.observationIds as unknown as MutableJson;
+  delete ids['domscan-dns-check-classification'];
+  assert.throws(() => validateDomscanWindow(missingClassificationMetric), expectCode('invalid_output'));
+
+  const reordered = structuredClone(agent);
+  [reordered.rows[0], reordered.rows[1]] = [reordered.rows[1]!, reordered.rows[0]!];
+  assert.throws(() => validateDomscanWindow(reordered), expectCode('invalid_output'));
+});
