@@ -329,4 +329,44 @@ test('valid long DomScan trusted identifiers split the same 12 signals into boun
       index === 0 ? { ...part, observations: part.observations.slice(1) } : part),
   };
   assert.throws(() => validateDomscanWindow(droppedObservation), expectCode('invalid_output'));
+
+  // A coordinated deletion must not pass as "complete" simply because the
+  // remaining local rows and canonical sources still match each other.
+  const removedRow = multipart.rows[0]!;
+  const removedTogether = {
+    ...multipart,
+    rows: multipart.rows.slice(1),
+    batches: multipart.batches.map((part) => ({
+      ...part,
+      sources: part.sources.filter((source) => source.id !== removedRow.sourceId),
+      observations: part.observations.filter((observation) =>
+        observation.sourceId !== removedRow.sourceId),
+    })),
+  };
+  for (const part of removedTogether.batches) {
+    assert.doesNotThrow(() => parseCollectionBatch(part), 'partial deletion still has valid part shape');
+  }
+  assert.throws(() => validateDomscanWindow(removedTogether), expectCode('invalid_output'));
+
+  const duplicateRowIdentity = {
+    ...multipart,
+    rows: multipart.rows.map((row, index) =>
+      index === 1 ? { ...row, rowIdentity: multipart.rows[0]!.rowIdentity } : row),
+  };
+  assert.throws(() => validateDomscanWindow(duplicateRowIdentity), expectCode('invalid_output'));
+
+  const [metricKey, validObservationId] = Object.entries(multipart.rows[0]!.observationIds)[0]!;
+  const relabeledMetricKey = {
+    ...multipart,
+    rows: multipart.rows.map((row, index) => index === 0
+      ? {
+        ...row,
+        observationIds: Object.fromEntries([
+          ...Object.entries(row.observationIds).filter(([key]) => key !== metricKey),
+          ['synthetic-wrong-metric-key', validObservationId],
+        ]),
+      }
+      : row),
+  };
+  assert.throws(() => validateDomscanWindow(relabeledMetricKey), expectCode('invalid_output'));
 });
