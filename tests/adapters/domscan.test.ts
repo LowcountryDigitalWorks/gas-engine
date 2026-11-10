@@ -370,3 +370,66 @@ test('valid long DomScan trusted identifiers split the same 12 signals into boun
   };
   assert.throws(() => validateDomscanWindow(relabeledMetricKey), expectCode('invalid_output'));
 });
+
+
+test('DomScan validation rejects accessor and Proxy inputs before reading mutable row identities', () => {
+  const config: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const valid = adaptDomscanSidecarEvidence(bytes(agentFixture), config);
+  assert.ok(valid.batches.length > 1);
+  assert.doesNotThrow(() => validateDomscanWindow(valid));
+
+  const accessorRow = structuredClone(valid);
+  let rowReads = 0;
+  const actualIdentity = accessorRow.rows[0]!.rowIdentity;
+  Object.defineProperty(accessorRow.rows[0]!, 'rowIdentity', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      rowReads += 1;
+      return rowReads <= 2 ? actualIdentity : 'synthetic-inconsistent-row';
+    },
+  });
+  assert.throws(() => validateDomscanWindow(accessorRow), expectCode('invalid_output'));
+  assert.equal(rowReads, 0, 'row getter must not be invoked by validation');
+
+  const accessorOuter = { ...valid };
+  let rowsReads = 0;
+  Object.defineProperty(accessorOuter, 'rows', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      rowsReads += 1;
+      return valid.rows;
+    },
+  });
+  assert.throws(() => validateDomscanWindow(accessorOuter), expectCode('invalid_output'));
+  assert.equal(rowsReads, 0, 'top-level rows getter must not be invoked');
+
+  const accessorMetric = structuredClone(valid);
+  const metricMap = accessorMetric.rows[0]!.observationIds;
+  const [metricName, metricId] = Object.entries(metricMap)[0]!;
+  let metricReads = 0;
+  Object.defineProperty(metricMap, metricName, {
+    enumerable: true,
+    configurable: true,
+    get() {
+      metricReads += 1;
+      return metricId;
+    },
+  });
+  assert.throws(() => validateDomscanWindow(accessorMetric), expectCode('invalid_output'));
+  assert.equal(metricReads, 0, 'observation map getter must not be invoked');
+
+  assert.throws(
+    () => validateDomscanWindow({ ...valid, rows: new Proxy(valid.rows, {}) }),
+    expectCode('invalid_output'),
+  );
+  assert.throws(
+    () => validateDomscanWindow(new Proxy(valid, {})),
+    expectCode('invalid_output'),
+  );
+});
