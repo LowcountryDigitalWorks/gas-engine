@@ -950,7 +950,7 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   // The sidecar outcome is an unverified source-native hint. Unlike a
   // classification observation it is not reconstitutable from canonical
   // persisted evidence, so it must never be returned as validated semantics.
-  const safeSemantics: DomscanSemantics = structuredClone(semantics);
+  const safeSemantics = structuredClone(semantics) as DomscanSemantics;
   delete (safeSemantics as { outcome?: string }).outcome;
 
   const expectedMethod: Contract<'collection'>['method'] = {
