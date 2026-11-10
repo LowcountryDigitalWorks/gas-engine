@@ -546,7 +546,9 @@ test('DomScan adapted classification and ordered endpoint codes must match canon
   delete ids['domscan-dns-check-classification'];
   assert.throws(() => validateDomscanWindow(missingClassificationMetric), expectCode('invalid_output'));
 
-  const reordered = structuredClone(agent);
-  [reordered.rows[0], reordered.rows[1]] = [reordered.rows[1]!, reordered.rows[0]!];
+  const reordered = {
+    ...agent,
+    rows: [agent.rows[1]!, agent.rows[0]!, ...agent.rows.slice(2)],
+  };
   assert.throws(() => validateDomscanWindow(reordered), expectCode('invalid_output'));
 });
