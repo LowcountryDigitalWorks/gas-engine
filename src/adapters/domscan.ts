@@ -896,13 +896,22 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   // rows when the collection spans several bounded parts.
   const sourceIds = new Map(sources.map((source) => [source.id, source]));
   const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
-  if (sources.length !== input.rows.length
+  if (collection.completeness.state !== 'complete'
+      || collection.completeness.expectedCount !== input.rows.length
+      || collection.completeness.receivedCount !== input.rows.length
+      || sources.length !== input.rows.length
       || sourceIds.size !== sources.length
       || observationIds.size !== observations.length) {
     fail('invalid_output', 'DomScan adapted parts have missing or duplicate canonical evidence.');
   }
   const referencedObservations = new Set<string>();
+  const rowIdentities = new Set<string>();
   for (const row of input.rows) {
+    if (row.rowIdentity !== row.sourceRecordId
+        || rowIdentities.has(row.rowIdentity)) {
+      fail('invalid_output', 'DomScan adapted row identity is missing or duplicated.');
+    }
+    rowIdentities.add(row.rowIdentity);
     const source = sourceIds.get(row.sourceId);
     if (source === undefined || source.record.identity.sourceRecordId !== row.sourceRecordId) {
       fail('invalid_output', 'DomScan adapted row has no matching canonical source.');
@@ -912,13 +921,14 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
         || Array.isArray(row.observationIds)) {
       fail('invalid_output', 'DomScan adapted row has invalid observation references.');
     }
-    for (const id of Object.values(row.observationIds)) {
+    for (const [metricId, id] of Object.entries(row.observationIds)) {
       if (typeof id !== 'string') {
         fail('invalid_output', 'DomScan adapted row has invalid observation reference ID.');
       }
       const observation = observationIds.get(id);
       if (observation === undefined
           || observation.sourceId !== row.sourceId
+          || observation.record.cohort.context.metric.id !== metricId
           || referencedObservations.has(id)) {
         fail('invalid_output', 'DomScan adapted row has inconsistent observation references.');
       }
