@@ -947,6 +947,30 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
     fail('invalid_output', 'DomScan adapted semantics have invalid shape or method authority.');
   }
   const semantics = parsedSemantics.data;
+  // The sidecar outcome is an unverified source-native hint. Unlike a
+  // classification observation it is not reconstitutable from canonical
+  // persisted evidence, so it must never be returned as validated semantics.
+  const safeSemantics: DomscanSemantics = structuredClone(semantics);
+  delete (safeSemantics as { outcome?: string }).outcome;
+
+  const expectedMethod: Contract<'collection'>['method'] = {
+    id: semantics.endpoint === 'dns_security'
+      ? 'ldw-domscan-dns-security' : 'ldw-domscan-agent-readiness',
+    version: DOMSCAN_MAPPING_VERSION,
+    configurationId: derivedIdentifier('domscan.config', {
+      endpoint: semantics.endpoint,
+      expectedSiteId: semantics.siteId,
+      expectedOrigin: semantics.trustedOrigin,
+      providerConnectionId: collection.providerConnectionId,
+      mapping: DOMSCAN_MAPPING_VERSION,
+      revision: DOMSCAN_METHOD_REVISION,
+    }),
+    configurationRevision: DOMSCAN_METHOD_REVISION,
+  };
+  const expectedSubjectRef = derivedIdentifier('domscan.site', {
+    origin: semantics.trustedOrigin,
+    siteId: semantics.siteId,
+  });
   try {
     validateHttpsOrigin(semantics.trustedOrigin, 'DomScan trusted origin');
     validateHttpsOrigin(semantics.artifactOrigin, 'DomScan artifact origin');
@@ -959,8 +983,7 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
       || collection.sourceTime.end !== semantics.inputObservedAt
       || collection.startedAt !== semantics.inputObservedAt
       || collection.endedAt !== semantics.inputObservedAt
-      || collection.method.id !== (semantics.endpoint === 'dns_security'
-        ? 'ldw-domscan-dns-security' : 'ldw-domscan-agent-readiness')
+      || canonicalJson(collection.method) !== canonicalJson(expectedMethod)
       || (semantics.endpoint === 'dns_security' && semantics.outcome !== undefined)
       || (semantics.endpoint === 'agent_readiness' && semantics.outcome === undefined)) {
     fail('invalid_output', 'DomScan adapted semantics disagree with canonical collection.');
@@ -969,6 +992,17 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   const canonicalCollection = canonicalJson(collection);
   const sources = parts.flatMap((part) => part.sources);
   const observations = parts.flatMap((part) => part.observations);
+  // The canonical observation subject binds site ID + HTTPS origin. A
+  // coordinated semantics-only change to both origins must not pass.
+  if (observations.some((observation) => {
+    const context = observation.record.cohort.context;
+    return context.subject.kind !== 'site'
+      || context.subject.reference !== expectedSubjectRef
+      || canonicalJson(context.method) !== canonicalJson(expectedMethod);
+  }) || sources.some((source) =>
+    source.record.identity.providerConnectionId !== collection.providerConnectionId)) {
+    fail('invalid_output', 'DomScan subject or method metadata differs from canonical evidence.');
+  }
   for (const [index, part] of parts.entries()) {
     if (part.part !== index + 1
         || part.parts !== parts.length
@@ -1067,7 +1101,7 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   }
   return {
     collection: structuredClone(collection),
-    semantics: semanticsSnapshot,
+    semantics: safeSemantics,
     rows: rowsSnapshot,
   };
 }
