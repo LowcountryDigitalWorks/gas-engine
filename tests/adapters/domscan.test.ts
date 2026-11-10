@@ -573,10 +573,13 @@ test('paired origin, site ID, method identity and unverified outcome cannot laun
 
   const alternateOutcome = structuredClone(valid);
   (alternateOutcome.semantics as unknown as MutableJson).outcome = 'complete';
-  const alternateValidated = validateDomscanWindow(alternateOutcome, config, bytes(agentFixture));
-  assert.equal(Object.hasOwn(alternateValidated.semantics, 'outcome'), false,
-    'even a valid alternative source-native outcome must not reach trusted consumers');
-  assert.deepEqual(alternateValidated, accepted);
+  assert.throws(
+    () => validateDomscanWindow(alternateOutcome, config, bytes(agentFixture)),
+    expectCode('invalid_output'),
+    'raw source-native outcome must not be rewritten under an unchanged content identity',
+  );
+  assert.equal(Object.hasOwn(accepted.semantics, 'outcome'), false,
+    'the genuine but unverified outcome remains omitted from validated output');
 
   const pairedOrigin = structuredClone(valid);
   (pairedOrigin.semantics as unknown as MutableJson).trustedOrigin = 'https://other.example.test';
