@@ -433,3 +433,92 @@ test('DomScan validation rejects accessor and Proxy inputs before reading mutabl
     expectCode('invalid_output'),
   );
 });
+
+
+test('DomScan window semantics cannot promote method authority or drift from canonical collection', () => {
+  const config: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const valid = adaptDomscanSidecarEvidence(bytes(agentFixture), config);
+  assert.ok(valid.batches.length > 1);
+  assert.doesNotThrow(() => validateDomscanWindow(valid));
+
+  const mutate = (field: string, value: unknown) => {
+    const altered = structuredClone(valid);
+    (altered.semantics as unknown as MutableJson)[field] = value;
+    assert.throws(
+      () => validateDomscanWindow(altered),
+      expectCode('invalid_output'),
+      `tampered semantics ${field} must fail closed`,
+    );
+  };
+  mutate('providerMethodEstablished', true);
+  mutate('endpoint', 'dns_security');
+  mutate('trustedOrigin', 'https://another-site.example.test');
+  mutate('artifactOrigin', 'https://another-site.example.test');
+  mutate('inputObservedAt', '2026-11-07T11:00:00.000Z');
+  mutate('outcome', 'invented-outcome');
+  mutate('availability', { state: 'available', reference: 'synthetic-wrong-availability' });
+  mutate('sourceNativeMethodEstablished', true);
+
+  const noOutcome = structuredClone(valid);
+  delete (noOutcome.semantics as unknown as MutableJson).outcome;
+  assert.throws(() => validateDomscanWindow(noOutcome), expectCode('invalid_output'));
+
+  const invalidDns = structuredClone(adaptDomscanSidecarEvidence(bytes(dnsFixture), dnsConfig()));
+  (invalidDns.semantics as unknown as MutableJson).outcome = 'partial';
+  assert.throws(() => validateDomscanWindow(invalidDns), expectCode('invalid_output'));
+});
+
+test('DomScan batch array accessors and Proxies are rejected without executing user code', () => {
+  const config: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const valid = adaptDomscanSidecarEvidence(bytes(agentFixture), config);
+  assert.ok(valid.batches.length > 1);
+  assert.doesNotThrow(() => validateDomscanWindow(valid));
+
+  const accessorBatches = [...valid.batches];
+  let getterCalls = 0;
+  Object.defineProperty(accessorBatches, '0', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      getterCalls += 1;
+      return valid.batches[0];
+    },
+  });
+  assert.throws(
+    () => validateDomscanWindow({ ...valid, batches: accessorBatches }),
+    expectCode('invalid_output'),
+  );
+  assert.equal(getterCalls, 0, 'indexed batch getter must not be called');
+
+  const proxyArray = new Proxy(valid.batches, {
+    get(target, key) {
+      getterCalls += 1;
+      return Reflect.get(target, key);
+    },
+  });
+  assert.throws(
+    () => validateDomscanWindow({ ...valid, batches: proxyArray }),
+    expectCode('invalid_output'),
+  );
+  assert.equal(getterCalls, 0, 'batch Proxy trap must not be called');
+
+  const proxyPart = new Proxy(valid.batches[0]!, {});
+  assert.throws(
+    () => validateDomscanWindow({ ...valid, batches: [proxyPart, ...valid.batches.slice(1)] }),
+    expectCode('invalid_output'),
+  );
+  const sparseBatches = new Array(valid.batches.length);
+  sparseBatches[1] = valid.batches[1];
+  assert.throws(
+    () => validateDomscanWindow({ ...valid, batches: sparseBatches }),
+    expectCode('invalid_output'),
+  );
+});
