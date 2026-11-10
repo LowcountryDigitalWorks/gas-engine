@@ -848,7 +848,7 @@ export function adaptDomscanSidecarEvidence(
   });
   const prepared = prepareRows(artifact, config, collection);
   const batches = packRows(prepared, idempotencyKey, collection);
-  return {
+  const result: DomscanAdaptationResult = {
     providerId: DOMSCAN_PROVIDER_ID,
     endpoint: artifact.endpoint,
     inputSha256,
@@ -867,7 +867,14 @@ export function adaptDomscanSidecarEvidence(
     rows: prepared.map((item) => item.row),
     batches,
   };
+  adaptationTrust.set(result, structuredClone(config));
+  return result;
 }
+
+// Only the adapter can establish an implicit in-process trust anchor.
+// Deserialized/cloned adaptation objects require an explicit, independently
+// authorized DomscanAdapterConfig at the validation boundary.
+const adaptationTrust = new WeakMap<DomscanAdaptationResult, ParsedConfig>();
 
 export interface ValidatedDomscanWindow {
   readonly collection: Contract<'collection'>;
@@ -875,8 +882,16 @@ export interface ValidatedDomscanWindow {
   readonly rows: readonly DomscanAdaptedRow[];
 }
 
-/** Revalidate an application-local DomScan adaptation before downstream analysis. */
-export function validateDomscanWindow(input: DomscanAdaptationResult): ValidatedDomscanWindow {
+/**
+ * Revalidate DomScan evidence using an independently authorized trust anchor.
+ * An unmodified adaptation returned by this module carries private in-process
+ * binding. A cloned/deserialized result requires trustedConfig explicitly;
+ * self-consistent JSON alone cannot authorize a site or provider connection.
+ */
+export function validateDomscanWindow(
+  input: DomscanAdaptationResult,
+  trustedConfig?: DomscanAdapterConfig,
+): ValidatedDomscanWindow {
   // Snapshot the application-local, untrusted view exactly once. In particular,
   // getters/Proxies must not return different row identities between checking
   // uniqueness, recording it, and returning the validated result.
@@ -889,6 +904,16 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
     if (descriptor === undefined || !Object.hasOwn(descriptor, 'value')) {
       fail('invalid_output', 'DomScan adapted window requires own data fields.');
     }
+  }
+  let trusted: ParsedConfig;
+  if (trustedConfig !== undefined) {
+    trusted = parseConfig(trustedConfig);
+  } else {
+    const bound = adaptationTrust.get(input);
+    if (bound === undefined) {
+      fail('invalid_output', 'Detached DomScan evidence requires independently trusted configuration.');
+    }
+    trusted = bound;
   }
   let rowsSnapshot: readonly DomscanAdaptedRow[];
   let semanticsSnapshot: DomscanSemantics;
@@ -953,23 +978,10 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   const safeSemantics = structuredClone(semantics) as DomscanSemantics;
   delete (safeSemantics as { outcome?: string }).outcome;
 
-  const expectedMethod: Contract<'collection'>['method'] = {
-    id: semantics.endpoint === 'dns_security'
-      ? 'ldw-domscan-dns-security' : 'ldw-domscan-agent-readiness',
-    version: DOMSCAN_MAPPING_VERSION,
-    configurationId: derivedIdentifier('domscan.config', {
-      endpoint: semantics.endpoint,
-      expectedSiteId: semantics.siteId,
-      expectedOrigin: semantics.trustedOrigin,
-      providerConnectionId: collection.providerConnectionId,
-      mapping: DOMSCAN_MAPPING_VERSION,
-      revision: DOMSCAN_METHOD_REVISION,
-    }),
-    configurationRevision: DOMSCAN_METHOD_REVISION,
-  };
+  const expectedMethod = domscanMethod(trusted.expectedEndpoint, trusted);
   const expectedSubjectRef = derivedIdentifier('domscan.site', {
-    origin: semantics.trustedOrigin,
-    siteId: semantics.siteId,
+    origin: trusted.expectedOrigin,
+    siteId: trusted.expectedSiteId,
   });
   try {
     validateHttpsOrigin(semantics.trustedOrigin, 'DomScan trusted origin');
@@ -978,7 +990,21 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
     fail('invalid_output', 'DomScan adapted semantics contain invalid origin identity.');
   }
   if (input.endpoint !== semantics.endpoint
-      || semantics.artifactOrigin !== semantics.trustedOrigin
+      || input.endpoint !== trusted.expectedEndpoint
+      || semantics.siteId !== trusted.expectedSiteId
+      || semantics.trustedOrigin !== trusted.expectedOrigin
+      || semantics.artifactOrigin !== trusted.expectedOrigin
+      || canonicalJson(semantics.availability) !== canonicalJson(trusted.availability)
+      || collection.providerId !== DOMSCAN_PROVIDER_ID
+      || collection.providerConnectionId !== trusted.providerConnectionId
+      || canonicalJson(collection.scope) !== canonicalJson(trusted.scope)
+      || collection.collectedAt !== trusted.collectedAt
+      || collection.receivedAt !== trusted.receivedAt
+      || collection.adapter.id !== DOMSCAN_ADAPTER_ID
+      || collection.adapter.version !== DOMSCAN_MAPPING_VERSION
+      || collection.sourceSchema.id !== DOMSCAN_SOURCE_SCHEMA_ID
+      || collection.sourceSchema.version !== DOMSCAN_SOURCE_SCHEMA_VERSION
+      || semantics.inputObservedAt > trusted.collectedAt
       || collection.sourceTime.start !== semantics.inputObservedAt
       || collection.sourceTime.end !== semantics.inputObservedAt
       || collection.startedAt !== semantics.inputObservedAt
@@ -1018,8 +1044,12 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
   // rows when the collection spans several bounded parts.
   const sourceIds = new Map(sources.map((source) => [source.id, source]));
   const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
-  if (sources.some((source) => canonicalJson(source.record.availability) !== semanticAvailability)) {
-    fail('invalid_output', 'DomScan adapted availability differs from canonical source records.');
+  if (sources.some((source) =>
+    canonicalJson(source.record.availability) !== semanticAvailability
+    || canonicalJson(source.record.identity.scope) !== canonicalJson(trusted.scope)
+    || source.record.identity.providerId !== DOMSCAN_PROVIDER_ID
+    || source.record.identity.providerConnectionId !== trusted.providerConnectionId)) {
+    fail('invalid_output', 'DomScan source provenance differs from the independently trusted configuration.');
   }
   if (collection.completeness.state !== 'complete'
       || collection.completeness.expectedCount !== rowsSnapshot.length
