@@ -995,13 +995,22 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
       || observationIds.size !== observations.length) {
     fail('invalid_output', 'DomScan adapted parts have missing or duplicate canonical evidence.');
   }
+  const expectedCodes: readonly string[] = semantics.endpoint === 'dns_security'
+    ? DOMSCAN_DNS_CHECK_CODES
+    : [...DOMSCAN_AGENT_SIGNAL_CODES].sort(asciiCompare);
+  if (rowsSnapshot.length !== expectedCodes.length) {
+    fail('invalid_output', 'DomScan adapted rows disagree with the accepted endpoint coverage.');
+  }
   const referencedObservations = new Set<string>();
   const rowIdentities = new Set<string>();
-  for (const row of rowsSnapshot) {
+  for (const [rowIndex, row] of rowsSnapshot.entries()) {
     const expectedIdentity = derivedIdentifier('domscan.row', {
       endpoint: semantics.endpoint,
       code: row.code,
     });
+    if (row.code !== expectedCodes[rowIndex]) {
+      fail('invalid_output', 'DomScan adapted row code/order differs from canonical endpoint coverage.');
+    }
     if (row.endpoint !== semantics.endpoint
         || row.rowIdentity !== expectedIdentity
         || row.rowIdentity !== row.sourceRecordId
@@ -1030,6 +1039,27 @@ export function validateDomscanWindow(input: DomscanAdaptationResult): Validated
         fail('invalid_output', 'DomScan adapted row has inconsistent observation references.');
       }
       referencedObservations.add(id);
+    }
+    // Row classification is a downstream decision input. Require its exact
+    // source-native state to agree with the canonical classification metric,
+    // rather than allowing a caller to relabel "present" as "absent".
+    const classificationMetric = semantics.endpoint === 'dns_security'
+      ? 'domscan-dns-check-classification' : 'domscan-agent-signal-classification';
+    const classificationObservationId = row.observationIds[classificationMetric];
+    const classificationObservation = classificationObservationId === undefined
+      ? undefined : observationIds.get(classificationObservationId);
+    if (classificationObservation === undefined
+        || classificationObservation.sourceId !== row.sourceId) {
+      fail('invalid_output', 'DomScan adapted row lacks a matching classification observation.');
+    }
+    try {
+      const expected = canonicalJson(classificationValue(row.classification));
+      if (canonicalJson(classificationObservation.record.value) !== expected) {
+        fail('invalid_output', 'DomScan row classification disagrees with canonical observation.');
+      }
+    } catch (error) {
+      if (error instanceof DomscanAdapterError) throw error;
+      fail('invalid_output', 'DomScan row classification is invalid canonical evidence.');
     }
   }
   if (referencedObservations.size !== observations.length) {
