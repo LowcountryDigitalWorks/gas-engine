@@ -178,7 +178,7 @@ test('trusted siteId with leading digit matches WQT opaque id pattern', () => {
   const config = { ...dnsConfig(), expectedSiteId: '9synthetic-gas-domscan' };
   const result = adaptDomscanSidecarEvidence(bytes(digitSite), config);
   assert.equal(result.semantics.siteId, '9synthetic-gas-domscan');
-  assert.doesNotThrow(() => validateDomscanWindow(result, config));
+  assert.doesNotThrow(() => validateDomscanWindow(result, config, bytes(dnsFixture)));
   const uppercaseSite = structuredClone(dnsFixture) as MutableJson;
   uppercaseSite.siteId = 'Bad_Site';
   assert.throws(
@@ -317,19 +317,19 @@ test('valid long DomScan trusted identifiers split the same 12 signals into boun
   // No part may be reordered, silently lose an observation or claim a
   // conflicting part index without fail-closed downstream validation.
   const reversed = { ...multipart, batches: [...multipart.batches].reverse() };
-  assert.throws(() => validateDomscanWindow(reversed, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(reversed, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
   const wrongPart = {
     ...multipart,
     batches: multipart.batches.map((part, index) =>
       index === 0 ? { ...part, part: 2 } : part),
   };
-  assert.throws(() => validateDomscanWindow(wrongPart, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(wrongPart, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
   const droppedObservation = {
     ...multipart,
     batches: multipart.batches.map((part, index) =>
       index === 0 ? { ...part, observations: part.observations.slice(1) } : part),
   };
-  assert.throws(() => validateDomscanWindow(droppedObservation, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(droppedObservation, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
 
   // A coordinated deletion must not pass as "complete" simply because the
   // remaining local rows and canonical sources still match each other.
@@ -347,14 +347,14 @@ test('valid long DomScan trusted identifiers split the same 12 signals into boun
   for (const part of removedTogether.batches) {
     assert.doesNotThrow(() => parseCollectionBatch(part), 'partial deletion still has valid part shape');
   }
-  assert.throws(() => validateDomscanWindow(removedTogether, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(removedTogether, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
 
   const duplicateRowIdentity = {
     ...multipart,
     rows: multipart.rows.map((row, index) =>
       index === 1 ? { ...row, rowIdentity: multipart.rows[0]!.rowIdentity } : row),
   };
-  assert.throws(() => validateDomscanWindow(duplicateRowIdentity, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(duplicateRowIdentity, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
 
   const [metricKey, validObservationId] = Object.entries(multipart.rows[0]!.observationIds)[0]!;
   const relabeledMetricKey = {
@@ -369,7 +369,7 @@ test('valid long DomScan trusted identifiers split the same 12 signals into boun
       }
       : row),
   };
-  assert.throws(() => validateDomscanWindow(relabeledMetricKey, longConfig), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(relabeledMetricKey, longConfig, bytes(agentFixture)), expectCode('invalid_output'));
 });
 
 
@@ -394,7 +394,7 @@ test('DomScan validation rejects accessor and Proxy inputs before reading mutabl
       return rowReads <= 2 ? actualIdentity : 'synthetic-inconsistent-row';
     },
   });
-  assert.throws(() => validateDomscanWindow(accessorRow, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(accessorRow, config, bytes(agentFixture)), expectCode('invalid_output'));
   assert.equal(rowReads, 0, 'row getter must not be invoked by validation');
 
   const accessorOuter = { ...valid };
@@ -407,7 +407,7 @@ test('DomScan validation rejects accessor and Proxy inputs before reading mutabl
       return valid.rows;
     },
   });
-  assert.throws(() => validateDomscanWindow(accessorOuter, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(accessorOuter, config, bytes(agentFixture)), expectCode('invalid_output'));
   assert.equal(rowsReads, 0, 'top-level rows getter must not be invoked');
 
   const accessorMetric = structuredClone(valid);
@@ -422,15 +422,15 @@ test('DomScan validation rejects accessor and Proxy inputs before reading mutabl
       return metricId;
     },
   });
-  assert.throws(() => validateDomscanWindow(accessorMetric, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(accessorMetric, config, bytes(agentFixture)), expectCode('invalid_output'));
   assert.equal(metricReads, 0, 'observation map getter must not be invoked');
 
   assert.throws(
-    () => validateDomscanWindow({ ...valid, rows: new Proxy(valid.rows, {}) }, config),
+    () => validateDomscanWindow({ ...valid, rows: new Proxy(valid.rows, {}) }, config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
   assert.throws(
-    () => validateDomscanWindow(new Proxy(valid, {}), config),
+    () => validateDomscanWindow(new Proxy(valid, {}), config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
 });
@@ -450,7 +450,7 @@ test('DomScan window semantics cannot promote method authority or drift from can
     const altered = structuredClone(valid);
     (altered.semantics as unknown as MutableJson)[field] = value;
     assert.throws(
-      () => validateDomscanWindow(altered, config),
+      () => validateDomscanWindow(altered, config, bytes(agentFixture)),
       expectCode('invalid_output'),
       `tampered semantics ${field} must fail closed`,
     );
@@ -466,11 +466,11 @@ test('DomScan window semantics cannot promote method authority or drift from can
 
   const noOutcome = structuredClone(valid);
   delete (noOutcome.semantics as unknown as MutableJson).outcome;
-  assert.throws(() => validateDomscanWindow(noOutcome, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(noOutcome, config, bytes(agentFixture)), expectCode('invalid_output'));
 
   const invalidDns = structuredClone(adaptDomscanSidecarEvidence(bytes(dnsFixture), dnsConfig()));
   (invalidDns.semantics as unknown as MutableJson).outcome = 'partial';
-  assert.throws(() => validateDomscanWindow(invalidDns, dnsConfig()), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(invalidDns, dnsConfig(), bytes(dnsFixture)), expectCode('invalid_output'));
 });
 
 test('DomScan batch array accessors and Proxies are rejected without executing user code', () => {
@@ -494,7 +494,7 @@ test('DomScan batch array accessors and Proxies are rejected without executing u
     },
   });
   assert.throws(
-    () => validateDomscanWindow({ ...valid, batches: accessorBatches }, config),
+    () => validateDomscanWindow({ ...valid, batches: accessorBatches }, config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
   assert.equal(getterCalls, 0, 'indexed batch getter must not be called');
@@ -506,20 +506,20 @@ test('DomScan batch array accessors and Proxies are rejected without executing u
     },
   });
   assert.throws(
-    () => validateDomscanWindow({ ...valid, batches: proxyArray }, config),
+    () => validateDomscanWindow({ ...valid, batches: proxyArray }, config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
   assert.equal(getterCalls, 0, 'batch Proxy trap must not be called');
 
   const proxyPart = new Proxy(valid.batches[0]!, {});
   assert.throws(
-    () => validateDomscanWindow({ ...valid, batches: [proxyPart, ...valid.batches.slice(1)] }, config),
+    () => validateDomscanWindow({ ...valid, batches: [proxyPart, ...valid.batches.slice(1)] }, config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
   const sparseBatches = new Array(valid.batches.length);
   sparseBatches[1] = valid.batches[1];
   assert.throws(
-    () => validateDomscanWindow({ ...valid, batches: sparseBatches }, config),
+    () => validateDomscanWindow({ ...valid, batches: sparseBatches }, config, bytes(agentFixture)),
     expectCode('invalid_output'),
   );
 });
@@ -536,24 +536,24 @@ test('DomScan adapted classification and ordered endpoint codes must match canon
   const flipped = original === 'absent' ? 'present' : 'absent';
   (wrongClassification.rows[0] as unknown as MutableJson).classification = flipped;
   assert.notEqual(flipped, original);
-  assert.throws(() => validateDomscanWindow(wrongClassification, dnsConfig()), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(wrongClassification, dnsConfig(), bytes(dnsFixture)), expectCode('invalid_output'));
 
   const relabeledPresent = structuredClone(agent);
   const presentIndex = relabeledPresent.rows.findIndex((row) => row.classification === 'present');
   assert.ok(presentIndex >= 0, 'fixture must include a present agent signal');
   (relabeledPresent.rows[presentIndex] as unknown as MutableJson).classification = 'absent';
-  assert.throws(() => validateDomscanWindow(relabeledPresent, agentConfig()), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(relabeledPresent, agentConfig(), bytes(agentFixture)), expectCode('invalid_output'));
 
   const missingClassificationMetric = structuredClone(dns);
   const ids = missingClassificationMetric.rows[0]!.observationIds as unknown as MutableJson;
   delete ids['domscan-dns-check-classification'];
-  assert.throws(() => validateDomscanWindow(missingClassificationMetric, dnsConfig()), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(missingClassificationMetric, dnsConfig(), bytes(dnsFixture)), expectCode('invalid_output'));
 
   const reordered = {
     ...agent,
     rows: [agent.rows[1]!, agent.rows[0]!, ...agent.rows.slice(2)],
   };
-  assert.throws(() => validateDomscanWindow(reordered, agentConfig()), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(reordered, agentConfig(), bytes(agentFixture)), expectCode('invalid_output'));
 });
 
 
@@ -573,7 +573,7 @@ test('paired origin, site ID, method identity and unverified outcome cannot laun
 
   const alternateOutcome = structuredClone(valid);
   (alternateOutcome.semantics as unknown as MutableJson).outcome = 'complete';
-  const alternateValidated = validateDomscanWindow(alternateOutcome, config);
+  const alternateValidated = validateDomscanWindow(alternateOutcome, config, bytes(agentFixture));
   assert.equal(Object.hasOwn(alternateValidated.semantics, 'outcome'), false,
     'even a valid alternative source-native outcome must not reach trusted consumers');
   assert.deepEqual(alternateValidated, accepted);
@@ -581,11 +581,11 @@ test('paired origin, site ID, method identity and unverified outcome cannot laun
   const pairedOrigin = structuredClone(valid);
   (pairedOrigin.semantics as unknown as MutableJson).trustedOrigin = 'https://other.example.test';
   (pairedOrigin.semantics as unknown as MutableJson).artifactOrigin = 'https://other.example.test';
-  assert.throws(() => validateDomscanWindow(pairedOrigin, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(pairedOrigin, config, bytes(agentFixture)), expectCode('invalid_output'));
 
   const otherSite = structuredClone(valid);
   (otherSite.semantics as unknown as MutableJson).siteId = 'synthetic-other-site';
-  assert.throws(() => validateDomscanWindow(otherSite, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(otherSite, config, bytes(agentFixture)), expectCode('invalid_output'));
 
   for (const [field, bad] of [
     ['version', '2.0.0'],
@@ -596,14 +596,14 @@ test('paired origin, site ID, method identity and unverified outcome cannot laun
     for (const part of altered.batches) {
       (part.collection.method as unknown as MutableJson)[field] = bad;
     }
-    assert.throws(() => validateDomscanWindow(altered, config), expectCode('invalid_output'),
+    assert.throws(() => validateDomscanWindow(altered, config, bytes(agentFixture)), expectCode('invalid_output'),
       `changed method ${field} must fail closed`);
   }
 
   const wrongSubject = structuredClone(valid);
   const firstSubject = wrongSubject.batches[0]!.observations[0]!.record.cohort.context.subject;
   (firstSubject as unknown as MutableJson).reference = 'synthetic-wrong-subject';
-  assert.throws(() => validateDomscanWindow(wrongSubject, config), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(wrongSubject, config, bytes(agentFixture)), expectCode('invalid_output'));
 });
 
 
@@ -619,7 +619,7 @@ test('detached DomScan evidence requires independent trust, even after coordinat
 
   const detached = structuredClone(original);
   assert.throws(() => validateDomscanWindow(detached), expectCode('invalid_output'));
-  const independentlyValidated = validateDomscanWindow(detached, trusted);
+  const independentlyValidated = validateDomscanWindow(detached, trusted, bytes(agentFixture));
   assert.deepEqual(independentlyValidated, validateDomscanWindow(original));
 
   const newOrigin = 'https://different.example.test';
@@ -644,7 +644,7 @@ test('detached DomScan evidence requires independent trust, even after coordinat
       (observation.record.cohort.context.method as unknown as MutableJson).configurationId = configId;
     }
   }
-  assert.throws(() => validateDomscanWindow(spoofed, trusted), expectCode('invalid_output'),
+  assert.throws(() => validateDomscanWindow(spoofed, trusted, bytes(agentFixture)), expectCode('invalid_output'),
     'a consistent forged site/method cannot overwrite the independently trusted identity');
 
   const shiftedScope = structuredClone(original);
@@ -655,5 +655,58 @@ test('detached DomScan evidence requires independent trust, even after coordinat
       (source.record.identity as unknown as MutableJson).scope = otherScope;
     }
   }
-  assert.throws(() => validateDomscanWindow(shiftedScope, trusted), expectCode('invalid_output'));
+  assert.throws(() => validateDomscanWindow(shiftedScope, trusted, bytes(agentFixture)), expectCode('invalid_output'));
+});
+
+
+test('coordinated DomScan classification and canonical observation forgery fails against original content', () => {
+  const trusted: DomscanAdapterConfig = {
+    ...agentConfig(),
+    providerConnectionId: `domscan-${'x'.repeat(110)}`,
+    availability: { state: 'available', reference: `domscan-${'y'.repeat(110)}` },
+  };
+  const original = adaptDomscanSidecarEvidence(bytes(agentFixture), trusted);
+  assert.ok(original.batches.length > 1);
+  assert.doesNotThrow(() => validateDomscanWindow(original));
+  const forged = structuredClone(original);
+  const row = forged.rows.find((entry) => entry.classification === 'present');
+  assert.ok(row, 'agent fixture includes a present classification');
+  (row as unknown as MutableJson).classification = 'absent';
+  const classificationId = row.observationIds['domscan-agent-signal-classification'];
+  assert.ok(classificationId);
+  const linked = forged.batches.flatMap((part) => part.observations).find((entry) =>
+    entry.record.id === classificationId);
+  assert.ok(linked, 'linked canonical observation exists');
+  (linked.record as unknown as MutableJson).value = {
+    state: 'observed', value: { type: 'text', value: 'absent' },
+  };
+  // Internal row and observation agree, but the original source digest,
+  // collection ID and input hash still identify unmodified evidence.
+  for (const part of forged.batches) {
+    assert.doesNotThrow(() => parseCollectionBatch(part));
+  }
+  assert.throws(
+    () => validateDomscanWindow(forged, trusted, bytes(agentFixture)),
+    expectCode('invalid_output'),
+  );
+
+  // The original bound object is checked against an immutable private content
+  // snapshot too, not only its site identity or row/observation consistency.
+  const directlyForged = adaptDomscanSidecarEvidence(bytes(agentFixture), trusted);
+  const direct = directlyForged.rows.find((entry) => entry.code === row.code);
+  assert.ok(direct);
+  (direct as unknown as MutableJson).classification = 'absent';
+  const directLinked = directlyForged.batches.flatMap((part) => part.observations).find((entry) =>
+    entry.record.id === direct.observationIds['domscan-agent-signal-classification']);
+  assert.ok(directLinked);
+  (directLinked.record as unknown as MutableJson).value = {
+    state: 'observed', value: { type: 'text', value: 'absent' },
+  };
+  assert.throws(() => validateDomscanWindow(directlyForged), expectCode('invalid_output'));
+
+  const detached = structuredClone(original);
+  assert.throws(() => validateDomscanWindow(detached, trusted), expectCode('invalid_output'),
+    'configuration alone cannot authenticate detached content');
+  assert.deepEqual(validateDomscanWindow(detached, trusted, bytes(agentFixture)),
+    validateDomscanWindow(original));
 });
