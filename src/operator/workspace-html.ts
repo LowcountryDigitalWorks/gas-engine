@@ -309,6 +309,84 @@ label.field{display:grid;gap:.25rem;min-width:180px;flex:1}.field input,.field s
 .actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}button.primary{background:#2f766f;color:#fff;border:0;border-radius:.4rem;padding:.6rem .85rem;font-weight:700;cursor:pointer}button.secondary{background:#fff;color:#102a3a;border:1px solid #7d9298;border-radius:.4rem;padding:.6rem .85rem;cursor:pointer}
 .notice{border-left:4px solid #2f766f}.empty{font-style:italic;color:#53666d}.message{min-height:1.4em;font-weight:700;color:#2f766f}.message.error{color:#9a2d20}.mono,code{overflow-wrap:anywhere}
 textarea{min-height:110px}.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.full{grid-column:1/-1}
+/* Tidal liquid-glass-inspired operator layer: only functional chrome uses translucency.
+   Dense evidence, forms, tables, and decision state stay on opaque readable surfaces. */
+:root{
+  --tidal-navy:#102a3a;
+  --tidal-teal:#2f766f;
+  --tidal-oyster:#f3efe6;
+  --tidal-paper:#f7f8f6;
+  --tidal-border:#cbd9d6;
+  --tidal-shadow:0 12px 32px rgba(16,42,58,.08);
+  font-family:"Manrope",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+body{
+  background-color:var(--tidal-paper);
+  background-image:radial-gradient(circle at 95% 0%,rgba(47,118,111,.13),transparent 34rem);
+}
+aside{background:var(--tidal-navy);color:var(--tidal-paper)}
+aside h1{letter-spacing:-.02em}
+nav button{
+  min-height:44px;
+  border-radius:999px;
+  border-color:rgba(243,239,230,.6);
+  transition:background-color .16s ease,color .16s ease;
+}
+nav button:hover{background:rgba(243,239,230,.14)}
+nav button[aria-pressed="true"]{
+  background:var(--tidal-oyster);
+  color:var(--tidal-navy);
+  box-shadow:0 5px 16px rgba(0,0,0,.12);
+}
+main{padding:clamp(1rem,2.5vw,2rem)}
+header.workspace-head{
+  background:var(--tidal-oyster);
+  border-color:var(--tidal-border);
+  border-radius:24px;
+  padding:clamp(1rem,2vw,1.5rem);
+  box-shadow:var(--tidal-shadow);
+}
+.card,.notice,.form-card,.filters,.check-row,.facts div{
+  background:#fff;
+  border-color:var(--tidal-border);
+  border-radius:16px;
+  box-shadow:0 3px 12px rgba(16,42,58,.04);
+}
+.card strong{letter-spacing:-.025em}
+button.primary,button.secondary{min-height:44px;border-radius:999px;padding:.65rem 1.1rem}
+button.primary{background:#24635c;color:#fff}
+button.primary:hover{background:#1b4c47}
+button.secondary:hover{background:var(--tidal-oyster)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid #235d8c;
+  outline-offset:3px;
+}
+aside button:focus-visible{outline-color:var(--tidal-oyster)}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  aside{
+    background:rgba(16,42,58,.96);
+    -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px);
+  }
+  header.workspace-head{
+    background:rgba(243,239,230,.93);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+  }
+}
+@media (prefers-reduced-transparency:reduce){
+  aside{background:var(--tidal-navy);-webkit-backdrop-filter:none;backdrop-filter:none}
+  header.workspace-head{background:var(--tidal-oyster);-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media (prefers-contrast:more){
+  aside{background:var(--tidal-navy);-webkit-backdrop-filter:none;backdrop-filter:none}
+  header.workspace-head{background:var(--tidal-oyster);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .card,.notice,.form-card,.filters,.check-row,.facts div,header.workspace-head{border:2px solid var(--tidal-navy)}
+  nav button{border-width:2px}
+}
+@media (prefers-reduced-motion:reduce){
+  nav button{transition:none}
+}
 @media(max-width:800px){.shell{grid-template-columns:1fr}aside{position:static;height:auto}.report-grid{grid-template-columns:1fr}.full{grid-column:auto}}
 @media print{aside,.interactive-only{display:none!important}.shell{display:block}main{padding:.3in;max-width:none}[data-panel]{display:block!important;break-before:page}header.workspace-head{break-after:avoid}.table-wrap{overflow:visible}table{font-size:8.5pt}}
 </style>
