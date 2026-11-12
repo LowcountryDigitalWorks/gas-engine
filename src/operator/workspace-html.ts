@@ -325,6 +325,7 @@ body{margin:0;color:var(--gas-ink);background:var(--gas-bg);
 aside{background:var(--gas-rail);color:var(--gas-ink);border-right:1px solid var(--gas-border);
   padding:1.25rem;position:sticky;top:0;height:100vh;overflow:auto}
 aside h1{font-size:1.16rem;line-height:1.25;margin:.55rem 0 1.1rem;letter-spacing:-.02em}
+.gas-product-subtitle{display:block;font-size:.77rem;font-weight:550;letter-spacing:.08em;text-transform:uppercase;color:var(--gas-muted);margin-top:.23rem}
 nav{display:grid;gap:.45rem}
 nav button{font:inherit;text-align:left;min-height:44px;border:1px solid var(--gas-border);
   background:transparent;color:var(--gas-ink);border-radius:999px;padding:.62rem .85rem;cursor:pointer;
