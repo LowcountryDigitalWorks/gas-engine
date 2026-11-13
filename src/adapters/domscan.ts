@@ -1,3 +1,4 @@
+import { types } from 'node:util';
 import { z } from 'zod';
 import {
   availability as availabilitySchema,
@@ -130,6 +131,21 @@ export interface DomscanSemantics {
   readonly providerMethodEstablished: false;
   readonly availability: Contract<'sourceRecord'>['availability'];
 }
+
+
+// This local result is consumed by downstream analysis, not trusted merely
+// because its JSON is serializable. Never promote a source-native hint into an
+// established method or allow its identity/coverage metadata to drift.
+const windowSemanticsSchema = z.object({
+  endpoint: z.enum(['dns_security', 'agent_readiness']),
+  trustedOrigin: z.string().min(1).max(2_048),
+  artifactOrigin: z.string().min(1).max(2_048),
+  siteId: domscanSiteIdSchema,
+  inputObservedAt: timestamp,
+  outcome: agentOutcomeSchema.optional(),
+  providerMethodEstablished: z.literal(false),
+  availability: availabilitySchema,
+}).strict();
 
 export interface DomscanAdaptationResult {
   readonly providerId: typeof DOMSCAN_PROVIDER_ID;
@@ -694,29 +710,81 @@ function packRows(
   idempotencyKey: string,
   collection: Contract<'collection'>,
 ): CollectionBatch[] {
-  const batch = {
+  const makeBatch = (group: readonly PreparedRow[], part: number, parts: number) => ({
     idempotencyKey,
     collection,
-    part: 1,
-    parts: 1,
-    sources: prepared.map((item) => item.source),
-    observations: prepared.flatMap((item) => item.observations),
+    part,
+    parts,
+    sources: group.map((item) => item.source),
+    observations: group.flatMap((item) => item.observations),
+  });
+
+  // Preserve the exact accepted one-part representation whenever it fits.
+  // A valid trusted connection/reference may increase repeated canonical
+  // source/observation metadata beyond 65,536 bytes, even for 12 signals.
+  const single = makeBatch(prepared, 1, 1);
+  let needsParts = prepared.length > INGESTION_PART_BOUNDS.sourcesPerPart
+    || single.observations.length > INGESTION_PART_BOUNDS.observationsPerPart;
+  if (!needsParts) {
+    try {
+      canonicalJson(single);
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      needsParts = true;
+    }
+  }
+  if (!needsParts) {
+    try {
+      return [parseCollectionBatch(single)];
+    } catch {
+      fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
+    }
+  }
+
+  // Match the established G.A.S. multi-part contract, checking the worst
+  // possible part indices before selecting each deterministic row group.
+  const fitsWorstCase = (group: readonly PreparedRow[]): boolean => {
+    const observationCount = group.reduce((total, row) => total + row.observations.length, 0);
+    if (group.length > INGESTION_PART_BOUNDS.sourcesPerPart
+        || observationCount > INGESTION_PART_BOUNDS.observationsPerPart) return false;
+    try {
+      canonicalJson(makeBatch(group, INGESTION_PART_BOUNDS.parts, INGESTION_PART_BOUNDS.parts));
+      return true;
+    } catch (error) {
+      if (error instanceof RangeError) return false;
+      throw error;
+    }
   };
-  if (prepared.length > INGESTION_PART_BOUNDS.sourcesPerPart
-      || batch.observations.length > INGESTION_PART_BOUNDS.observationsPerPart) {
-    fail('row_too_large', 'DomScan sidecar evidence exceeds one bounded persistence part.');
+
+  const groups: PreparedRow[][] = [];
+  let current: PreparedRow[] = [];
+  for (const row of prepared) {
+    const candidate = [...current, row];
+    if (fitsWorstCase(candidate)) {
+      current = candidate;
+      continue;
+    }
+    if (current.length === 0) {
+      fail('row_too_large', 'One DomScan sidecar row cannot fit a bounded persistence part.');
+    }
+    groups.push(current);
+    current = [row];
+    if (!fitsWorstCase(current)) {
+      fail('row_too_large', 'One DomScan sidecar row cannot fit a bounded persistence part.');
+    }
   }
-  try {
-    canonicalJson(batch);
-  } catch (error) {
-    if (error instanceof RangeError) fail('row_too_large', 'DomScan sidecar evidence exceeds canonical byte bounds.');
-    throw error;
+  if (current.length > 0 || prepared.length === 0) groups.push(current);
+  if (groups.length > INGESTION_PART_BOUNDS.parts) {
+    fail('too_many_parts', 'DomScan sidecar evidence exceeds bounded persistence part count.');
   }
-  try {
-    return [parseCollectionBatch(batch)];
-  } catch {
-    fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
-  }
+
+  return groups.map((group, index) => {
+    try {
+      return parseCollectionBatch(makeBatch(group, index + 1, groups.length));
+    } catch {
+      fail('invalid_output', 'Adapted DomScan evidence failed canonical collection-part validation.');
+    }
+  });
 }
 
 /**
@@ -780,7 +848,7 @@ export function adaptDomscanSidecarEvidence(
   });
   const prepared = prepareRows(artifact, config, collection);
   const batches = packRows(prepared, idempotencyKey, collection);
-  return {
+  const result: DomscanAdaptationResult = {
     providerId: DOMSCAN_PROVIDER_ID,
     endpoint: artifact.endpoint,
     inputSha256,
@@ -799,7 +867,41 @@ export function adaptDomscanSidecarEvidence(
     rows: prepared.map((item) => item.row),
     batches,
   };
+  adaptationTrust.set(result, {
+    config: structuredClone(config),
+    content: contentFingerprint(result),
+  });
+  return result;
 }
+
+// Canonical batches may total more than the per-part 65,536 byte ceiling,
+// so fingerprint every bounded part independently. This snapshot is private,
+// immutable to callers and includes ALL semantic rows, values and provenance.
+interface DomscanContentFingerprint {
+  readonly metadata: string;
+  readonly semantics: string;
+  readonly rows: string;
+  readonly parts: readonly string[];
+}
+interface BoundDomscanTrust {
+  readonly config: ParsedConfig;
+  readonly content: DomscanContentFingerprint;
+}
+function contentFingerprint(input: DomscanAdaptationResult): DomscanContentFingerprint {
+  return {
+    metadata: hashCanonicalJson({
+      providerId: input.providerId,
+      endpoint: input.endpoint,
+      inputSha256: input.inputSha256,
+      collectionId: input.collectionId,
+      idempotencyKey: input.idempotencyKey,
+    }),
+    semantics: hashCanonicalJson(input.semantics),
+    rows: hashCanonicalJson(input.rows),
+    parts: input.batches.map((part) => hashCanonicalJson(part)),
+  };
+}
+const adaptationTrust = new WeakMap<DomscanAdaptationResult, BoundDomscanTrust>();
 
 export interface ValidatedDomscanWindow {
   readonly collection: Contract<'collection'>;
@@ -807,29 +909,297 @@ export interface ValidatedDomscanWindow {
   readonly rows: readonly DomscanAdaptedRow[];
 }
 
-/** Revalidate an application-local DomScan adaptation before downstream analysis. */
-export function validateDomscanWindow(input: DomscanAdaptationResult): ValidatedDomscanWindow {
-  if (input === null
-      || typeof input !== 'object'
-      || input.providerId !== DOMSCAN_PROVIDER_ID
-      || !Array.isArray(input.rows)
-      || !Array.isArray(input.batches)
-      || input.batches.length !== 1) {
+/**
+ * Revalidate DomScan evidence using an independently authorized trust anchor.
+ * Direct adapter results carry a private immutable trust+content binding.
+ * Detached/deserialized evidence requires BOTH separately trusted configuration
+ * AND the original trusted source bytes, so the expected complete content can
+ * be reconstructed. Configuration alone cannot authenticate mutable values.
+ */
+export function validateDomscanWindow(
+  input: DomscanAdaptationResult,
+  trustedConfig?: DomscanAdapterConfig,
+  trustedSourceBytes?: Uint8Array,
+): ValidatedDomscanWindow {
+  // Snapshot the application-local, untrusted view exactly once. In particular,
+  // getters/Proxies must not return different row identities between checking
+  // uniqueness, recording it, and returning the validated result.
+  if (input === null || typeof input !== 'object' || types.isProxy(input)) {
+    fail('invalid_output', 'DomScan adapted window must be a plain data record.');
+  }
+  for (const key of ['providerId', 'endpoint', 'inputSha256', 'collectionId',
+    'idempotencyKey', 'semantics', 'rows', 'batches']) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+    if (descriptor === undefined || !Object.hasOwn(descriptor, 'value')) {
+      fail('invalid_output', 'DomScan adapted window requires own data fields.');
+    }
+  }
+  let boundTrust: BoundDomscanTrust;
+  const bound = adaptationTrust.get(input);
+  if (bound !== undefined) {
+    boundTrust = bound;
+    if (trustedConfig !== undefined) {
+      const separatelyTrusted = parseConfig(trustedConfig);
+      if (canonicalJson(separatelyTrusted) !== canonicalJson(bound.config)) {
+        fail('invalid_output', 'Supplied DomScan trust disagrees with the original adapter configuration.');
+      }
+    }
+  } else {
+    if (trustedConfig === undefined || trustedSourceBytes === undefined) {
+      fail('invalid_output', 'Detached DomScan evidence requires trusted config AND original source bytes.');
+    }
+    try {
+      const reference = adaptDomscanSidecarEvidence(trustedSourceBytes, trustedConfig);
+      const expected = adaptationTrust.get(reference);
+      if (expected === undefined) throw new TypeError('missing source binding');
+      boundTrust = expected;
+    } catch {
+      fail('invalid_output', 'Detached DomScan content could not be reconstructed from trusted source.');
+    }
+  }
+  const trusted = boundTrust.config;
+  let rowsSnapshot: readonly DomscanAdaptedRow[];
+  let semanticsSnapshot: DomscanSemantics;
+  try {
+    // canonicalJson enforces the repository's no-Proxy/no-accessor/no-symbol
+    // data-only contract recursively. The bounded DomScan row set is tiny.
+    canonicalJson(input.rows);
+    canonicalJson(input.semantics);
+    rowsSnapshot = structuredClone(input.rows);
+    semanticsSnapshot = structuredClone(input.semantics);
+  } catch {
+    fail('invalid_output', 'DomScan adapted window contains unsafe row or semantic data.');
+  }
+  if (input.providerId !== DOMSCAN_PROVIDER_ID) {
     fail('invalid_output', 'DomScan adapted window has invalid bounded metadata.');
   }
-  let batch: CollectionBatch;
+
+  // Inspect batch-array descriptors BEFORE traversal. Array.map would invoke
+  // an attacker-controlled indexed getter/proxy trap ahead of part validation.
+  // Each part is individually bounded; hashing the whole batch array would
+  // reject legitimate multi-part evidence above the single-part byte ceiling.
+  let batchSnapshot: readonly CollectionBatch[];
   try {
-    batch = parseCollectionBatch(input.batches[0]!);
+    const batchInput = input.batches;
+    if (!Array.isArray(batchInput)
+        || types.isProxy(batchInput)
+        || Object.getPrototypeOf(batchInput) !== Array.prototype
+        || batchInput.length < 1
+        || batchInput.length > INGESTION_PART_BOUNDS.parts
+        || Reflect.ownKeys(batchInput).length !== batchInput.length + 1) {
+      throw new TypeError('invalid batch container');
+    }
+    const snapshot: CollectionBatch[] = [];
+    for (let index = 0; index < batchInput.length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(batchInput, String(index));
+      if (descriptor === undefined || !descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) {
+        throw new TypeError('invalid batch element');
+      }
+      canonicalJson(descriptor.value);
+      snapshot.push(structuredClone(descriptor.value) as CollectionBatch);
+    }
+    batchSnapshot = snapshot;
+  } catch {
+    fail('invalid_output', 'DomScan adapted batch container must contain bounded plain data.');
+  }
+
+  // Source-record digest and collection ID alone are not a content integrity
+  // check. Reject a coordinated row + observation rewrite even when the
+  // attacker keeps the old digest/IDs and all parts remain syntactically valid.
+  try {
+    const expected = boundTrust.content;
+    const actualMetadata = hashCanonicalJson({
+      providerId: input.providerId,
+      endpoint: input.endpoint,
+      inputSha256: input.inputSha256,
+      collectionId: input.collectionId,
+      idempotencyKey: input.idempotencyKey,
+    });
+    if (actualMetadata !== expected.metadata
+        || hashCanonicalJson(rowsSnapshot) !== expected.rows
+        || hashCanonicalJson(semanticsSnapshot) !== expected.semantics
+        || batchSnapshot.length !== expected.parts.length
+        || batchSnapshot.some((part, index) => hashCanonicalJson(part) !== expected.parts[index])) {
+      fail('invalid_output', 'DomScan evidence differs from the independently bound content snapshot.');
+    }
+  } catch (error) {
+    if (error instanceof DomscanAdapterError) throw error;
+    fail('invalid_output', 'DomScan evidence failed bounded content integrity validation.');
+  }
+
+  let parts: CollectionBatch[];
+  try {
+    parts = batchSnapshot.map((part) => parseCollectionBatch(part));
   } catch {
     fail('invalid_output', 'DomScan adapted batch is not valid canonical evidence.');
   }
-  if (batch.collection.id !== input.collectionId || batch.idempotencyKey !== input.idempotencyKey) {
-    fail('invalid_output', 'DomScan adapted batch disagrees with window identity.');
+  const collection = parts[0]!.collection;
+  const parsedSemantics = windowSemanticsSchema.safeParse(semanticsSnapshot);
+  if (!parsedSemantics.success) {
+    fail('invalid_output', 'DomScan adapted semantics have invalid shape or method authority.');
+  }
+  const semantics = parsedSemantics.data;
+  // The sidecar outcome is an unverified source-native hint. Unlike a
+  // classification observation it is not reconstitutable from canonical
+  // persisted evidence, so it must never be returned as validated semantics.
+  const safeSemantics = structuredClone(semantics) as DomscanSemantics;
+  delete (safeSemantics as { outcome?: string }).outcome;
+
+  const expectedMethod = domscanMethod(trusted.expectedEndpoint, trusted);
+  const expectedSubjectRef = derivedIdentifier('domscan.site', {
+    origin: trusted.expectedOrigin,
+    siteId: trusted.expectedSiteId,
+  });
+  try {
+    validateHttpsOrigin(semantics.trustedOrigin, 'DomScan trusted origin');
+    validateHttpsOrigin(semantics.artifactOrigin, 'DomScan artifact origin');
+  } catch {
+    fail('invalid_output', 'DomScan adapted semantics contain invalid origin identity.');
+  }
+  if (input.endpoint !== semantics.endpoint
+      || input.endpoint !== trusted.expectedEndpoint
+      || semantics.siteId !== trusted.expectedSiteId
+      || semantics.trustedOrigin !== trusted.expectedOrigin
+      || semantics.artifactOrigin !== trusted.expectedOrigin
+      || canonicalJson(semantics.availability) !== canonicalJson(trusted.availability)
+      || collection.providerId !== DOMSCAN_PROVIDER_ID
+      || collection.providerConnectionId !== trusted.providerConnectionId
+      || canonicalJson(collection.scope) !== canonicalJson(trusted.scope)
+      || collection.collectedAt !== trusted.collectedAt
+      || collection.receivedAt !== trusted.receivedAt
+      || collection.adapter.id !== DOMSCAN_ADAPTER_ID
+      || collection.adapter.version !== DOMSCAN_MAPPING_VERSION
+      || collection.sourceSchema.id !== DOMSCAN_SOURCE_SCHEMA_ID
+      || collection.sourceSchema.version !== DOMSCAN_SOURCE_SCHEMA_VERSION
+      || semantics.inputObservedAt > trusted.collectedAt
+      || collection.sourceTime.start !== semantics.inputObservedAt
+      || collection.sourceTime.end !== semantics.inputObservedAt
+      || collection.startedAt !== semantics.inputObservedAt
+      || collection.endedAt !== semantics.inputObservedAt
+      || canonicalJson(collection.method) !== canonicalJson(expectedMethod)
+      || (semantics.endpoint === 'dns_security' && semantics.outcome !== undefined)
+      || (semantics.endpoint === 'agent_readiness' && semantics.outcome === undefined)) {
+    fail('invalid_output', 'DomScan adapted semantics disagree with canonical collection.');
+  }
+  const semanticAvailability = canonicalJson(semantics.availability);
+  const canonicalCollection = canonicalJson(collection);
+  const sources = parts.flatMap((part) => part.sources);
+  const observations = parts.flatMap((part) => part.observations);
+  // The canonical observation subject binds site ID + HTTPS origin. A
+  // coordinated semantics-only change to both origins must not pass.
+  if (observations.some((observation) => {
+    const context = observation.record.cohort.context;
+    return context.subject.kind !== 'site'
+      || context.subject.reference !== expectedSubjectRef
+      || canonicalJson(context.method) !== canonicalJson(expectedMethod);
+  }) || sources.some((source) =>
+    source.record.identity.providerConnectionId !== collection.providerConnectionId)) {
+    fail('invalid_output', 'DomScan subject or method metadata differs from canonical evidence.');
+  }
+  for (const [index, part] of parts.entries()) {
+    if (part.part !== index + 1
+        || part.parts !== parts.length
+        || part.collection.id !== input.collectionId
+        || part.idempotencyKey !== input.idempotencyKey
+        || canonicalJson(part.collection) !== canonicalCollection) {
+      fail('invalid_output', 'DomScan adapted parts disagree on order or collection identity.');
+    }
+  }
+
+  // The already-validated canonical source and observation rows must match
+  // the application-local row references exactly, with no lost or duplicated
+  // rows when the collection spans several bounded parts.
+  const sourceIds = new Map(sources.map((source) => [source.id, source]));
+  const observationIds = new Map(observations.map((observation) => [observation.record.id, observation]));
+  if (sources.some((source) =>
+    canonicalJson(source.record.availability) !== semanticAvailability
+    || canonicalJson(source.record.identity.scope) !== canonicalJson(trusted.scope)
+    || source.record.identity.providerId !== DOMSCAN_PROVIDER_ID
+    || source.record.identity.providerConnectionId !== trusted.providerConnectionId)) {
+    fail('invalid_output', 'DomScan source provenance differs from the independently trusted configuration.');
+  }
+  if (collection.completeness.state !== 'complete'
+      || collection.completeness.expectedCount !== rowsSnapshot.length
+      || collection.completeness.receivedCount !== rowsSnapshot.length
+      || sources.length !== rowsSnapshot.length
+      || sourceIds.size !== sources.length
+      || observationIds.size !== observations.length) {
+    fail('invalid_output', 'DomScan adapted parts have missing or duplicate canonical evidence.');
+  }
+  const expectedCodes: readonly string[] = semantics.endpoint === 'dns_security'
+    ? DOMSCAN_DNS_CHECK_CODES
+    : [...DOMSCAN_AGENT_SIGNAL_CODES].sort(asciiCompare);
+  if (rowsSnapshot.length !== expectedCodes.length) {
+    fail('invalid_output', 'DomScan adapted rows disagree with the accepted endpoint coverage.');
+  }
+  const referencedObservations = new Set<string>();
+  const rowIdentities = new Set<string>();
+  for (const [rowIndex, row] of rowsSnapshot.entries()) {
+    const expectedIdentity = derivedIdentifier('domscan.row', {
+      endpoint: semantics.endpoint,
+      code: row.code,
+    });
+    if (row.code !== expectedCodes[rowIndex]) {
+      fail('invalid_output', 'DomScan adapted row code/order differs from canonical endpoint coverage.');
+    }
+    if (row.endpoint !== semantics.endpoint
+        || row.rowIdentity !== expectedIdentity
+        || row.rowIdentity !== row.sourceRecordId
+        || rowIdentities.has(row.rowIdentity)) {
+      fail('invalid_output', 'DomScan adapted row identity is missing or duplicated.');
+    }
+    rowIdentities.add(row.rowIdentity);
+    const source = sourceIds.get(row.sourceId);
+    if (source === undefined || source.record.identity.sourceRecordId !== row.sourceRecordId) {
+      fail('invalid_output', 'DomScan adapted row has no matching canonical source.');
+    }
+    if (row.observationIds === null
+        || typeof row.observationIds !== 'object'
+        || Array.isArray(row.observationIds)) {
+      fail('invalid_output', 'DomScan adapted row has invalid observation references.');
+    }
+    for (const [metricId, id] of Object.entries(row.observationIds)) {
+      if (typeof id !== 'string') {
+        fail('invalid_output', 'DomScan adapted row has invalid observation reference ID.');
+      }
+      const observation = observationIds.get(id);
+      if (observation === undefined
+          || observation.sourceId !== row.sourceId
+          || observation.record.cohort.context.metric.id !== metricId
+          || referencedObservations.has(id)) {
+        fail('invalid_output', 'DomScan adapted row has inconsistent observation references.');
+      }
+      referencedObservations.add(id);
+    }
+    // Row classification is a downstream decision input. Require its exact
+    // source-native state to agree with the canonical classification metric,
+    // rather than allowing a caller to relabel "present" as "absent".
+    const classificationMetric = semantics.endpoint === 'dns_security'
+      ? 'domscan-dns-check-classification' : 'domscan-agent-signal-classification';
+    const classificationObservationId = row.observationIds[classificationMetric];
+    const classificationObservation = classificationObservationId === undefined
+      ? undefined : observationIds.get(classificationObservationId);
+    if (classificationObservation === undefined
+        || classificationObservation.sourceId !== row.sourceId) {
+      fail('invalid_output', 'DomScan adapted row lacks a matching classification observation.');
+    }
+    try {
+      const expected = canonicalJson(classificationValue(row.classification));
+      if (canonicalJson(classificationObservation.record.value) !== expected) {
+        fail('invalid_output', 'DomScan row classification disagrees with canonical observation.');
+      }
+    } catch (error) {
+      if (error instanceof DomscanAdapterError) throw error;
+      fail('invalid_output', 'DomScan row classification is invalid canonical evidence.');
+    }
+  }
+  if (referencedObservations.size !== observations.length) {
+    fail('invalid_output', 'DomScan adapted parts have unreferenced observations.');
   }
   return {
-    collection: structuredClone(batch.collection),
-    semantics: structuredClone(input.semantics),
-    rows: structuredClone(input.rows),
+    collection: structuredClone(collection),
+    semantics: safeSemantics,
+    rows: rowsSnapshot,
   };
 }
 
