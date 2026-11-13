@@ -87,6 +87,16 @@ Duplicate topic/page URL/query assignments, invalid parent graphs, scope mismatc
 }
 ```
 
+### Human-mapped page with no query assignment (source present)
+
+```json
+{
+  "mapping": "mapped_by_human",
+  "evidenceState": "unavailable",
+  "reason": "no_query_assignment"
+}
+```
+
 ### No source window supplied
 
 ```json

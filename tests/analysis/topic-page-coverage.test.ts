@@ -476,13 +476,25 @@ test('addendum: authored page outside accepted GSC rows remains inventory not_re
       ctr: 0.1,
       averagePosition: 4,
     },
+    {
+      query: 'synthetic orphan query',
+      page: inSource,
+      clicks: 1,
+      impressions: 5,
+      ctr: 0.2,
+      averagePosition: 3,
+    },
   ]);
   const window = adapt(artifact);
   const row = window.rows[0]!;
+  const orphan = window.rows[1]!;
   const report = analyzeTopicPageCoverage(baseInvocation(
     window,
     [{ topicId: 'topic-a', pageId: row.pageId }, { topicId: 'topic-b', pageId: 'inventory-only' }],
-    [{ queryId: row.queryId, topicId: 'topic-a' }],
+    [
+      { queryId: row.queryId, topicId: 'topic-a' },
+      { queryId: orphan.queryId, topicId: 'topic-b' },
+    ],
     [
       { pageId: row.pageId, url: inSource },
       { pageId: 'inventory-only', url: 'https://example.test/never-in-gsc' },
@@ -698,6 +710,94 @@ test('correction: present source exposes method adapter schema provenance', () =
     assert.ok(report.source.sourceSchema.id);
   }
   assert.ok(report.topicPageCoverageRows[0]?.evidenceRows?.[0]?.observationIds.clicks);
+});
+
+test('correction: mapped link with zero query assignments is unavailable not not_returned', () => {
+  const pageUrl = 'https://example.test/no-assign';
+  const absentUrl = 'https://example.test/never-in-gsc';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic assign present',
+      page: pageUrl,
+      clicks: 1,
+      impressions: 10,
+      ctr: 0.1,
+      averagePosition: 2,
+    },
+  ]);
+  const window = adapt(artifact);
+  const report = analyzeTopicPageCoverage({
+    scope: alphaScope,
+    universe,
+    topics: [{ topicId: 'topic-a', label: 'A' }, { topicId: 'topic-b', label: 'B' }],
+    pages: [
+      { pageId: 'page-in-gsc', url: pageUrl },
+      { pageId: 'page-absent', url: absentUrl },
+    ],
+    topicPageLinks: [
+      { topicId: 'topic-a', pageId: 'page-in-gsc' },
+      { topicId: 'topic-b', pageId: 'page-absent' },
+    ],
+    queryTopicAssignments: [],
+    policy,
+    window,
+  });
+  const inGsc = report.topicPageCoverageRows.find((row) => row.pageId === 'page-in-gsc');
+  const absent = report.topicPageCoverageRows.find((row) => row.pageId === 'page-absent');
+  assert.equal(inGsc?.evidenceState, 'unavailable');
+  assert.equal(inGsc?.reason, 'no_query_assignment');
+  assert.equal(absent?.evidenceState, 'unavailable');
+  assert.equal(absent?.reason, 'no_query_assignment');
+  assert.equal(inGsc?.evidenceRows, undefined);
+});
+
+test('correction: revoked hostile window Proxy fails typed invalid_input', () => {
+  const revoked = Proxy.revocable(
+    { providerId: 'google-search-console' },
+    {},
+  );
+  revoked.revoke();
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics: [{ topicId: 'topic-a', label: 'A' }],
+      pages: [{ pageId: 'page-a', url: 'https://example.test/a' }],
+      topicPageLinks: [{ topicId: 'topic-a', pageId: 'page-a' }],
+      queryTopicAssignments: [],
+      policy,
+      window: revoked.proxy,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_input',
+  );
+});
+
+test('correction: empty-trailing-hash inventory URL is rejected', () => {
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics: [{ topicId: 'topic-a', label: 'A' }],
+      pages: [{ pageId: 'page-a', url: 'https://example.test/a#' }],
+      topicPageLinks: [{ topicId: 'topic-a', pageId: 'page-a' }],
+      queryTopicAssignments: [],
+      policy,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_input',
+  );
+
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics: [{ topicId: 'topic-a', label: 'A' }],
+      pages: [{ pageId: 'page-a', url: 'https://example.test/a#section' }],
+      topicPageLinks: [],
+      queryTopicAssignments: [],
+      policy,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_input',
+  );
 });
 
 test('synthetic JSON proof excerpt for Product review', () => {

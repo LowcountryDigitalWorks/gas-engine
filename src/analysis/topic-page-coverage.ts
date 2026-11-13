@@ -194,8 +194,12 @@ function same(left: unknown, right: unknown): boolean {
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === null || proto === Object.prototype;
+  try {
+    const proto = Object.getPrototypeOf(value);
+    return proto === null || proto === Object.prototype;
+  } catch {
+    return false;
+  }
 }
 
 function readOptionalWindow(value: unknown): SearchAnalyticsAdaptationResult | undefined {
@@ -203,7 +207,11 @@ function readOptionalWindow(value: unknown): SearchAnalyticsAdaptationResult | u
   if (value === null) {
     fail('invalid_input', 'Optional source window must be omitted instead of null.');
   }
-  if (!isPlainRecord(value)) {
+  try {
+    if (!isPlainRecord(value)) {
+      fail('invalid_input', 'Optional source window must be a plain accepted adaptation result.');
+    }
+  } catch {
     fail('invalid_input', 'Optional source window must be a plain accepted adaptation result.');
   }
   try {
@@ -223,6 +231,9 @@ function readOptionalWindow(value: unknown): SearchAnalyticsAdaptationResult | u
 }
 
 function normalizeInventoryUrl(raw: string): string {
+  if (raw.includes('#')) {
+    fail('invalid_input', 'Inventory page URL must be canonical HTTPS without credentials or fragment.');
+  }
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -233,6 +244,7 @@ function normalizeInventoryUrl(raw: string): string {
       || parsed.username !== ''
       || parsed.password !== ''
       || parsed.hash !== ''
+      || parsed.href.includes('#')
       || parsed.hostname === ''
       || parsed.href === 'https://'
       || parsed.href === 'https:') {
@@ -619,6 +631,17 @@ export function analyzeTopicPageCoverage(input: unknown): TopicPageCoverageRepor
     const inventoryUrl = pagesById.get(link.pageId)?.url;
     if (inventoryUrl === undefined) {
       fail('invalid_assignments', 'Topic-page link pageId must resolve in inventory.');
+    }
+
+    if (assignedQueries.length === 0) {
+      rows.push({
+        topicId: link.topicId,
+        pageId: link.pageId,
+        mapping: 'mapped_by_human',
+        evidenceState: 'unavailable',
+        reason: 'no_query_assignment',
+      });
+      continue;
     }
 
     const matches = assignedQueries
