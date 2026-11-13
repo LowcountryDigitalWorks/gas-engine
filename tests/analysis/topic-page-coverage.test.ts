@@ -838,18 +838,19 @@ test('frozen graph: valid authored hierarchy and self, missing-parent, cycle ref
 });
 
 test('frozen max output bytes: full declared mapping matrix fails typed without truncation', () => {
-  const topics = Array.from({ length: MAX_TOPIC_PAGE_TOPICS }, (_, i) => ({
-    topicId: `topic-${i}`,
+  const topics = Array.from({ length: 30 }, (_, i) => ({
+    topicId: `topic-aaaaaaaa-${i}`, 
     label: `Synthetic topic ${i}`,
   }));
-  const pages = Array.from({ length: MAX_TOPIC_PAGE_PAGES }, (_, i) => ({
-    pageId: `page-${i}`,
+  const pages = Array.from({ length: 30 }, (_, i) => ({
+    pageId: `page-bbbbbbbb-${i}`, 
     url: `https://example.test/known-page/${i}`,
   }));
   const topicPageLinks = topics.flatMap((topic) =>
     pages.map((page) => ({ topicId: topic.topicId, pageId: page.pageId })));
-  assert.equal(topicPageLinks.length, MAX_TOPIC_PAGE_LINKS);
-
+  assert.equal(topicPageLinks.length, 900);
+  assert.ok(topicPageLinks.length < MAX_TOPIC_PAGE_LINKS);
+  // 900 links fit canonical input limits; the expanded evidence report exceeds 128 KiB.
   assert.throws(
     () => analyzeTopicPageCoverage({
       scope: alphaScope,
