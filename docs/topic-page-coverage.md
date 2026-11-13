@@ -42,6 +42,8 @@ Each `topicPageCoverageRow` includes:
 - `evidenceState`: `observed` | `not_returned` | `unavailable` | `incompatible`;
 - `reason` and optional bounded `evidenceRows[]` — one entry per validated query×**inventory URL** match (no aggregate clicks/impressions).
 
+**Current candidate emission:** `mapping_unknown` and `incompatible` are reserved typed states, not states produced by this narrowly frozen pure/local profile; callers must not claim them as observed outputs. Source omissions never imply zero demand or missing content. The deterministic report is bounded to 131,072 UTF-8 bytes: oversized valid input fails as typed `invalid_output` rather than truncating rows. Topic parent references must resolve within the authored universe and cannot form self-links or cycles.
+
 Evidence binding uses **exact source `queryId` + exact inventory HTTPS `pages[].url`**, not caller `pageId`. Each evidence row carries `sourcePageId`, `sourcePageUrl`, row identity, and observation IDs for clicks/impressions only.
 
 When the source window is absent, `source` is minimal `{ state: 'absent', scope }` only.
