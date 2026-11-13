@@ -49,11 +49,11 @@ Artifact fields cannot mint tenant, site, or connection authority.
 
 ## Canonical adaptation
 
-The **accepted 0.25.0 baseline** reuses existing `collection`, `source_record`, `observation`, and `CollectionBatch` contracts and emits one bounded part per endpoint. The independently source-reviewed **0.25.1 patch candidate** extends only the packing/validation implementation below. It is **not yet an accepted or deployed release**.
+The **accepted 0.25.0 baseline** reuses existing `collection`, `source_record`, `observation`, and `CollectionBatch` contracts and emitted one bounded part per endpoint. The **accepted private 0.25.1 patch** extends packing and content revalidation as described below. It was independently reviewed and Product-accepted through [Issue #167 / PR #168](https://github.com/LowcountryDigitalWorks/gas-engine/pull/168), protected-squash merged at `c2554394d3ef014c4118bdb5d95be94129dfd3a3`, with [postmerge Contracts](https://github.com/LowcountryDigitalWorks/gas-engine/actions/runs/43349864206) and [Security](https://github.com/LowcountryDigitalWorks/gas-engine/actions/runs/43349864531) SUCCESS. It remains **internal/offline source**, not a customer deployment.
 
-## Release 0.25.1 patch candidate — byte-safe canonical multi-part evidence
+## Accepted private 0.25.1 patch — byte-safe canonical multi-part evidence
 
-Valid, accepted WQT `agent_readiness` sidecars contain 12 signal rows / 24 canonical observations. Longer but still valid *trusted* provider-connection or availability identifiers can repeat across source/observation metadata and cause the 0.25.0 single-part representation to exceed the canonical **65,536-byte** bound. That is a G.A.S. canonical packing limitation, not defective WQT evidence. This candidate preserves the existing accepted **bit-identical 1-part batch** whenever it fits, including original collection, source, observation and idempotency identities. Otherwise it deterministically splits prepared rows into contiguous groups without changing the source observation meaning, canonical method, adapter version, schema or identity algorithm.
+Valid, accepted WQT `agent_readiness` sidecars contain 12 signal rows / 24 canonical observations. Longer but still valid *trusted* provider-connection or availability identifiers can repeat across source/observation metadata and cause the 0.25.0 single-part representation to exceed the canonical **65,536-byte** bound. That is a G.A.S. canonical packing limitation, not defective WQT evidence. The accepted patch preserves the existing **bit-identical 1-part batch** whenever it fits, including original collection, source, observation and idempotency identities. Otherwise it deterministically splits prepared rows into contiguous groups without changing the source observation meaning, canonical method, adapter version, schema or identity algorithm.
 
 **Existing accepted per-part ingestion bounds remain unchanged:** maximum **64 parts per collection**, maximum **16 sources** and **32 observations per part**, and at most **65,536 canonical UTF-8 JSON bytes per part**. The packer checks each candidate group at the worst-case maximum part-index metadata before forming its stable result. One row that cannot fit fails closed; no row, source, observation, completion state or reference is dropped or silently truncated. A 12-row/24-observation agent sidecar may produce multiple parts, while an 8-row/10-observation DNS sidecar generally fits one part under accepted short configuration; part count is driven by actual validated canonical bytes, **not a promised fixed count**.
 
@@ -63,7 +63,7 @@ Parts use sequential 1-based `part` indices with a common `parts` total, identic
 
 `adaptDomscanSidecarEvidence(sourceBytes, trustedConfig)` is pure/local and stores a **module-private WeakMap binding** from the exact returned object to a validated clone of the separately trusted configuration and canonical content fingerprints covering root metadata, source-native semantics, every adapted row, and every canonical bounded part. The snapshot binding is **not serialized** into JSON and must not be rebuilt from mutable evidence alone.
 
-Two explicit accepted *candidate* invocation paths (TypeScript-style example, not a new API service):
+Two accepted local invocation paths (TypeScript-style example, not a new API service):
 
 ```ts
 const original = adaptDomscanSidecarEvidence(sourceBytes, trustedConfig);
@@ -80,7 +80,7 @@ Existing one-argument callers that keep the exact result returned directly by th
 
 ## Patch verification and release gate
 
-Existing synthetic tests cover short-ID single part, long-ID multiple parts retaining 24/24 observations, canonical order/size, tamper rejection, direct one-argument trust, detached with config **and original source bytes**, and failure of detached config-only trust. Product acceptance additionally requires exact-head hosted Contracts/Security/CodeQL, 11 canonical schema checks, no new provider/network path, independent author-excluded review and guarded protected squash/postmerge success. This note records a candidate contract, **not acceptance of release 0.25.1**, provider availability, customer production ingestion, or license to make network calls. The canonical schema remains 1.0 and the DomScan adapter mapping stays 1.0.0; only the **private package patch identity** would change to 0.25.1.
+Existing synthetic tests cover short-ID single part, long-ID multiple parts retaining 24/24 observations, canonical order/size, tamper rejection, direct one-argument trust, detached with config **and original source bytes**, and failure of detached config-only trust. **Accepted release evidence:** exact-head source independent H0/M0/L1, hosted Contracts/Security/CodeQL, 11 canonical schemas, protected SHA-pinned squash and successful postmerge checks (links above). This is an accepted **private package patch 0.25.1**, not a claim of provider availability, customer production ingestion, broad external detached-consumer compatibility, or permission to make network calls. The canonical schema remains 1.0 and the DomScan adapter mapping stays 1.0.0.
 
 Source owner: [G.A.S. #167](https://github.com/LowcountryDigitalWorks/gas-engine/issues/167) / [PR #168](https://github.com/LowcountryDigitalWorks/gas-engine/pull/168). No WQT runtime repin, customer scan, account key or paid credit is required.
 
