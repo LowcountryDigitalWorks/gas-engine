@@ -740,7 +740,18 @@ export function analyzeTopicPageCoverage(input: unknown): TopicPageCoverageRepor
     },
   };
 
-  if (Buffer.byteLength(canonicalJson(report), 'utf8') > MAX_TOPIC_PAGE_OUTPUT_BYTES) {
+  // Measure the actual emitted JSON, not canonicalJson's separate 65 KiB hash-input ceiling.
+  let encodedBytes: number;
+  try {
+    const outputJson = JSON.stringify(report);
+    if (typeof outputJson !== 'string') {
+      fail('invalid_output', 'Topic-page coverage report cannot be encoded as JSON.');
+    }
+    encodedBytes = Buffer.byteLength(outputJson, 'utf8');
+  } catch {
+    fail('invalid_output', 'Topic-page coverage report cannot be encoded as JSON.');
+  }
+  if (encodedBytes > MAX_TOPIC_PAGE_OUTPUT_BYTES) {
     fail('invalid_output', 'Topic-page coverage report exceeds bounded output bytes.');
   }
 
