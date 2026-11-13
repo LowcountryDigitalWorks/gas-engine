@@ -300,7 +300,7 @@ export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace): strin
   color-scheme:dark;
   --gas-bg:#0b101b;--gas-rail:#0e1726;--gas-surface:#162235;
   --gas-raised:#1d2b41;--gas-head:#1b2840;--gas-ink:#f1f5fb;
-  --gas-muted:#b4c3d9;--gas-border:#36455e;
+  --gas-muted:#b4c3d9;--gas-border:#36455e;--gas-control-border:#738aaa;
   --gas-accent:#a59bff;--gas-on-accent:#0a1020;--gas-link:#b8b0ff;
   --gas-focus:#fbcb75;--gas-success:#92e5cf;--gas-warning:#ffd58c;
   --gas-error:#ffb4b7;--gas-selected:#302c55;
@@ -312,7 +312,7 @@ html[data-theme="light"]{
   color-scheme:light;
   --gas-bg:#eff3fa;--gas-rail:#e4e8f7;--gas-surface:#ffffff;
   --gas-raised:#f5f7fd;--gas-head:#f8f9ff;--gas-ink:#17213b;
-  --gas-muted:#3d4c69;--gas-border:#c5cedf;
+  --gas-muted:#3d4c69;--gas-border:#c5cedf;--gas-control-border:#63718a;
   --gas-accent:#5146be;--gas-on-accent:#ffffff;--gas-link:#4838ad;
   --gas-focus:#4531ab;--gas-success:#14654e;--gas-warning:#8b4d09;
   --gas-error:#9c2030;--gas-selected:#dcd8fd;
@@ -327,7 +327,7 @@ aside{background:var(--gas-rail);color:var(--gas-ink);border-right:1px solid var
 aside h1{font-size:1.16rem;line-height:1.25;margin:.55rem 0 1.1rem;letter-spacing:-.02em}
 .gas-product-subtitle{display:block;font-size:.77rem;font-weight:550;letter-spacing:.08em;text-transform:uppercase;color:var(--gas-muted);margin-top:.23rem}
 nav{display:grid;gap:.45rem}
-nav button{font:inherit;text-align:left;min-height:44px;border:1px solid var(--gas-border);
+nav button{font:inherit;text-align:left;min-height:44px;border:1px solid var(--gas-control-border);
   background:transparent;color:var(--gas-ink);border-radius:999px;padding:.62rem .85rem;cursor:pointer;
   transition:background-color .16s ease,border-color .16s ease}
 nav button:hover{background:var(--gas-raised);border-color:var(--gas-accent)}
@@ -356,7 +356,7 @@ th{background:var(--gas-raised)}
 .filters{display:flex;flex-wrap:wrap;gap:.7rem;align-items:end;margin-bottom:.8rem}
 label.field{display:grid;gap:.25rem;min-width:180px;flex:1}
 .field input,.field select,.field textarea,textarea{
-  font:inherit;width:100%;padding:.65rem;border:1px solid var(--gas-border);
+  font:inherit;width:100%;padding:.65rem;border:1px solid var(--gas-control-border);
   border-radius:10px;background:var(--gas-raised);color:var(--gas-ink)}
 .check-list{display:grid;gap:.5rem}
 .check-row{display:flex;gap:.6rem;align-items:flex-start}
@@ -371,7 +371,7 @@ button.primary{background:var(--gas-accent);color:var(--gas-on-accent);
   border:1px solid var(--gas-accent);font-weight:700}
 button.primary:hover{filter:brightness(1.08)}
 button.secondary,.mode-toggle{background:var(--gas-raised);color:var(--gas-ink);
-  border:1px solid var(--gas-border)}
+  border:1px solid var(--gas-control-border)}
 button.secondary:hover,.mode-toggle:hover{border-color:var(--gas-accent)}
 .mode-toggle[aria-checked="true"]{border-color:var(--gas-accent);
   box-shadow:inset 0 0 0 1px var(--gas-accent)}
@@ -402,15 +402,16 @@ textarea{min-height:110px}
 }
 @media (prefers-reduced-motion:reduce){nav button{transition:none}button.primary:hover{filter:none}}
 @media(max-width:800px){
-  .shell{grid-template-columns:1fr}
-  aside{position:static;height:auto;overflow:visible;padding:.75rem 1rem}
+  /* Stop auto minimum grid track sizing from propagating wide nav/metrics into the document. */
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;height:auto;min-width:0;width:100%;max-width:100%;overflow:visible;padding:.75rem 1rem}
   aside h1{margin:.3rem 0 .6rem}
-  nav{display:flex;overflow-x:auto;gap:.45rem;padding:.2rem;scroll-padding-inline:.25rem}
+  nav{display:flex;min-width:0;width:100%;max-width:100%;overflow-x:auto;gap:.45rem;padding:.2rem;scroll-padding-inline:.25rem}
   nav button{flex:0 0 auto;max-width:82vw}
   .report-grid{grid-template-columns:1fr}.full{grid-column:auto}
   .actions{margin-top:.45rem}
 }
-@media(max-width:400px){main{padding:.85rem}.cards{grid-template-columns:1fr 1fr}}
+@media(max-width:400px){main{padding:.85rem}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{min-width:0;overflow-wrap:anywhere}}
 @media print{
   :root,html[data-theme="light"]{color-scheme:light}
   aside,.interactive-only{display:none!important}
