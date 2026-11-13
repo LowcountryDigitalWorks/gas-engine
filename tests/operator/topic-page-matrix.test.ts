@@ -153,3 +153,18 @@ test('source scope, canonical URLs and trusted origin are all required before op
     (error: unknown) => error instanceof OperatorWorkspaceError && error.code === 'invalid_request',
   );
 });
+
+test('a literal human pageId named unassigned is not confused with unmapped topic sentinel', async (t) => {
+  const workspace = await trustedWorkspace(t);
+  const target = new URL(workspace.trustedTarget).origin;
+  const input = authoredInput(workspace);
+  const html = renderOperatorWorkspaceHtml(workspace, {
+    ...input,
+    topics: [{ topicId: 'topic-focus', label: 'A human-assigned real page' }],
+    pages: [{ pageId: 'unassigned', url: target + '/real-page' }],
+    topicPageLinks: [{ topicId: 'topic-focus', pageId: 'unassigned' }],
+  });
+  assert.match(html, /A human-assigned real page/);
+  assert.match(html, /<td>https:\/\/example\.test\/real-page<\/td><td>mapped_by_human<\/td>/);
+  assert.doesNotMatch(html, /No page assigned by a human/);
+});
