@@ -293,9 +293,14 @@ function renderTopicPageEvidenceMatrix(workspace: OperatorWorkspace, invocation:
   const topicLabels = new Map(sourceInput.topics.map((topic) => [topic.topicId, topic.label]));
   const pageUrls = new Map(sourceInput.pages.map((page) => [page.pageId, page.url]));
   for (const page of sourceInput.pages) {
-    // The analyzer validates canonical HTTPS and the source-property boundary;
-    // the workspace adds a stricter exact-origin bound for this optional local view.
-    if (new URL(page.url).origin !== targetOrigin) {
+    // The analyzer validates HTTPS and the GSC property boundary. Preserve
+    // identity with its normalized URL rather than display an unnormalized
+    // caller string as if it were the canonical page.
+    const canonical = new URL(page.url);
+    if (canonical.href !== page.url) {
+      throw new OperatorWorkspaceError('invalid_request', 'Topic-page presentation requires canonical authored URLs.');
+    }
+    if (canonical.origin !== targetOrigin) {
       throw new OperatorWorkspaceError('target_mismatch', 'Authored page is outside the trusted workspace origin.');
     }
   }
