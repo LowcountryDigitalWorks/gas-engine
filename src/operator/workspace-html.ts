@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { Contract } from '../contracts/wire.js';
+import { analyzeTopicPageCoverage } from '../analysis/topic-page-coverage.js';
 import { DECISION_CYCLE_HARD_LIMITS } from './decision-cycle.js';
 import {
   OPERATOR_WORKSPACE_VERSION,
+  OperatorWorkspaceError,
   type OperatorWorkspace,
   type OperatorWorkspaceEvidenceRow,
 } from './workspace.js';
@@ -245,7 +247,117 @@ qs('#download-report-request').addEventListener('click',()=>{try{const selected=
 qs('#print-workspace').addEventListener('click',()=>window.print());`;
 }
 
-export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace): string {
+
+/**
+ * Pure, optional presentation over the already-accepted Release 0.26 analyzer.
+ * A single cloned trusted-host invocation supplies both the validated report and
+ * authored topic/page labels. The untrusted HTML never accepts a result as authority.
+ */
+function renderTopicPageEvidenceMatrix(workspace: OperatorWorkspace, invocation: unknown): string {
+  const heading = '<h3>Topic–page evidence matrix (local / human-authored mapping)</h3>';
+  if (invocation === undefined) {
+    return heading + '<p class="empty">Not assessed — no trusted topic/page invocation was supplied. This is not evidence of a content gap or a zero.</p>';
+  }
+
+  let snapshot: unknown;
+  try {
+    snapshot = structuredClone(invocation);
+  } catch {
+    throw new OperatorWorkspaceError('invalid_request', 'Topic-page presentation input must be cloneable local evidence.');
+  }
+  // This call must succeed before any original authored labels, pages or rows
+  // are used. Its source/window/scope/assignment checks are never duplicated or weakened.
+  const report = analyzeTopicPageCoverage(snapshot);
+  if (report.scope.tenantId !== workspace.scope.tenantId
+      || report.scope.siteId !== workspace.scope.siteId
+      || report.scope.siteScopeRevisionId !== workspace.scope.siteScopeRevisionId) {
+    throw new OperatorWorkspaceError('scope_mismatch', 'Topic-page report is outside the trusted workspace scope.');
+  }
+
+  const sourceInput = snapshot as {
+    readonly topics: readonly { readonly topicId: string; readonly label: string }[];
+    readonly pages: readonly { readonly pageId: string; readonly url: string }[];
+  };
+  let targetOrigin: string;
+  try {
+    const trustedTarget = new URL(workspace.trustedTarget);
+    if (trustedTarget.protocol !== 'https:' || trustedTarget.username || trustedTarget.password
+        || trustedTarget.hash || trustedTarget.search) {
+      throw new Error('Noncanonical trusted target');
+    }
+    targetOrigin = trustedTarget.origin;
+  } catch {
+    throw new OperatorWorkspaceError('target_mismatch', 'Topic-page presentation requires an HTTPS trusted workspace target.');
+  }
+
+  const topicLabels = new Map(sourceInput.topics.map((topic) => [topic.topicId, topic.label]));
+  const pageUrls = new Map(sourceInput.pages.map((page) => [page.pageId, page.url]));
+  for (const page of sourceInput.pages) {
+    // The analyzer validates canonical HTTPS and the source-property boundary;
+    // the workspace adds a stricter exact-origin bound for this optional local view.
+    if (new URL(page.url).origin !== targetOrigin) {
+      throw new OperatorWorkspaceError('target_mismatch', 'Authored page is outside the trusted workspace origin.');
+    }
+  }
+
+  const matrixRows = report.topicPageCoverageRows.map((row) => {
+    const label = topicLabels.get(row.topicId);
+    const url = row.pageId === 'unassigned' ? undefined : pageUrls.get(row.pageId);
+    if (label === undefined || (row.pageId !== 'unassigned' && url === undefined)) {
+      throw new OperatorWorkspaceError('invalid_output', 'Validated topic/page identity cannot be resolved for presentation.');
+    }
+    return [
+      label,
+      row.topicId,
+      url ?? 'No page assigned by a human',
+      row.mapping,
+      row.evidenceState,
+      row.reason,
+    ];
+  });
+  // One original query×page observation per row. Never sum impressions/clicks
+  // across queries or interpret omitted/unavailable source rows as numeric zero.
+  const observationRows = report.topicPageCoverageRows.flatMap((row) =>
+    (row.evidenceRows ?? []).map((item) => [
+      row.topicId, row.pageId, item.queryId, item.sourceRecordId,
+      item.rowIdentity, item.clicks, item.impressions,
+    ]));
+  const sourceRowsForMatrix = report.source.state === 'present'
+    ? [[
+        report.source.providerId, report.source.property, report.source.collectionId,
+        JSON.stringify(report.source.method), JSON.stringify(report.source.period),
+        JSON.stringify(report.source.freshness), JSON.stringify(report.source.coverage),
+      ]]
+    : [];
+  return heading
+    + '<div class="notice"><strong>Interpretation limit:</strong> Authored assignments are human mapping, not rankings or automatically discovered content gaps. '
+    + 'GSC query/page rows may be non-exhaustive. A not_returned or unavailable state is not zero or proof of no demand. '
+    + 'No content action is generated.</div>'
+    + '<p><strong>Coverage outcome:</strong> ' + text(report.summary.outcome)
+    + ' · <strong>Human editorial review required:</strong> yes'
+    + ' · <strong>Source limitations:</strong> ' + text(report.summary.sourceLimitations.join('; '))
+    + ' · <strong>Exact report identity:</strong> <code>' + text(report.id) + '</code></p>'
+    + table(
+        'Accepted topic-to-existing-page pairs (no inferred missing pages)',
+        ['Human topic label', 'Topic ID', 'Authored canonical page URL', 'Mapping', 'Evidence state', 'Exact reason'],
+        matrixRows,
+        'No authored topic/page assignments were returned.',
+      )
+    + table(
+        'Original GSC source/method/freshness/coverage, when supplied',
+        ['Provider', 'Property', 'Collection ID', 'Method', 'Window', 'Freshness', 'Coverage'],
+        sourceRowsForMatrix,
+        'No GSC source window was supplied; all mapped-pair evidence remains unavailable.',
+      )
+    + table(
+        'Exact independently observed query×page rows — no metric aggregation',
+        ['Topic ID', 'Page ID', 'Query ID', 'Original source record', 'Row identity', 'Observed clicks', 'Observed impressions'],
+        observationRows,
+        'No individual observed GSC query×page rows. This does not establish measured zero.',
+      );
+}
+
+export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace, topicPageInvocation?: unknown): string {
   const providers = [...new Set(workspace.evidenceRows.flatMap((row) => row.providerIds))].sort();
   const modules = [...new Set(workspace.evidenceRows.map((row) => row.moduleId))].sort();
   const states = [...new Set(workspace.evidenceRows.map((row) => row.state))].sort();
@@ -478,6 +590,7 @@ ${stateCounts}
 <button type="button" class="secondary" id="reset-evidence">Reset filters</button>
 </div>
 ${sources}
+${renderTopicPageEvidenceMatrix(workspace, topicPageInvocation)}
 <div class="table-wrap"><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
 </section>
 
