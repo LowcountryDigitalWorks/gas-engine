@@ -43,7 +43,11 @@ function table(
     ? `<tr><td colspan="${String(headers.length)}">${escapeHtml(empty)}</td></tr>`
     : rows.map((row) =>
       '<tr>' + row.map((cell) => `<td>${text(cell)}</td>`).join('') + '</tr>').join('');
-  return `<div class="table-wrap"><table><caption>${escapeHtml(caption)}</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  const isDense = headers.length >= 5;
+  const region = isDense
+    ? ` role="region" tabindex="0" aria-label="${attr(caption + '. Scroll sideways to read more columns on narrow screens.')}"`
+    : '';
+  return `<div class="table-wrap${isDense ? ' wide-table' : ''}"${region}><table><caption>${escapeHtml(caption)}</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 function evidenceReference(row: OperatorWorkspaceEvidenceRow): string {
@@ -468,6 +472,8 @@ header.workspace-head h1{margin:.25rem 0;overflow-wrap:anywhere}
 [data-panel]{max-width:1180px}[data-panel][hidden]{display:none}
 h2{line-height:1.2;outline:none}h3{margin-top:1.5rem}
 .table-wrap{overflow-x:auto;max-width:100%;border-radius:12px}
+.wide-table:focus-visible{outline:3px solid var(--gas-focus);outline-offset:2px}
+.table-scroll-hint{display:none}
 table{width:100%;border-collapse:collapse;background:var(--gas-surface);
   color:var(--gas-ink);table-layout:fixed}
 caption{text-align:left;font-weight:700;padding:.5rem 0}
@@ -531,6 +537,9 @@ textarea{min-height:110px}
   nav button{flex:0 0 auto;max-width:82vw}
   .report-grid{grid-template-columns:1fr}.full{grid-column:auto}
   .actions{margin-top:.45rem}
+  /* Dense evidence grids need readable columns with contained horizontal scrolling. */
+  .wide-table table{min-width:780px;table-layout:auto}
+  .table-scroll-hint{display:block;color:var(--gas-muted);font-weight:600}
 }
 @media(max-width:400px){main{padding:.85rem}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{min-width:0;overflow-wrap:anywhere}}
 @media print{
@@ -538,6 +547,7 @@ textarea{min-height:110px}
   aside,.interactive-only{display:none!important}
   body{background:#fff!important;color:#111!important;background-image:none!important}
   .shell{display:block}main{padding:.3in;max-width:none}
+  .wide-table table{min-width:0!important;table-layout:fixed}
   [data-panel]{display:block!important;break-before:page}
   header.workspace-head{break-after:avoid;background:#fff!important;color:#111!important;box-shadow:none}
   .card,.notice,.form-card,.filters,.check-row,.facts div,table,th,td{
@@ -598,9 +608,10 @@ ${stateCounts}
 <label class="field">Text filter<input id="evidence-text" type="search" autocomplete="off" placeholder="URL, query, kind, identity"></label>
 <button type="button" class="secondary" id="reset-evidence">Reset filters</button>
 </div>
+<p class="table-scroll-hint">On narrow screens, scroll dense tables sideways to read all columns. Keyboard: focus the labeled table region, then use arrow keys.</p>
 ${sources}
 ${renderTopicPageEvidenceMatrix(workspace, topicPageInvocation)}
-<div class="table-wrap"><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
+<div class="table-wrap wide-table" role="region" tabindex="0" aria-label="Accepted evidence and attention drill-down. Scroll sideways to read more columns on narrow screens."><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
 </section>
 
 <section id="attention" data-panel="attention" hidden>
