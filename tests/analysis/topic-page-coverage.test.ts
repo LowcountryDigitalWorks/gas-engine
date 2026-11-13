@@ -800,6 +800,70 @@ test('correction: empty-trailing-hash inventory URL is rejected', () => {
   );
 });
 
+
+test('frozen graph: valid authored hierarchy and self, missing-parent, cycle references', () => {
+  const input = baseInvocation(
+    undefined,
+    [{ topicId: 'topic-a', pageId: 'page-a' }],
+    [],
+    [{ pageId: 'page-a', url: 'https://example.test/services/a' }],
+  );
+  const valid = {
+    ...input,
+    topics: [
+      { topicId: 'topic-a', label: 'A' },
+      { topicId: 'topic-b', label: 'B', parentTopicId: 'topic-a' },
+      { topicId: 'topic-c', label: 'C', parentTopicId: 'topic-b' },
+    ],
+  };
+  const report = analyzeTopicPageCoverage(valid);
+  assert.equal(report.topicPageCoverageRows.length, 3);
+  assert.equal(report.topicPageCoverageRows[0]?.evidenceState, 'unavailable');
+  assert.equal(report.summary.noAutomaticContentAction, true);
+
+  const badHierarchies = [
+    [{ topicId: 'topic-a', label: 'A', parentTopicId: 'topic-a' }],
+    [{ topicId: 'topic-a', label: 'A', parentTopicId: 'unlisted-topic' }],
+    [
+      { topicId: 'topic-a', label: 'A', parentTopicId: 'topic-b' },
+      { topicId: 'topic-b', label: 'B', parentTopicId: 'topic-a' },
+    ],
+  ];
+  for (const topics of badHierarchies) {
+    assert.throws(
+      () => analyzeTopicPageCoverage({ ...input, topics }),
+      (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_assignments',
+    );
+  }
+});
+
+test('frozen max output bytes: full declared mapping matrix fails typed without truncation', () => {
+  const topics = Array.from({ length: MAX_TOPIC_PAGE_TOPICS }, (_, i) => ({
+    topicId: `topic-${i}`,
+    label: `Synthetic topic ${i}`,
+  }));
+  const pages = Array.from({ length: MAX_TOPIC_PAGE_PAGES }, (_, i) => ({
+    pageId: `page-${i}`,
+    url: `https://example.test/known-page/${i}`,
+  }));
+  const topicPageLinks = topics.flatMap((topic) =>
+    pages.map((page) => ({ topicId: topic.topicId, pageId: page.pageId })));
+  assert.equal(topicPageLinks.length, MAX_TOPIC_PAGE_LINKS);
+
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics,
+      pages,
+      topicPageLinks,
+      queryTopicAssignments: [],
+      policy,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_output',
+  );
+});
+
 test('synthetic JSON proof excerpt for Product review', () => {
   const pageUrl = 'https://example.test/proof';
   const artifact = topicArtifact([
