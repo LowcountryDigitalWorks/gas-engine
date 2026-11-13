@@ -83,6 +83,16 @@ test('optional matrix is honestly not assessed when trusted invocation is absent
   assert.match(html, /role="switch" id="theme-toggle"/);
   assert.equal((html.match(/data-nav=/g) ?? []).length, 6, 'no seventh workspace panel');
   assert.match(html, /connect-src 'none'/);
+  assert.ok(html.includes('class="table-wrap wide-table" role="region" tabindex="0" aria-label='),
+    'dense evidence tables must be keyboard-accessible horizontal scroll regions');
+  assert.ok(html.includes('class="table-wrap"><table><caption>Evidence / attention state counts</caption>'),
+    'compact state-count tables must not become unnecessarily wide');
+  assert.ok(html.includes('.wide-table table{min-width:780px;table-layout:auto}'),
+    'mobile dense tables must preserve readable columns inside scroll containers');
+  assert.ok(html.includes('On narrow screens, scroll dense tables sideways'),
+    'mobile users should see explicit horizontal-scroll help');
+  assert.ok(html.includes('.wide-table table{min-width:0!important;table-layout:fixed}'),
+    'print rendering must return dense tables to page-width layout');
 });
 
 test('source-free authored mapping remains unavailable and labels are escaped, not treated as markup', async (t) => {
