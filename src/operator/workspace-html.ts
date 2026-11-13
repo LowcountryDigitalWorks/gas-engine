@@ -230,6 +230,8 @@ const DECISION_POLICY=${JSON.stringify(decisionPolicy)};
 const WORKSPACE_EVALUATED_AT=${JSON.stringify(workspace.evaluatedAt)};
 const qs=(selector)=>document.querySelector(selector);
 const qsa=(selector)=>Array.from(document.querySelectorAll(selector));
+const mode=qs('#theme-toggle');
+mode.addEventListener('click',()=>{const light=document.documentElement.dataset.theme!=='light';document.documentElement.dataset.theme=light?'light':'dark';mode.setAttribute('aria-checked',String(light));mode.textContent=light?'Light mode: on':'Light mode: off';});
 function setMessage(id,message,isError=false){const node=qs(id);if(!node)return;node.textContent=message;node.classList.toggle('error',isError);}
 function downloadJson(value,name){const text=JSON.stringify(value,null,2)+'\\n';if(new TextEncoder().encode(text).byteLength>256000){throw new Error('Downloaded request exceeds the browser convenience bound.');}const blob=new Blob([text],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);}
 qsa('[data-nav]').forEach((button)=>button.addEventListener('click',()=>{const target=button.dataset.nav;qsa('[data-panel]').forEach((panel)=>{panel.hidden=panel.dataset.panel!==target;});qsa('[data-nav]').forEach((item)=>item.setAttribute('aria-pressed',String(item===button)));const heading=qs('#'+target+' h2');if(heading)heading.focus();}));
@@ -285,39 +287,150 @@ export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace): strin
   );
 
   const html = `<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-${scriptHash}'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'">
 <title>G.A.S. Operator Workspace — ${escapeHtml(workspace.scope.siteId)}</title>
 <style>
-:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#102a3a;background:#eef2f0;line-height:1.45}
-*{box-sizing:border-box}body{margin:0}.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
-aside{background:#102a3a;color:#fff;padding:1.25rem;position:sticky;top:0;height:100vh;overflow:auto}aside h1{font-size:1.2rem;margin:.2rem 0 1rem}
-nav{display:grid;gap:.45rem}nav button{font:inherit;text-align:left;border:1px solid #8db8b2;background:transparent;color:#fff;border-radius:.45rem;padding:.6rem .7rem;cursor:pointer}
-nav button[aria-pressed="true"]{background:#f3efe6;color:#102a3a}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #d7b655;outline-offset:2px}
-main{padding:1.5rem;max-width:1400px;width:100%}header.workspace-head{background:#fff;border:1px solid #d1dada;border-radius:.65rem;padding:1rem;margin-bottom:1rem}
-.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:.15rem .5rem;font-weight:700;letter-spacing:.03em}.warning{color:#7a4e00}.good{color:#2f766f}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.75rem}.card,.notice,.form-card{background:#fff;border:1px solid #d1dada;border-radius:.6rem;padding:.85rem}.card strong{display:block;font-size:1.45rem}
-[data-panel]{max-width:1180px}[data-panel][hidden]{display:none}h2{line-height:1.2;outline:none}h3{margin-top:1.5rem}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:#fff;table-layout:fixed}
-caption{text-align:left;font-weight:700;padding:.5rem 0}th,td{border:1px solid #d1dada;padding:.55rem;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#f3efe6}
-.filters{display:flex;flex-wrap:wrap;gap:.7rem;align-items:end;background:#fff;border:1px solid #d1dada;border-radius:.6rem;padding:.8rem;margin-bottom:.8rem}
-label.field{display:grid;gap:.25rem;min-width:180px;flex:1}.field input,.field select,.field textarea,textarea{font:inherit;width:100%;padding:.5rem;border:1px solid #8ca0a5;border-radius:.35rem;background:#fff;color:#102a3a}
-.check-list{display:grid;gap:.5rem}.check-row{display:flex;gap:.6rem;align-items:flex-start;background:#fff;border:1px solid #d1dada;border-radius:.5rem;padding:.65rem}.check-row input{margin-top:.25rem}.check-row small{overflow-wrap:anywhere}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}.facts div{background:#fff;border:1px solid #d1dada;border-radius:.5rem;padding:.7rem}dt{font-weight:700}dd{margin:.2rem 0 0;overflow-wrap:anywhere}
-.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}button.primary{background:#2f766f;color:#fff;border:0;border-radius:.4rem;padding:.6rem .85rem;font-weight:700;cursor:pointer}button.secondary{background:#fff;color:#102a3a;border:1px solid #7d9298;border-radius:.4rem;padding:.6rem .85rem;cursor:pointer}
-.notice{border-left:4px solid #2f766f}.empty{font-style:italic;color:#53666d}.message{min-height:1.4em;font-weight:700;color:#2f766f}.message.error{color:#9a2d20}.mono,code{overflow-wrap:anywhere}
-textarea{min-height:110px}.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.full{grid-column:1/-1}
-@media(max-width:800px){.shell{grid-template-columns:1fr}aside{position:static;height:auto}.report-grid{grid-template-columns:1fr}.full{grid-column:auto}}
-@media print{aside,.interactive-only{display:none!important}.shell{display:block}main{padding:.3in;max-width:none}[data-panel]{display:block!important;break-before:page}header.workspace-head{break-after:avoid}.table-wrap{overflow:visible}table{font-size:8.5pt}}
+/* G.A.S. Signal Glass: product-specific spectral violet + cool cyan identity.
+   Dark is intentional default; light mode is user-selected and session-only. */
+:root{
+  color-scheme:dark;
+  --gas-bg:#0b101b;--gas-rail:#0e1726;--gas-surface:#162235;
+  --gas-raised:#1d2b41;--gas-head:#1b2840;--gas-ink:#f1f5fb;
+  --gas-muted:#b4c3d9;--gas-border:#36455e;--gas-control-border:#738aaa;
+  --gas-accent:#a59bff;--gas-on-accent:#0a1020;--gas-link:#b8b0ff;
+  --gas-focus:#fbcb75;--gas-success:#92e5cf;--gas-warning:#ffd58c;
+  --gas-error:#ffb4b7;--gas-selected:#302c55;
+  --gas-glass:rgba(21,32,53,.94);--gas-shadow:0 16px 36px rgba(0,0,0,.23);
+  font-family:"Manrope",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--gas-ink);background:var(--gas-bg);line-height:1.5;
+}
+html[data-theme="light"]{
+  color-scheme:light;
+  --gas-bg:#eff3fa;--gas-rail:#e4e8f7;--gas-surface:#ffffff;
+  --gas-raised:#f5f7fd;--gas-head:#f8f9ff;--gas-ink:#17213b;
+  --gas-muted:#3d4c69;--gas-border:#c5cedf;--gas-control-border:#63718a;
+  --gas-accent:#5146be;--gas-on-accent:#ffffff;--gas-link:#4838ad;
+  --gas-focus:#4531ab;--gas-success:#14654e;--gas-warning:#8b4d09;
+  --gas-error:#9c2030;--gas-selected:#dcd8fd;
+  --gas-glass:rgba(248,249,255,.95);--gas-shadow:0 12px 32px rgba(34,43,83,.1);
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--gas-ink);background:var(--gas-bg);
+  background-image:radial-gradient(circle at 98% 0%,rgba(133,122,242,.12),transparent 33rem)}
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+aside{background:var(--gas-rail);color:var(--gas-ink);border-right:1px solid var(--gas-border);
+  padding:1.25rem;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:1.16rem;line-height:1.25;margin:.55rem 0 1.1rem;letter-spacing:-.02em}
+.gas-product-subtitle{display:block;font-size:.77rem;font-weight:550;letter-spacing:.08em;text-transform:uppercase;color:var(--gas-muted);margin-top:.23rem}
+nav{display:grid;gap:.45rem}
+nav button{font:inherit;text-align:left;min-height:44px;border:1px solid var(--gas-control-border);
+  background:transparent;color:var(--gas-ink);border-radius:999px;padding:.62rem .85rem;cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease}
+nav button:hover{background:var(--gas-raised);border-color:var(--gas-accent)}
+nav button[aria-pressed="true"]{background:var(--gas-selected);border-color:var(--gas-accent);color:var(--gas-ink)}
+main{padding:clamp(1rem,2.5vw,2rem);max-width:1400px;width:100%;min-width:0}
+header.workspace-head{background:var(--gas-head);border:1px solid var(--gas-border);
+  border-radius:24px;padding:clamp(1rem,2vw,1.5rem);margin-bottom:1rem;box-shadow:var(--gas-shadow)}
+header.workspace-head h1{margin:.25rem 0;overflow-wrap:anywhere}
+.badge{display:inline-block;border:1px solid var(--gas-border);color:var(--gas-ink);
+  border-radius:999px;padding:.2rem .6rem;font-weight:700;letter-spacing:.035em}
+.warning{color:var(--gas-warning)}.good{color:var(--gas-success)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.75rem}
+.card,.notice,.form-card,.filters,.check-row,.facts div{background:var(--gas-surface);
+  color:var(--gas-ink);border:1px solid var(--gas-border);border-radius:16px;padding:.85rem;
+  box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.card strong{display:block;font-size:1.45rem;letter-spacing:-.025em}
+[data-panel]{max-width:1180px}[data-panel][hidden]{display:none}
+h2{line-height:1.2;outline:none}h3{margin-top:1.5rem}
+.table-wrap{overflow-x:auto;max-width:100%;border-radius:12px}
+table{width:100%;border-collapse:collapse;background:var(--gas-surface);
+  color:var(--gas-ink);table-layout:fixed}
+caption{text-align:left;font-weight:700;padding:.5rem 0}
+th,td{border:1px solid var(--gas-border);padding:.55rem;text-align:left;
+  vertical-align:top;overflow-wrap:anywhere}
+th{background:var(--gas-raised)}
+.filters{display:flex;flex-wrap:wrap;gap:.7rem;align-items:end;margin-bottom:.8rem}
+label.field{display:grid;gap:.25rem;min-width:180px;flex:1}
+.field input,.field select,.field textarea,textarea{
+  font:inherit;width:100%;padding:.65rem;border:1px solid var(--gas-control-border);
+  border-radius:10px;background:var(--gas-raised);color:var(--gas-ink)}
+.check-list{display:grid;gap:.5rem}
+.check-row{display:flex;gap:.6rem;align-items:flex-start}
+.check-row input{margin-top:.25rem;accent-color:var(--gas-accent)}
+.check-row small{overflow-wrap:anywhere}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}
+dt{font-weight:700}dd{margin:.2rem 0 0;overflow-wrap:anywhere}
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}
+button.primary,button.secondary,.mode-toggle{font:inherit;min-height:44px;border-radius:999px;
+  padding:.65rem 1rem;cursor:pointer}
+button.primary{background:var(--gas-accent);color:var(--gas-on-accent);
+  border:1px solid var(--gas-accent);font-weight:700}
+button.primary:hover{filter:brightness(1.08)}
+button.secondary,.mode-toggle{background:var(--gas-raised);color:var(--gas-ink);
+  border:1px solid var(--gas-control-border)}
+button.secondary:hover,.mode-toggle:hover{border-color:var(--gas-accent)}
+.mode-toggle[aria-checked="true"]{border-color:var(--gas-accent);
+  box-shadow:inset 0 0 0 1px var(--gas-accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,
+a:focus-visible{outline:3px solid var(--gas-focus);outline-offset:3px}
+.notice{border-left:4px solid var(--gas-accent)}
+.empty{font-style:italic;color:var(--gas-muted)}
+.message{min-height:1.4em;font-weight:700;color:var(--gas-success)}
+.message.error{color:var(--gas-error)}
+.mono,code{overflow-wrap:anywhere}
+a{color:var(--gas-link)}a:hover{text-decoration-thickness:2px}
+textarea{min-height:110px}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.full{grid-column:1/-1}
+/* Glass only on app chrome, not reports, evidence, controls or dense tables. */
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  aside{background:var(--gas-glass);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+  header.workspace-head{background:var(--gas-glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+}
+@media (prefers-reduced-transparency:reduce){
+  aside{background:var(--gas-rail);-webkit-backdrop-filter:none;backdrop-filter:none}
+  header.workspace-head{background:var(--gas-head);-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media (prefers-contrast:more){
+  aside{background:var(--gas-rail);-webkit-backdrop-filter:none;backdrop-filter:none}
+  header.workspace-head{background:var(--gas-head);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .card,.notice,.form-card,.filters,.check-row,.facts div{border-width:2px}
+  nav button,button.secondary,.mode-toggle{border-width:2px}
+}
+@media (prefers-reduced-motion:reduce){nav button{transition:none}button.primary:hover{filter:none}}
+@media(max-width:800px){
+  /* Stop auto minimum grid track sizing from propagating wide nav/metrics into the document. */
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;height:auto;min-width:0;width:100%;max-width:100%;overflow:visible;padding:.75rem 1rem}
+  aside h1{margin:.3rem 0 .6rem}
+  nav{display:flex;min-width:0;width:100%;max-width:100%;overflow-x:auto;gap:.45rem;padding:.2rem;scroll-padding-inline:.25rem}
+  nav button{flex:0 0 auto;max-width:82vw}
+  .report-grid{grid-template-columns:1fr}.full{grid-column:auto}
+  .actions{margin-top:.45rem}
+}
+@media(max-width:400px){main{padding:.85rem}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{min-width:0;overflow-wrap:anywhere}}
+@media print{
+  :root,html[data-theme="light"]{color-scheme:light}
+  aside,.interactive-only{display:none!important}
+  body{background:#fff!important;color:#111!important;background-image:none!important}
+  .shell{display:block}main{padding:.3in;max-width:none}
+  [data-panel]{display:block!important;break-before:page}
+  header.workspace-head{break-after:avoid;background:#fff!important;color:#111!important;box-shadow:none}
+  .card,.notice,.form-card,.filters,.check-row,.facts div,table,th,td{
+    background:#fff!important;color:#111!important;border-color:#777!important;box-shadow:none}
+  .badge,.warning,.good,.empty,.message{color:#111!important}
+  .table-wrap{overflow:visible}table{font-size:8.5pt}
+}
 </style>
 </head>
 <body>
 <div class="shell">
 <aside>
 <p class="badge">INTERNAL WORKBENCH</p>
-<h1>G.A.S. Operator Workspace</h1>
+<h1>G.A.S. <span class="gas-product-subtitle">Signal Intelligence</span></h1>
 <nav aria-label="Workspace sections">
 <button type="button" data-nav="overview" aria-pressed="true">1. Overview</button>
 <button type="button" data-nav="evidence" aria-pressed="false">2. Evidence / readiness</button>
@@ -326,7 +439,7 @@ textarea{min-height:110px}.report-grid{display:grid;grid-template-columns:1fr 1f
 <button type="button" data-nav="history" aria-pressed="false">5. History / timeline</button>
 <button type="button" data-nav="reports" aria-pressed="false">6. Reports</button>
 </nav>
-<div class="actions"><button type="button" class="secondary" id="print-workspace">Print workspace</button></div>
+<div class="actions"><button type="button" class="mode-toggle" role="switch" id="theme-toggle" aria-label="Light mode" aria-checked="false">Light mode: off</button><button type="button" class="secondary" id="print-workspace">Print workspace</button></div>
 </aside>
 <main>
 <header class="workspace-head">
