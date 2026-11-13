@@ -37,10 +37,14 @@ Deterministic report `gsc.topic-page-coverage:<hash>` binding universe, inventor
 
 Each `topicPageCoverageRow` includes:
 
-- authored `topicId` and `pageId`;
+- authored `topicId` and `pageId` (inventory identity, independent of GSC `pageId`);
 - `mapping`: `mapped_by_human` | `unmapped` | `mapping_unknown`;
 - `evidenceState`: `observed` | `not_returned` | `unavailable` | `incompatible`;
-- `reason` and optional `evidence` with **only** exact observed `clicks` and `impressions` plus source refs when a single validated query×page row returned.
+- `reason` and optional bounded `evidenceRows[]` — one entry per validated query×**inventory URL** match (no aggregate clicks/impressions).
+
+Evidence binding uses **exact source `queryId` + exact inventory HTTPS `pages[].url`**, not caller `pageId`. Each evidence row carries `sourcePageId`, `sourcePageUrl`, row identity, and observation IDs for clicks/impressions only.
+
+When the source window is absent, `source` is minimal `{ state: 'absent', scope }` only.
 
 Summary always sets `humanEditorialReviewRequired: true` and `noAutomaticContentAction: true`, with an outcome among:
 
@@ -60,13 +64,17 @@ Duplicate topic/page URL/query assignments, invalid parent graphs, scope mismatc
 
 ```json
 {
+  "pageId": "custom-home",
   "evidenceState": "observed",
-  "evidence": {
-    "clicks": 7,
-    "impressions": 140,
-    "queryId": "gsc.query:…",
-    "pageId": "gsc.page:…"
-  }
+  "evidenceRows": [
+    {
+      "queryId": "gsc.query:…",
+      "sourcePageId": "gsc.page:…",
+      "sourcePageUrl": "https://example.test/services/alpha",
+      "clicks": 7,
+      "impressions": 140
+    }
+  ]
 }
 ```
 

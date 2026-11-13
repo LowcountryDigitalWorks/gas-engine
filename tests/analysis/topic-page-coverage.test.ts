@@ -84,6 +84,10 @@ function jsonProof(report: TopicPageCoverageReport): unknown {
     rowCount: report.topicPageCoverageRows.length,
     observed: report.topicPageCoverageRows.filter((row) => row.evidenceState === 'observed').length,
     notReturned: report.topicPageCoverageRows.filter((row) => row.evidenceState === 'not_returned').length,
+    evidenceRowCount: report.topicPageCoverageRows.reduce(
+      (count, row) => count + (row.evidenceRows?.length ?? 0),
+      0,
+    ),
   };
 }
 
@@ -101,19 +105,22 @@ test('1) mapped topic/page returns exact observed GSC clicks and impressions', (
   ]);
   const window = adapt(artifact);
   const row = window.rows[0]!;
-  const pageId = row.pageId;
   const report = analyzeTopicPageCoverage(baseInvocation(
     window,
-    [{ topicId: 'topic-a', pageId }],
+    [{ topicId: 'topic-a', pageId: 'custom-home' }],
     [{ queryId: row.queryId, topicId: 'topic-a' }],
-    [{ pageId, url: pageUrl }],
+    [{ pageId: 'custom-home', url: pageUrl }],
   ));
   assert.equal(report.topicPageCoverageRows.length, 2);
-  const observed = report.topicPageCoverageRows.find((entry) => entry.topicId === 'topic-a' && entry.pageId === pageId);
+  const observed = report.topicPageCoverageRows.find((entry) => entry.topicId === 'topic-a' && entry.pageId === 'custom-home');
   assert.ok(observed);
   assert.equal(observed.evidenceState, 'observed');
-  assert.equal(observed.evidence?.clicks, 7);
-  assert.equal(observed.evidence?.impressions, 140);
+  assert.equal(observed.evidenceRows?.length, 1);
+  assert.equal(observed.evidenceRows?.[0]?.clicks, 7);
+  assert.equal(observed.evidenceRows?.[0]?.impressions, 140);
+  assert.equal(observed.evidenceRows?.[0]?.sourcePageUrl, pageUrl);
+  assert.equal(observed.pageId, 'custom-home');
+  assert.equal(observed.evidenceRows?.[0]?.sourcePageId, row.pageId);
   assert.equal(report.summary.outcome, 'investigate_existing_page_fit');
   assert.equal(report.summary.noAutomaticContentAction, true);
 });
@@ -121,6 +128,7 @@ test('1) mapped topic/page returns exact observed GSC clicks and impressions', (
 test('2) assigned query/page with no returned row stays not_returned without numeric zero', () => {
   const mappedUrl = 'https://example.test/services/alpha';
   const missingUrl = 'https://example.test/services/beta';
+  const otherUrl = 'https://example.test/services/gamma';
   const artifact = topicArtifact([
     {
       query: 'synthetic service alpha',
@@ -130,28 +138,46 @@ test('2) assigned query/page with no returned row stays not_returned without num
       ctr: 0.1,
       averagePosition: 6,
     },
+    {
+      query: 'synthetic service gamma',
+      page: otherUrl,
+      clicks: 1,
+      impressions: 5,
+      ctr: 0.2,
+      averagePosition: 3,
+    },
+    {
+      query: 'synthetic service beta only',
+      page: missingUrl,
+      clicks: 2,
+      impressions: 8,
+      ctr: 0.25,
+      averagePosition: 5,
+    },
   ]);
   const window = adapt(artifact);
-  const mapped = window.rows[0]!;
+  const mapped = window.rows.find((entry) => entry.page === mappedUrl)!;
+  const gamma = window.rows.find((entry) => entry.page === otherUrl)!;
   const report = analyzeTopicPageCoverage(baseInvocation(
     window,
     [
-      { topicId: 'topic-a', pageId: mapped.pageId },
+      { topicId: 'topic-a', pageId: 'page-alpha' },
       { topicId: 'topic-b', pageId: 'page-beta' },
     ],
     [
       { queryId: mapped.queryId, topicId: 'topic-a' },
-      { queryId: 'gsc.query:missing-assignment', topicId: 'topic-b' },
+      { queryId: gamma.queryId, topicId: 'topic-b' },
     ],
     [
-      { pageId: mapped.pageId, url: mappedUrl },
+      { pageId: 'page-alpha', url: mappedUrl },
       { pageId: 'page-beta', url: missingUrl },
     ],
   ));
   const missing = report.topicPageCoverageRows.find((entry) => entry.topicId === 'topic-b');
   assert.ok(missing);
   assert.equal(missing.evidenceState, 'not_returned');
-  assert.equal(missing.evidence, undefined);
+  assert.equal(missing.evidenceRows, undefined);
+  assert.equal(missing.reason, 'assigned_query_page_not_returned_in_source');
 });
 
 test('3) absent source window marks coverage unavailable/not ready', () => {
@@ -165,6 +191,8 @@ test('3) absent source window marks coverage unavailable/not ready', () => {
     policy,
   });
   assert.equal(report.source.state, 'absent');
+  assert.equal(Object.hasOwn(report.source, 'collectionId'), false);
+  assert.deepEqual(report.source.scope, alphaScope);
   assert.equal(report.topicPageCoverageRows[0]!.evidenceState, 'unavailable');
   assert.equal(report.summary.outcome, 'no_evidence_claim');
   assert.ok(report.summary.sourceLimitations.includes('source_window_absent'));
@@ -463,7 +491,7 @@ test('addendum: authored page outside accepted GSC rows remains inventory not_re
   const inventoryOnly = report.topicPageCoverageRows.find((entry) => entry.pageId === 'inventory-only');
   assert.equal(inventoryOnly?.evidenceState, 'not_returned');
   assert.equal(inventoryOnly?.reason, 'authored_page_not_in_accepted_source_rows');
-  assert.equal(inventoryOnly?.evidence, undefined);
+  assert.equal(inventoryOnly?.evidenceRows, undefined);
 });
 
 test('addendum: request/effective period and collection identity participate in deterministic hash', () => {
@@ -494,6 +522,182 @@ test('addendum: request/effective period and collection identity participate in 
   artifact.effectiveWindow = structuredClone(artifact.requestedWindow);
   const shifted = analyzeTopicPageCoverage({ ...base, window: adapt(artifact) });
   assert.notEqual(first.id, shifted.id);
+});
+
+test('correction: forged inventory pageId with different URL never inherits source metrics', () => {
+  const trueUrl = 'https://example.test/real';
+  const forgedUrl = 'https://example.test/forged';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic forged',
+      page: trueUrl,
+      clicks: 9,
+      impressions: 90,
+      ctr: 0.1,
+      averagePosition: 4,
+    },
+  ]);
+  const window = adapt(artifact);
+  const row = window.rows[0]!;
+  const report = analyzeTopicPageCoverage(baseInvocation(
+    window,
+    [{ topicId: 'topic-a', pageId: row.pageId }],
+    [{ queryId: row.queryId, topicId: 'topic-a' }],
+    [{ pageId: row.pageId, url: forgedUrl }],
+  ));
+  const entry = report.topicPageCoverageRows.find((item) => item.topicId === 'topic-a');
+  assert.equal(entry?.evidenceState, 'not_returned');
+  assert.equal(entry?.evidenceRows, undefined);
+});
+
+test('correction: multiple queries on one topic/page return bounded evidenceRows without aggregate', () => {
+  const pageUrl = 'https://example.test/multi';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic multi a',
+      page: pageUrl,
+      clicks: 3,
+      impressions: 30,
+      ctr: 0.1,
+      averagePosition: 4,
+    },
+    {
+      query: 'synthetic multi b',
+      page: pageUrl,
+      clicks: 5,
+      impressions: 50,
+      ctr: 0.1,
+      averagePosition: 6,
+    },
+  ]);
+  const window = adapt(artifact);
+  const rows = window.rows.filter((entry) => entry.page === pageUrl);
+  assert.equal(rows.length, 2);
+  const report = analyzeTopicPageCoverage(baseInvocation(
+    window,
+    [{ topicId: 'topic-a', pageId: 'multi-page' }],
+    rows.map((entry) => ({ queryId: entry.queryId, topicId: 'topic-a' })),
+    [{ pageId: 'multi-page', url: pageUrl }],
+  ));
+  const entry = report.topicPageCoverageRows.find((item) => item.topicId === 'topic-a');
+  assert.equal(entry?.evidenceRows?.length, 2);
+  assert.deepEqual(
+    entry?.evidenceRows?.map((evidence) => evidence.clicks).sort(),
+    [3, 5],
+  );
+});
+
+test('correction: unknown source query IDs fail closed when window present', () => {
+  const pageUrl = 'https://example.test/unknown-query';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic known',
+      page: pageUrl,
+      clicks: 1,
+      impressions: 10,
+      ctr: 0.1,
+      averagePosition: 2,
+    },
+  ]);
+  const window = adapt(artifact);
+  const row = window.rows[0]!;
+  assert.throws(
+    () => analyzeTopicPageCoverage(baseInvocation(
+      window,
+      [{ topicId: 'topic-a', pageId: 'page-known' }],
+      [
+        { queryId: row.queryId, topicId: 'topic-a' },
+        { queryId: 'gsc.query:never-in-source', topicId: 'topic-b' },
+      ],
+      [{ pageId: 'page-known', url: pageUrl }],
+    )),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_assignments',
+  );
+});
+
+test('correction: inventory URL outside sc-domain property is rejected when source present', () => {
+  const pageUrl = 'https://example.test/inside';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic inside',
+      page: pageUrl,
+      clicks: 1,
+      impressions: 10,
+      ctr: 0.1,
+      averagePosition: 2,
+    },
+  ]);
+  const window = adapt(artifact);
+  assert.throws(
+    () => analyzeTopicPageCoverage(baseInvocation(
+      window,
+      [{ topicId: 'topic-a', pageId: 'page-a' }],
+      [],
+      [
+        { pageId: 'page-a', url: pageUrl },
+        { pageId: 'page-outsider', url: 'https://outsider.test/a' },
+      ],
+    )),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_assignments',
+  );
+});
+
+test('correction: malformed inventory URL and window null fail typed invalid_input', () => {
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics: [{ topicId: 'topic-a', label: 'A' }],
+      pages: [{ pageId: 'page-a', url: 'https://' }],
+      topicPageLinks: [],
+      queryTopicAssignments: [],
+      policy,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_input',
+  );
+
+  assert.throws(
+    () => analyzeTopicPageCoverage({
+      scope: alphaScope,
+      universe,
+      topics: [{ topicId: 'topic-a', label: 'A' }],
+      pages: [{ pageId: 'page-a', url: 'https://example.test/a' }],
+      topicPageLinks: [],
+      queryTopicAssignments: [],
+      policy,
+      window: null,
+    }),
+    (error: unknown) => error instanceof TopicPageCoverageError && error.code === 'invalid_input',
+  );
+});
+
+test('correction: present source exposes method adapter schema provenance', () => {
+  const pageUrl = 'https://example.test/provenance';
+  const artifact = topicArtifact([
+    {
+      query: 'synthetic provenance',
+      page: pageUrl,
+      clicks: 2,
+      impressions: 20,
+      ctr: 0.1,
+      averagePosition: 3,
+    },
+  ]);
+  const window = adapt(artifact);
+  const row = window.rows[0]!;
+  const report = analyzeTopicPageCoverage(baseInvocation(
+    window,
+    [{ topicId: 'topic-a', pageId: 'page-prov' }],
+    [{ queryId: row.queryId, topicId: 'topic-a' }],
+    [{ pageId: 'page-prov', url: pageUrl }],
+  ));
+  assert.equal(report.source.state, 'present');
+  if (report.source.state === 'present') {
+    assert.ok(report.source.method);
+    assert.ok(report.source.adapter.id);
+    assert.ok(report.source.sourceSchema.id);
+  }
+  assert.ok(report.topicPageCoverageRows[0]?.evidenceRows?.[0]?.observationIds.clicks);
 });
 
 test('synthetic JSON proof excerpt for Product review', () => {
