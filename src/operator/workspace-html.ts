@@ -307,8 +307,12 @@ function renderTopicPageEvidenceMatrix(workspace: OperatorWorkspace, invocation:
 
   const matrixRows = report.topicPageCoverageRows.map((row) => {
     const label = topicLabels.get(row.topicId);
-    const url = row.pageId === 'unassigned' ? undefined : pageUrls.get(row.pageId);
-    if (label === undefined || (row.pageId !== 'unassigned' && url === undefined)) {
+    // 'unassigned' is a valid human page ID as well as the analyzer's
+    // no-page sentinel. Disambiguate by the authoritative mapping state,
+    // never by the opaque page ID's spelling.
+    const isUnmapped = row.mapping === 'unmapped';
+    const url = isUnmapped ? undefined : pageUrls.get(row.pageId);
+    if (label === undefined || (!isUnmapped && url === undefined)) {
       throw new OperatorWorkspaceError('invalid_output', 'Validated topic/page identity cannot be resolved for presentation.');
     }
     return [
