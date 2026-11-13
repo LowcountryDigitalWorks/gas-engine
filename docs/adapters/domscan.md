@@ -49,4 +49,38 @@ Artifact fields cannot mint tenant, site, or connection authority.
 
 ## Canonical adaptation
 
-The adapter reuses existing `collection`, `source_record`, `observation`, and `CollectionBatch` contracts with one bounded part per endpoint under accepted 64×16×32 / 65KiB packing limits.
+The **accepted 0.25.0 baseline** reuses existing `collection`, `source_record`, `observation`, and `CollectionBatch` contracts and emits one bounded part per endpoint. The independently source-reviewed **0.25.1 patch candidate** extends only the packing/validation implementation below. It is **not yet an accepted or deployed release**.
+
+## Release 0.25.1 patch candidate — byte-safe canonical multi-part evidence
+
+Valid, accepted WQT `agent_readiness` sidecars contain 12 signal rows / 24 canonical observations. Longer but still valid *trusted* provider-connection or availability identifiers can repeat across source/observation metadata and cause the 0.25.0 single-part representation to exceed the canonical **65,536-byte** bound. That is a G.A.S. canonical packing limitation, not defective WQT evidence. This candidate preserves the existing accepted **bit-identical 1-part batch** whenever it fits, including original collection, source, observation and idempotency identities. Otherwise it deterministically splits prepared rows into contiguous groups without changing the source observation meaning, canonical method, adapter version, schema or identity algorithm.
+
+**Existing accepted per-part ingestion bounds remain unchanged:** maximum **64 parts per collection**, maximum **16 sources** and **32 observations per part**, and at most **65,536 canonical UTF-8 JSON bytes per part**. The packer checks each candidate group at the worst-case maximum part-index metadata before forming its stable result. One row that cannot fit fails closed; no row, source, observation, completion state or reference is dropped or silently truncated. A 12-row/24-observation agent sidecar may produce multiple parts, while an 8-row/10-observation DNS sidecar generally fits one part under accepted short configuration; part count is driven by actual validated canonical bytes, **not a promised fixed count**.
+
+Parts use sequential 1-based `part` indices with a common `parts` total, identical collection and idempotency identities, and exact source/observation references. The validator confirms complete contiguous order, uniqueness and bounded canonical structure for every part. Do not treat an independently valid serialized `CollectionBatch` as sufficient to establish a trusted DomScan content claim.
+
+## Original in-process versus detached validation
+
+`adaptDomscanSidecarEvidence(sourceBytes, trustedConfig)` is pure/local and stores a **module-private WeakMap binding** from the exact returned object to a validated clone of the separately trusted configuration and canonical content fingerprints covering root metadata, source-native semantics, every adapted row, and every canonical bounded part. The snapshot binding is **not serialized** into JSON and must not be rebuilt from mutable evidence alone.
+
+Two explicit accepted *candidate* invocation paths (TypeScript-style example, not a new API service):
+
+```ts
+const original = adaptDomscanSidecarEvidence(sourceBytes, trustedConfig);
+const inProcess = validateDomscanWindow(original); // original returned object: trusted private binding
+
+// When records cross serialization/clone/process boundaries, the WeakMap binding is lost.
+const detached = structuredClone(original);
+const revalidated = validateDomscanWindow(detached, trustedConfig, sourceBytes);
+```
+
+For a **detached/deserialized** result, the validator requires **both** (1) the separately trusted original `DomscanAdapterConfig` and (2) the **exact original source artifact bytes**, supplied by a trusted input path, **not** copied from the untrusted result object. It locally reruns the source adapter to independently reconstruct expected metadata, full rows and every bounded part, and rejects mismatches before returning a validated window. Missing either input, wrong source bytes, config drift, tampering to both row classification and matching observations, reordered/dropped/duplicated parts, conflicting scope/site/method, Proxy/accessors, or invalid canonical data fail closed with `DomscanAdapterError` (typically `invalid_output`). **Providing only a trusted configuration to a detached object is insufficient** and must not be reintroduced for convenience.
+
+Existing one-argument callers that keep the exact result returned directly by the adapter remain compatible. **External/private caller inventory is unverified**: any caller that stores, clones, serializes or transports the result must retain original trusted source bytes and pass them with separately trusted config. Do not assert broad backward compatibility without auditing those consumers. The package is currently private, has no npm `exports`/`main`/`bin` contract, and has no known first-party production callsite depending on config-only detached validation. These observations **do not prove** that no uninspected consumer exists.
+
+## Patch verification and release gate
+
+Existing synthetic tests cover short-ID single part, long-ID multiple parts retaining 24/24 observations, canonical order/size, tamper rejection, direct one-argument trust, detached with config **and original source bytes**, and failure of detached config-only trust. Product acceptance additionally requires exact-head hosted Contracts/Security/CodeQL, 11 canonical schema checks, no new provider/network path, independent author-excluded review and guarded protected squash/postmerge success. This note records a candidate contract, **not acceptance of release 0.25.1**, provider availability, customer production ingestion, or license to make network calls. The canonical schema remains 1.0 and the DomScan adapter mapping stays 1.0.0; only the **private package patch identity** would change to 0.25.1.
+
+Source owner: [G.A.S. #167](https://github.com/LowcountryDigitalWorks/gas-engine/issues/167) / [PR #168](https://github.com/LowcountryDigitalWorks/gas-engine/pull/168). No WQT runtime repin, customer scan, account key or paid credit is required.
+
