@@ -67,11 +67,32 @@ test('glass and mobile navigation degrade safely without changing evidence table
   assert.match(css!, /@media \(prefers-contrast:more\)/);
   assert.match(css!, /@media \(prefers-reduced-motion:reduce\)/);
   assert.match(css!, /-webkit-backdrop-filter:none;backdrop-filter:none/);
-  assert.match(css!, /nav\{display:flex;overflow-x:auto/);
+  assert.match(css!, /\.shell\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(css!, /aside\{position:static;height:auto;min-width:0;width:100%;max-width:100%/);
+  assert.match(css!, /nav\{display:flex;min-width:0;width:100%;max-width:100%;overflow-x:auto/);
+  assert.match(css!, /\.cards\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/);
+  assert.match(css!, /\.card\{min-width:0;overflow-wrap:anywhere\}/);
+  assert.doesNotMatch(css!, /(?:html|body)\s*\{[^}]*overflow-x:\s*hidden/);
   assert.match(css!, /\.table-wrap\{overflow-x:auto/);
   assert.match(css!, /\[data-panel\]\[hidden\]\{display:none\}/);
   assert.match(css!, /min-height:44px/);
   assert.match(css!, /@media print/);
+});
+
+test('visible control outlines meet WCAG non-text 3:1 in both dark and light modes', () => {
+  const boundaries = [
+    ['#738aaa', '#162235'], // dark card
+    ['#738aaa', '#1d2b41'], // dark field fill
+    ['#63718a', '#ffffff'], // light card
+    ['#63718a', '#f5f7fd'], // light field fill
+  ];
+  for (const [border, adjacent] of boundaries) {
+    assert.ok(contrast(border!, adjacent!) >= 3,
+      border + ' against ' + adjacent + ' must meet non-text 3:1');
+  }
+  assert.match(css!, /--gas-control-border:#738aaa/);
+  assert.match(css!, /--gas-control-border:#63718a/);
+  assert.match(css!, /border:1px solid var\(--gas-control-border\)/);
 });
 
 test('theme candidate remains offline with no external assets or new data authority', () => {
