@@ -148,7 +148,7 @@ test('source scope, canonical URLs and trusted origin are all required before op
   assert.throws(
     () => renderOperatorWorkspaceHtml(workspace, {
       ...input,
-      pages: [{ pageId: 'page-focus', url: new URL(workspace.trustedTarget).origin + '/%66ocus' }, ...input.pages.slice(1)],
+      pages: [{ pageId: 'page-focus', url: 'https://' + new URL(workspace.trustedTarget).hostname + ':443/focus' }, ...input.pages.slice(1)],
     }),
     (error: unknown) => error instanceof OperatorWorkspaceError && error.code === 'invalid_request',
   );
