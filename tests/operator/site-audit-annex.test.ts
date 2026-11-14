@@ -266,7 +266,7 @@ test('rendered evidence uses only private verified snapshot after caller mutatio
     assert.equal(after.includes(malicious), false, 'forged source fields must not be displayed');
   }
   assert.match(after, /redirect-count=1 count/);
-  assert.match(after, /source score 0–1/);
+  assert.match(after, /Source score 0–1/);
   // Clones, JSON roundtrips and objects containing a legitimate-looking annex ID
   // cannot acquire display authority without recomposition from original source bytes.
   assert.throws(() => renderCustomerServiceReportHtml(report, privateCopy), /verified local composition/);
@@ -295,6 +295,6 @@ test('HTML renderer refuses an annex for another report, even with matching site
   );
   assert.throws(
     () => renderCustomerServiceReportHtml(report, { ...annex, inputSha256: 'bad' }),
-    /not bound/,
+    /verified local composition/,
   );
 });
