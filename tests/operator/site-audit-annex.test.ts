@@ -212,6 +212,8 @@ test('unavailable WQT provider cannot be promoted to observed audit evidence', (
     { provider: 'siteone', code: 'redirects' },
   ]);
   assert.equal(annex.sources[1]!.availability, 'unavailable');
+  assert.equal(annex.sources[1]!.observationCount, null);
+  assert.match(renderCustomerServiceReportHtml(report, annex), /not verified/);
   assert.equal(annex.selected.length, 1);
 });
 
