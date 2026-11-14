@@ -205,7 +205,7 @@ test('exact human selections reject unknown, duplicate, extra keys and >3 withou
 test('unavailable WQT provider cannot be promoted to observed audit evidence', () => {
   const unavailable: WqtAdapterConfig = {
     ...config,
-    availability: { ...config.availability, lighthouse: { state: 'unavailable', reference: 'synthetic-missing-source' } },
+    availability: { ...config.availability, lighthouse: { state: 'unavailable', reason: 'synthetic-missing-source' } },
   };
   assert.throws(() => composeSiteAuditAnnex(report, bytes(fixture()), unavailable, select), /unavailable/);
   const annex = composeSiteAuditAnnex(report, bytes(fixture()), unavailable, [
