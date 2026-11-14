@@ -22,7 +22,7 @@ export interface SiteAuditSourceStatus {
   readonly availability: string;
   readonly version: string | null;
   readonly reportedAt: string | null;
-  readonly observationCount: number;
+  readonly observationCount: number | null;
 }
 export interface SiteAuditEvidenceItem {
   readonly provider: WqtProviderId;
@@ -135,7 +135,8 @@ export function composeSiteAuditAnnex(
       version: source.version,
       reportedAt: provider === 'siteone'
         ? excerpt(artifact.sources.siteone.executedAt) : excerpt(artifact.sources.lighthouse.fetchTime),
-      observationCount: source.observations.length,
+      observationCount: trustedConfig.availability[provider].state === 'available'
+        ? source.observations.length : null,
     };
   });
 
@@ -182,5 +183,13 @@ export function composeSiteAuditAnnex(
       'Unavailable sources, unselected observations and missing source values are not proof of healthy or failed conditions.',
     ],
   };
-  return { ...body, id: 'site-audit-annex:' + hashCanonicalJson(body) };
+  return { ...body, id: 'site-audit-annex:' + hashCanonicalJson({
+    body,
+    trustedIdentity: {
+      scope: trustedConfig.scope,
+      providerConnectionIds: trustedConfig.providerConnectionIds,
+      timing: trustedConfig.timing,
+      availability: trustedConfig.availability,
+    },
+  }) };
 }
