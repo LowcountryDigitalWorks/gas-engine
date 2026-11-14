@@ -2,6 +2,7 @@ import {
   MAX_CUSTOMER_REPORT_JSON_BYTES,
   type CustomerServiceReport,
 } from './customer-report.js';
+import type { SiteAuditAnnex } from './site-audit-annex.js';
 
 export const MAX_CUSTOMER_REPORT_HTML_BYTES = 1_500_000;
 
@@ -72,6 +73,58 @@ function decisionSection(report: CustomerServiceReport): string {
   ${outcomes}`;
 }
 
+function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex | undefined): string {
+  if (annex === undefined) return '';
+  if (annex.reportId !== report.id || annex.siteId !== report.context.siteId
+      || annex.target !== report.context.target
+      || !/^site-audit-annex:[0-9a-f]{64}$/.test(annex.id)
+      || !/^[0-9a-f]{64}$/.test(annex.inputSha256)
+      || annex.selected.length > 3) {
+    throw new Error('Internal site audit annex is not bound to this exact report and accepted source.');
+  }
+  const sourceTable = table(
+    'Original WQT source availability and timing',
+    ['Source', 'Trusted availability', 'Native version', 'Source-reported time', 'Source observations'],
+    annex.sources.map((source) => [
+      source.provider, source.availability, source.version ?? 'not supplied',
+      source.reportedAt ?? 'not supplied', source.observationCount,
+    ]),
+    'No WQT sources are present.',
+  );
+  const selectionTable = table(
+    'Explicitly human-selected WQT technical observations — not ranked',
+    ['Source', 'Exact audit ID', 'Source status / display mode', 'Source score 0–1', 'Source text / typed facts'],
+    annex.selected.map((item) => [
+      item.provider,
+      item.code,
+      item.provider === 'siteone' ? item.sourceStatus ?? 'unknown' : item.sourceMode ?? 'unknown',
+      item.sourceScore === null ? 'n/a — unscored / unavailable' : item.sourceScore,
+      [
+        item.sourceText ?? 'no source text',
+        item.sourceDisplay === null ? '' : 'Source display: ' + item.sourceDisplay,
+        item.sourceFacts.length === 0 ? '' : 'Facts: ' + item.sourceFacts.map((fact) =>
+          fact.id + '=' + (fact.value === null ? 'unknown' : String(fact.value))
+          + (fact.unit === null ? '' : ' ' + fact.unit)).join('; '),
+      ].filter(Boolean).join(' | '),
+    ]),
+    'No technical observations were selected by the human reviewer; this is not a passed audit.',
+  );
+  return `<section id="site-audit" class="internal">
+  <h2>Internal technical site audit evidence annex — not approved for customer delivery</h2>
+  <p>Source-only. WQT observations are not LDW scores, priorities, rankings, health conclusions or remediation decisions. This annex is separate from the report identity and delivery authorization.</p>
+  <dl class="facts">
+    <div><dt>WQT site ID</dt><dd>${escapeHtml(annex.wqtSiteId)}</dd></div>
+    <div><dt>Original normalized WQT SHA-256</dt><dd><code>${escapeHtml(annex.inputSha256)}</code></dd></div>
+    <div><dt>Trusted collection observed at</dt><dd>${escapeHtml(annex.observedAt)}</dd></div>
+  </dl>
+  ${sourceTable}
+  ${selectionTable}
+  ${list(annex.limitations, 'No recorded source limitations.')}
+  <p>Consult the separately authorized WQT raw/source-native HTML evidence for full detail; the original report remains unchanged when this optional annex is omitted.</p>
+  </section>
+`;
+}
+
 function internalAppendix(report: CustomerServiceReport): string {
   const appendix = report.internalAppendix;
   if (appendix === undefined) return '';
@@ -88,7 +141,7 @@ function internalAppendix(report: CustomerServiceReport): string {
   </section>`;
 }
 
-export function renderCustomerServiceReportHtml(report: CustomerServiceReport): string {
+export function renderCustomerServiceReportHtml(report: CustomerServiceReport, siteAudit?: SiteAuditAnnex): string {
   const readiness = table(
     'Evidence readiness and limitations',
     ['Module', 'State', 'Reasons / limitations'],
@@ -200,7 +253,7 @@ ${sources}
 <p>This report preserves provider/source-specific readiness and does not blend unlike evidence into a universal score.</p>
 </section>
 
-${internalAppendix(report)}
+${siteAuditSection(report, siteAudit)}${internalAppendix(report)}
 </main>
 </body>
 </html>
