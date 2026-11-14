@@ -87,7 +87,7 @@ function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex |
     ['Source', 'Trusted availability', 'Native version', 'Source-reported time', 'Source observations'],
     annex.sources.map((source) => [
       source.provider, source.availability, source.version ?? 'not supplied',
-      source.reportedAt ?? 'not supplied', source.observationCount,
+      source.reportedAt ?? 'not supplied', source.observationCount ?? 'not verified',
     ]),
     'No WQT sources are present.',
   );
