@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { Contract } from '../contracts/wire.js';
+import { analyzeTopicPageCoverage } from '../analysis/topic-page-coverage.js';
 import { DECISION_CYCLE_HARD_LIMITS } from './decision-cycle.js';
 import {
   OPERATOR_WORKSPACE_VERSION,
+  OperatorWorkspaceError,
   type OperatorWorkspace,
   type OperatorWorkspaceEvidenceRow,
 } from './workspace.js';
@@ -41,7 +43,11 @@ function table(
     ? `<tr><td colspan="${String(headers.length)}">${escapeHtml(empty)}</td></tr>`
     : rows.map((row) =>
       '<tr>' + row.map((cell) => `<td>${text(cell)}</td>`).join('') + '</tr>').join('');
-  return `<div class="table-wrap"><table><caption>${escapeHtml(caption)}</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  const isDense = headers.length >= 5;
+  const region = isDense
+    ? ` role="region" tabindex="0" aria-label="${attr(caption + '. Scroll sideways to read more columns on narrow screens.')}"`
+    : '';
+  return `<div class="table-wrap${isDense ? ' wide-table' : ''}"${region}><table><caption>${escapeHtml(caption)}</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 function evidenceReference(row: OperatorWorkspaceEvidenceRow): string {
@@ -245,7 +251,126 @@ qs('#download-report-request').addEventListener('click',()=>{try{const selected=
 qs('#print-workspace').addEventListener('click',()=>window.print());`;
 }
 
-export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace): string {
+
+/**
+ * Pure, optional presentation over the already-accepted Release 0.26 analyzer.
+ * A single cloned trusted-host invocation supplies both the validated report and
+ * authored topic/page labels. The untrusted HTML never accepts a result as authority.
+ */
+function renderTopicPageEvidenceMatrix(workspace: OperatorWorkspace, invocation: unknown): string {
+  const heading = '<h3>Topic–page evidence matrix (local / human-authored mapping)</h3>';
+  if (invocation === undefined) {
+    return heading + '<p class="empty">Not assessed — no trusted topic/page invocation was supplied. This is not evidence of a content gap or a zero.</p>';
+  }
+
+  let snapshot: unknown;
+  try {
+    snapshot = structuredClone(invocation);
+  } catch {
+    throw new OperatorWorkspaceError('invalid_request', 'Topic-page presentation input must be cloneable local evidence.');
+  }
+  // This call must succeed before any original authored labels, pages or rows
+  // are used. Its source/window/scope/assignment checks are never duplicated or weakened.
+  const report = analyzeTopicPageCoverage(snapshot);
+  if (report.scope.tenantId !== workspace.scope.tenantId
+      || report.scope.siteId !== workspace.scope.siteId
+      || report.scope.siteScopeRevisionId !== workspace.scope.siteScopeRevisionId) {
+    throw new OperatorWorkspaceError('scope_mismatch', 'Topic-page report is outside the trusted workspace scope.');
+  }
+
+  const sourceInput = snapshot as {
+    readonly topics: readonly { readonly topicId: string; readonly label: string }[];
+    readonly pages: readonly { readonly pageId: string; readonly url: string }[];
+  };
+  let targetOrigin: string;
+  try {
+    const trustedTarget = new URL(workspace.trustedTarget);
+    if (trustedTarget.protocol !== 'https:' || trustedTarget.username || trustedTarget.password
+        || trustedTarget.hash || trustedTarget.search) {
+      throw new Error('Noncanonical trusted target');
+    }
+    targetOrigin = trustedTarget.origin;
+  } catch {
+    throw new OperatorWorkspaceError('target_mismatch', 'Topic-page presentation requires an HTTPS trusted workspace target.');
+  }
+
+  const topicLabels = new Map(sourceInput.topics.map((topic) => [topic.topicId, topic.label]));
+  const pageUrls = new Map(sourceInput.pages.map((page) => [page.pageId, page.url]));
+  for (const page of sourceInput.pages) {
+    // The analyzer validates HTTPS and the GSC property boundary. Preserve
+    // identity with its normalized URL rather than display an unnormalized
+    // caller string as if it were the canonical page.
+    const canonical = new URL(page.url);
+    if (canonical.href !== page.url) {
+      throw new OperatorWorkspaceError('invalid_request', 'Topic-page presentation requires canonical authored URLs.');
+    }
+    if (canonical.origin !== targetOrigin) {
+      throw new OperatorWorkspaceError('target_mismatch', 'Authored page is outside the trusted workspace origin.');
+    }
+  }
+
+  const matrixRows = report.topicPageCoverageRows.map((row) => {
+    const label = topicLabels.get(row.topicId);
+    // 'unassigned' is a valid human page ID as well as the analyzer's
+    // no-page sentinel. Disambiguate by the authoritative mapping state,
+    // never by the opaque page ID's spelling.
+    const isUnmapped = row.mapping === 'unmapped';
+    const url = isUnmapped ? undefined : pageUrls.get(row.pageId);
+    if (label === undefined || (!isUnmapped && url === undefined)) {
+      throw new OperatorWorkspaceError('invalid_output', 'Validated topic/page identity cannot be resolved for presentation.');
+    }
+    return [
+      label,
+      row.topicId,
+      url ?? 'No page assigned by a human',
+      row.mapping,
+      row.evidenceState,
+      row.reason,
+    ];
+  });
+  // One original query×page observation per row. Never sum impressions/clicks
+  // across queries or interpret omitted/unavailable source rows as numeric zero.
+  const observationRows = report.topicPageCoverageRows.flatMap((row) =>
+    (row.evidenceRows ?? []).map((item) => [
+      row.topicId, row.pageId, item.queryId, item.sourceRecordId,
+      item.rowIdentity, item.clicks, item.impressions,
+    ]));
+  const sourceRowsForMatrix = report.source.state === 'present'
+    ? [[
+        report.source.providerId, report.source.property, report.source.collectionId,
+        JSON.stringify(report.source.method), JSON.stringify(report.source.period),
+        JSON.stringify(report.source.freshness), JSON.stringify(report.source.coverage),
+      ]]
+    : [];
+  return heading
+    + '<div class="notice"><strong>Interpretation limit:</strong> Authored assignments are human mapping, not rankings or automatically discovered content gaps. '
+    + 'GSC query/page rows may be non-exhaustive. A not_returned or unavailable state is not zero or proof of no demand. '
+    + 'No content action is generated.</div>'
+    + '<p><strong>Coverage outcome:</strong> ' + text(report.summary.outcome)
+    + ' · <strong>Human editorial review required:</strong> yes'
+    + ' · <strong>Source limitations:</strong> ' + text(report.summary.sourceLimitations.join('; '))
+    + ' · <strong>Exact report identity:</strong> <code>' + text(report.id) + '</code></p>'
+    + table(
+        'Accepted topic-to-existing-page pairs (no inferred missing pages)',
+        ['Human topic label', 'Topic ID', 'Authored canonical page URL', 'Mapping', 'Evidence state', 'Exact reason'],
+        matrixRows,
+        'No authored topic/page assignments were returned.',
+      )
+    + table(
+        'Original GSC source/method/freshness/coverage, when supplied',
+        ['Provider', 'Property', 'Collection ID', 'Method', 'Window', 'Freshness', 'Coverage'],
+        sourceRowsForMatrix,
+        'No GSC source window was supplied; all mapped-pair evidence remains unavailable.',
+      )
+    + table(
+        'Exact independently observed query×page rows — no metric aggregation',
+        ['Topic ID', 'Page ID', 'Query ID', 'Original source record', 'Row identity', 'Observed clicks', 'Observed impressions'],
+        observationRows,
+        'No individual observed GSC query×page rows. This does not establish measured zero.',
+      );
+}
+
+export function renderOperatorWorkspaceHtml(workspace: OperatorWorkspace, topicPageInvocation?: unknown): string {
   const providers = [...new Set(workspace.evidenceRows.flatMap((row) => row.providerIds))].sort();
   const modules = [...new Set(workspace.evidenceRows.map((row) => row.moduleId))].sort();
   const states = [...new Set(workspace.evidenceRows.map((row) => row.state))].sort();
@@ -347,6 +472,8 @@ header.workspace-head h1{margin:.25rem 0;overflow-wrap:anywhere}
 [data-panel]{max-width:1180px}[data-panel][hidden]{display:none}
 h2{line-height:1.2;outline:none}h3{margin-top:1.5rem}
 .table-wrap{overflow-x:auto;max-width:100%;border-radius:12px}
+.wide-table:focus-visible{outline:3px solid var(--gas-focus);outline-offset:2px}
+.table-scroll-hint{display:none}
 table{width:100%;border-collapse:collapse;background:var(--gas-surface);
   color:var(--gas-ink);table-layout:fixed}
 caption{text-align:left;font-weight:700;padding:.5rem 0}
@@ -410,6 +537,9 @@ textarea{min-height:110px}
   nav button{flex:0 0 auto;max-width:82vw}
   .report-grid{grid-template-columns:1fr}.full{grid-column:auto}
   .actions{margin-top:.45rem}
+  /* Dense evidence grids need readable columns with contained horizontal scrolling. */
+  .wide-table table{min-width:780px;table-layout:auto}
+  .table-scroll-hint{display:block;color:var(--gas-muted);font-weight:600}
 }
 @media(max-width:400px){main{padding:.85rem}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{min-width:0;overflow-wrap:anywhere}}
 @media print{
@@ -417,6 +547,7 @@ textarea{min-height:110px}
   aside,.interactive-only{display:none!important}
   body{background:#fff!important;color:#111!important;background-image:none!important}
   .shell{display:block}main{padding:.3in;max-width:none}
+  .wide-table table{min-width:0!important;table-layout:fixed}
   [data-panel]{display:block!important;break-before:page}
   header.workspace-head{break-after:avoid;background:#fff!important;color:#111!important;box-shadow:none}
   .card,.notice,.form-card,.filters,.check-row,.facts div,table,th,td{
@@ -477,8 +608,10 @@ ${stateCounts}
 <label class="field">Text filter<input id="evidence-text" type="search" autocomplete="off" placeholder="URL, query, kind, identity"></label>
 <button type="button" class="secondary" id="reset-evidence">Reset filters</button>
 </div>
+<p class="table-scroll-hint">On narrow screens, scroll dense tables sideways to read all columns. Keyboard: focus the labeled table region, then use arrow keys.</p>
 ${sources}
-<div class="table-wrap"><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
+${renderTopicPageEvidenceMatrix(workspace, topicPageInvocation)}
+<div class="table-wrap wide-table" role="region" tabindex="0" aria-label="Accepted evidence and attention drill-down. Scroll sideways to read more columns on narrow screens."><table><caption>Accepted evidence/attention drill-down</caption><thead><tr><th scope="col">Module</th><th scope="col">Provider(s)</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Exact reference</th><th scope="col">Evidence identity</th><th scope="col">Readiness context</th></tr></thead><tbody>${evidenceRows(workspace)}</tbody></table></div>
 </section>
 
 <section id="attention" data-panel="attention" hidden>
