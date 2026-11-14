@@ -235,6 +235,58 @@ test('malformed, blocked, old or tampered evidence fails closed; altered origina
     (error: unknown) => error instanceof WqtAdapterError);
 });
 
+test('rendered evidence uses only private verified snapshot after caller mutation and valid-format forged hash', () => {
+  const annex = composeSiteAuditAnnex(report, bytes(fixture()), config, select);
+  const before = renderCustomerServiceReportHtml(report, annex);
+  const privateCopy = structuredClone(annex);
+
+  // Ordinary TypeScript readonly is not an execution-time integrity check.
+  // A caller can mutate the returned object, but cannot alter the private original evidence.
+  const mutable = annex as any;
+  mutable.inputSha256 = 'b'.repeat(64); // Syntactically valid, but not the WQT source bytes.
+  mutable.id = 'site-audit-annex:' + 'c'.repeat(64); // Syntactically valid counterfeit ID.
+  mutable.selected[0].sourceText = 'MUTATED_EVIDENCE_NOT_IN_SOURCE';
+  mutable.selected[0].sourceStatus = 'FAKE_HEALTHY';
+  mutable.selected[0].sourceFacts[0].value = 999999;
+  mutable.selected[1].sourceScore = 1;
+  mutable.sources[0].observationCount = 0;
+  mutable.limitations[0] = 'CUSTOMER_APPROVED_FAKE';
+  mutable.selected.push({
+    provider: 'lighthouse', code: 'invented', sourceStatus: null,
+    sourceText: 'forged', sourceMode: 'binary', sourceScore: 1,
+    sourceDisplay: null, sourceFacts: [],
+  });
+  const after = renderCustomerServiceReportHtml(report, annex);
+  assert.equal(after, before, 'renderer uses the original trusted source snapshot, never mutated objects');
+  for (const malicious of [
+    'MUTATED_EVIDENCE_NOT_IN_SOURCE', 'FAKE_HEALTHY', '999999',
+    'CUSTOMER_APPROVED_FAKE', 'invented',
+    'b'.repeat(64), 'c'.repeat(64),
+  ]) {
+    assert.equal(after.includes(malicious), false, 'forged source fields must not be displayed');
+  }
+  assert.match(after, /redirect-count=1 count/);
+  assert.match(after, /source score 0–1/);
+  // Clones, JSON roundtrips and objects containing a legitimate-looking annex ID
+  // cannot acquire display authority without recomposition from original source bytes.
+  assert.throws(() => renderCustomerServiceReportHtml(report, privateCopy), /verified local composition/);
+  assert.throws(() => renderCustomerServiceReportHtml(report, {
+    ...privateCopy, inputSha256: 'a'.repeat(64),
+  }), /verified local composition/);
+  assert.throws(() => renderCustomerServiceReportHtml(report,
+    JSON.parse(JSON.stringify(privateCopy)) as typeof annex), /verified local composition/);
+});
+
+test('private snapshot cannot be changed indirectly through returned deep nested arrays', () => {
+  const annex = composeSiteAuditAnnex(report, bytes(fixture()), config, select);
+  const first = renderCustomerServiceReportHtml(report, annex);
+  const mutable = annex as any;
+  mutable.sources.splice(0, 2);
+  mutable.selected[0].sourceFacts.splice(0, 1);
+  mutable.selected.splice(0, 2);
+  assert.equal(renderCustomerServiceReportHtml(report, annex), first);
+});
+
 test('HTML renderer refuses an annex for another report, even with matching site and target', () => {
   const annex = composeSiteAuditAnnex(report, bytes(fixture()), config, select);
   assert.throws(
