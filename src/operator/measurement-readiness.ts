@@ -56,6 +56,10 @@ const trustedSchema = z.strictObject({
 type Source = z.infer<typeof sourceSchema>;
 type NextCheck = z.infer<typeof nextCheckSchema>;
 
+// A renderer accepts only an object composed in this process. Raw/forged or
+// serialized displays cannot masquerade as verified operator output.
+const verifiedReports = new WeakMap<object, MeasurementReadinessReport>();
+
 export interface MeasurementReadinessReport {
   readonly scope: z.infer<typeof scopeSchema>;
   readonly target: string;
@@ -161,13 +165,15 @@ export function composeMeasurementReadiness(
       state: 'unknown',
       limitation: 'No trusted provider status supplied; absence is not an observed zero.',
     });
-  return Object.freeze({
+  const finalized = Object.freeze({
     scope: Object.freeze({ ...request.scope }),
     target,
     evaluatedAt: request.evaluatedAt,
     sources: Object.freeze(sources.map((source) => Object.freeze({ ...source }))),
     nextChecks: Object.freeze(request.nextChecks.map((check) => Object.freeze({ ...check }))),
   });
+  verifiedReports.set(finalized, structuredClone(finalized));
+  return finalized;
 }
 
 /**
@@ -175,13 +181,18 @@ export function composeMeasurementReadiness(
  * client-ready report. Revalidation prevents accidental type-only bypass.
  */
 export function renderMeasurementReadinessHtml(reportInput: unknown): string {
+  if (reportInput === null || typeof reportInput !== 'object') {
+    throw new MeasurementReadinessError('invalid_request');
+  }
+  const trustedSnapshot = verifiedReports.get(reportInput);
+  if (trustedSnapshot === undefined) throw new MeasurementReadinessError('invalid_request');
   const reportResult = z.strictObject({
     scope: scopeSchema,
     target: z.string(),
     evaluatedAt: timestamp,
     sources: z.array(sourceSchema).length(MEASUREMENT_READINESS_PROVIDERS.length),
     nextChecks: z.array(nextCheckSchema).max(3),
-  }).safeParse(reportInput);
+  }).safeParse(structuredClone(trustedSnapshot));
   if (!reportResult.success) throw new MeasurementReadinessError('invalid_request');
   const report = reportResult.data;
   const canonical = canonicalHttpsOrigin(report.target);
