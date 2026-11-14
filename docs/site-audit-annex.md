@@ -10,6 +10,8 @@ The report site ID and canonical origin must match that separately trusted WQT s
 
 An optional second argument to existing `renderCustomerServiceReportHtml(report, annex)` adds one visually separated **LDW INTERNAL ONLY — NOT APPROVED FOR CUSTOMER DELIVERY** section to the same existing print-friendly static HTML, with existing CSP, no script, no network and escaped content. The original one-argument report output and customer report request/model remain unchanged.
 
+**Same-process integrity rule:** The composer privately stores a validated deep snapshot keyed to the exact composed annex object. The renderer reads only a fresh copy of that private verified snapshot; editing returned annex fields, swapping a valid-looking 64-character digest, or inserting forged rows cannot change rendered source evidence. Deserialized JSON, plain clones and manufactured annex objects are **rejected** as display authority, even if their IDs look valid. Recompose using exact original WQT bytes and separately trusted configuration for each authorized local rendering; the annex is **not a portable verification token or a customer export format**.
+
 ## Evidence interpretation
 
 - The only supported providers are **SiteOne** and **Lighthouse**; no third scanner, cross-provider scoring or rank impact is inferred.
