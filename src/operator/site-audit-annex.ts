@@ -13,6 +13,11 @@ import type { CustomerServiceReport } from './customer-report.js';
 export const MAX_SITE_AUDIT_SELECTIONS = 3;
 const MAX_EXCERPT = 240;
 
+// A validated annex is a same-process display capability, NOT a portable authority token.
+// The only source of rendered values is this private snapshot: caller mutations to the
+// public return object cannot change an already verified WQT/report binding.
+const verifiedAnnexSnapshots = new WeakMap<SiteAuditAnnex, SiteAuditAnnex>();
+
 export interface SiteAuditSelection {
   readonly provider: WqtProviderId;
   readonly code: string;
@@ -105,6 +110,19 @@ function validateSelections(value: readonly SiteAuditSelection[]): void {
   }
 }
 
+/** Read only a separately held verified snapshot; forged, deserialized and cloned objects fail closed. */
+export function verifiedSiteAuditAnnexSnapshot(annex: SiteAuditAnnex): SiteAuditAnnex {
+  if (annex === null || typeof annex !== 'object') {
+    throw new Error('Site audit annex is not a current verified local composition.');
+  }
+  const snapshot = verifiedAnnexSnapshots.get(annex);
+  if (snapshot === undefined) {
+    throw new Error('Site audit annex is not a current verified local composition.');
+  }
+  // Never give the caller or renderer the private stored snapshot by reference.
+  return structuredClone(snapshot) as SiteAuditAnnex;
+}
+
 /** Caller supplies an already-assembled trusted report, original WQT bytes and separate trusted adapter config. */
 export function composeSiteAuditAnnex(
   report: CustomerServiceReport,
@@ -183,7 +201,7 @@ export function composeSiteAuditAnnex(
       'Unavailable sources, unselected observations and missing source values are not proof of healthy or failed conditions.',
     ],
   };
-  return { ...body, id: 'site-audit-annex:' + hashCanonicalJson({
+  const annex: SiteAuditAnnex = { ...body, id: 'site-audit-annex:' + hashCanonicalJson({
     body,
     trustedIdentity: {
       scope: trustedConfig.scope,
@@ -192,4 +210,6 @@ export function composeSiteAuditAnnex(
       availability: trustedConfig.availability,
     },
   }) };
+  verifiedAnnexSnapshots.set(annex, structuredClone(annex) as SiteAuditAnnex);
+  return annex;
 }
