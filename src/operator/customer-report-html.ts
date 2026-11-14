@@ -2,7 +2,7 @@ import {
   MAX_CUSTOMER_REPORT_JSON_BYTES,
   type CustomerServiceReport,
 } from './customer-report.js';
-import type { SiteAuditAnnex } from './site-audit-annex.js';
+import { verifiedSiteAuditAnnexSnapshot, type SiteAuditAnnex } from './site-audit-annex.js';
 
 export const MAX_CUSTOMER_REPORT_HTML_BYTES = 1_500_000;
 
@@ -75,17 +75,18 @@ function decisionSection(report: CustomerServiceReport): string {
 
 function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex | undefined): string {
   if (annex === undefined) return '';
-  if (annex.reportId !== report.id || annex.siteId !== report.context.siteId
-      || annex.target !== report.context.target
-      || !/^site-audit-annex:[0-9a-f]{64}$/.test(annex.id)
-      || !/^[0-9a-f]{64}$/.test(annex.inputSha256)
-      || annex.selected.length > 3) {
+  const verified = verifiedSiteAuditAnnexSnapshot(annex);
+  if (verified.reportId !== report.id || verified.siteId !== report.context.siteId
+      || verified.target !== report.context.target
+      || !/^site-audit-annex:[0-9a-f]{64}$/.test(verified.id)
+      || !/^[0-9a-f]{64}$/.test(verified.inputSha256)
+      || verified.selected.length > 3) {
     throw new Error('Internal site audit annex is not bound to this exact report and accepted source.');
   }
   const sourceTable = table(
     'Original WQT source availability and timing',
     ['Source', 'Trusted availability', 'Native version', 'Source-reported time', 'Source observations'],
-    annex.sources.map((source) => [
+    verified.sources.map((source) => [
       source.provider, source.availability, source.version ?? 'not supplied',
       source.reportedAt ?? 'not supplied', source.observationCount ?? 'not verified',
     ]),
@@ -94,7 +95,7 @@ function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex |
   const selectionTable = table(
     'Explicitly human-selected WQT technical observations — not ranked',
     ['Source', 'Exact audit ID', 'Source status / display mode', 'Source score 0–1', 'Source text / typed facts'],
-    annex.selected.map((item) => [
+    verified.selected.map((item) => [
       item.provider,
       item.code,
       item.provider === 'siteone' ? item.sourceStatus ?? 'unknown' : item.sourceMode ?? 'unknown',
@@ -113,13 +114,13 @@ function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex |
   <h2>Internal technical site audit evidence annex — not approved for customer delivery</h2>
   <p>Source-only. WQT observations are not LDW scores, priorities, rankings, health conclusions or remediation decisions. This annex is separate from the report identity and delivery authorization.</p>
   <dl class="facts">
-    <div><dt>WQT site ID</dt><dd>${escapeHtml(annex.wqtSiteId)}</dd></div>
-    <div><dt>Original normalized WQT SHA-256</dt><dd><code>${escapeHtml(annex.inputSha256)}</code></dd></div>
-    <div><dt>Trusted collection observed at</dt><dd>${escapeHtml(annex.observedAt)}</dd></div>
+    <div><dt>WQT site ID</dt><dd>${escapeHtml(verified.wqtSiteId)}</dd></div>
+    <div><dt>Original normalized WQT SHA-256</dt><dd><code>${escapeHtml(verified.inputSha256)}</code></dd></div>
+    <div><dt>Trusted collection observed at</dt><dd>${escapeHtml(verified.observedAt)}</dd></div>
   </dl>
   ${sourceTable}
   ${selectionTable}
-  ${list(annex.limitations, 'No recorded source limitations.')}
+  ${list(verified.limitations, 'No recorded source limitations.')}
   <p>Consult the separately authorized WQT raw/source-native HTML evidence for full detail; the original report remains unchanged when this optional annex is omitted.</p>
   </section>
 `;
