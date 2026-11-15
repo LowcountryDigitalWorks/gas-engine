@@ -85,10 +85,11 @@ function siteAuditSection(report: CustomerServiceReport, annex: SiteAuditAnnex |
   }
   const sourceTable = table(
     'Original WQT source availability and timing',
-    ['Source', 'Trusted availability', 'Native version', 'Source-reported time', 'Source observations'],
+    ['Source', 'Trusted availability', 'Trusted limitation', 'Native version', 'Source-reported time', 'Source observations'],
     verified.sources.map((source) => [
-      source.provider, source.availability, source.version ?? 'not supplied',
-      source.reportedAt ?? 'not supplied', source.observationCount ?? 'not verified',
+      source.provider, source.availability, source.limitation ?? 'not supplied',
+      source.version ?? 'not supplied', source.reportedAt ?? 'not supplied',
+      source.observationCount ?? 'not verified',
     ]),
     'No WQT sources are present.',
   );
