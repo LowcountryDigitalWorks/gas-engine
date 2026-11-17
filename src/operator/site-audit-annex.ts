@@ -25,6 +25,8 @@ export interface SiteAuditSelection {
 export interface SiteAuditSourceStatus {
   readonly provider: WqtProviderId;
   readonly availability: string;
+  /** Source limitation from separately trusted availability metadata; never inferred from scanner text. */
+  readonly limitation: string | null;
   readonly version: string | null;
   readonly reportedAt: string | null;
   readonly observationCount: number | null;
@@ -147,9 +149,11 @@ export function composeSiteAuditAnnex(
   const providers: readonly WqtProviderId[] = ['siteone', 'lighthouse'];
   const sources: SiteAuditSourceStatus[] = providers.map((provider) => {
     const source = artifact.sources[provider];
+    const availability = trustedConfig.availability[provider];
     return {
       provider,
-      availability: trustedConfig.availability[provider].state,
+      availability: availability.state,
+      limitation: availability.state === 'available' ? null : excerpt(availability.reason),
       version: source.version,
       reportedAt: provider === 'siteone'
         ? excerpt(artifact.sources.siteone.executedAt) : excerpt(artifact.sources.lighthouse.fetchTime),

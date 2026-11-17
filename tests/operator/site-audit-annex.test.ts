@@ -298,3 +298,68 @@ test('HTML renderer refuses an annex for another report, even with matching site
     /verified local composition/,
   );
 });
+
+
+test('trusted unavailable/expired/deleted WQT source reasons appear, never inferred from source scores', () => {
+  const states = [
+    { state: 'unavailable' as const, reason: 'Synthetic scanner root HTTP 403; no scan proof' },
+    { state: 'expired' as const, reason: 'Synthetic source retention window ended' },
+    { state: 'deleted' as const, reason: 'Synthetic source artifact no longer available' },
+  ];
+  for (const availability of states) {
+    const scopedConfig: WqtAdapterConfig = {
+      ...config,
+      availability: { ...config.availability, siteone: availability },
+    };
+    const annex = composeSiteAuditAnnex(report, bytes(fixture()), scopedConfig, [
+      { provider: 'lighthouse', code: 'first-contentful-paint' },
+    ]);
+    const siteone = annex.sources.find((source) => source.provider === 'siteone')!;
+    assert.equal(siteone.availability, availability.state);
+    assert.equal(siteone.limitation, availability.reason);
+    assert.equal(siteone.observationCount, null);
+    assert.equal(annex.selected.length, 1);
+    const html = renderCustomerServiceReportHtml(report, annex);
+    assert.match(html, /Trusted limitation/);
+    assert.ok(html.includes(availability.reason));
+    assert.match(html, /not verified/);
+    assert.doesNotMatch(html, /siteone[^<]*healthy/i);
+  }
+});
+
+test('bounded trusted unavailable reason is HTML-escaped and private snapshot resists caller edits', () => {
+  const hostile = '<ScRiPt>alert("fake")</ScRiPt> '.repeat(14);
+  assert.ok(hostile.length > 240 && hostile.length < 512);
+  const scopedConfig: WqtAdapterConfig = {
+    ...config,
+    availability: {
+      ...config.availability,
+      lighthouse: { state: 'unavailable', reason: hostile },
+    },
+  };
+  const annex = composeSiteAuditAnnex(report, bytes(fixture()), scopedConfig, [
+    { provider: 'siteone', code: 'redirects' },
+  ]);
+  const source = annex.sources.find((item) => item.provider === 'lighthouse')!;
+  assert.equal(source.observationCount, null);
+  assert.ok(source.limitation !== null);
+  assert.ok(source.limitation.length <= 241);
+  assert.equal(source.limitation.endsWith('…'), true);
+  const before = renderCustomerServiceReportHtml(report, annex);
+  assert.match(before, /&lt;ScRiPt&gt;alert\(&quot;fake&quot;\)&lt;\/ScRiPt&gt;/);
+  assert.doesNotMatch(before, /<ScRiPt>/i);
+  const mutable = annex as any;
+  mutable.sources[1].limitation = 'FORGED_HEALTHY_SOURCE';
+  assert.equal(renderCustomerServiceReportHtml(report, annex), before);
+  assert.equal(before.includes('FORGED_HEALTHY_SOURCE'), false);
+  assert.throws(() => renderCustomerServiceReportHtml(report, structuredClone(annex)), /verified local composition/);
+});
+
+test('available WQT source has no invented limitation and report can omit optional annex', () => {
+  const annex = composeSiteAuditAnnex(report, bytes(fixture()), config, []);
+  assert.deepEqual(annex.sources.map((source) => source.limitation), [null, null]);
+  const html = renderCustomerServiceReportHtml(report, annex);
+  assert.match(html, /Trusted limitation/);
+  assert.match(html, /not supplied/);
+  assert.equal(renderCustomerServiceReportHtml(report), renderCustomerServiceReportHtml(report, undefined));
+});
