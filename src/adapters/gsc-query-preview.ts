@@ -58,11 +58,17 @@ export class GscQueryPreviewError extends Error {
   }
 }
 
+function canonicalDnsHostname(host: string): boolean {
+  // Syntactic selection only: neither an account/ownership proof nor a live
+  // DNS lookup. Reject IP literals, trailing dots and special-use local zones.
+  return host.length <= 253
+    && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)
+    && !/\.(?:localhost|local|invalid|internal)$/.test(host);
+}
+
 function canonicalProperty(value: string): boolean {
   if (value.startsWith('sc-domain:')) {
-    const domain = value.slice('sc-domain:'.length);
-    return domain.length <= 253
-      && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain);
+    return canonicalDnsHostname(value.slice('sc-domain:'.length));
   }
   try {
     const parsed = new URL(value);
@@ -72,7 +78,7 @@ function canonicalProperty(value: string): boolean {
       && parsed.password === ''
       && parsed.search === ''
       && parsed.hash === ''
-      && parsed.hostname.includes('.')
+      && canonicalDnsHostname(parsed.hostname)
       && parsed.pathname === '/'
       && (value === parsed.origin || value === parsed.origin + '/');
   } catch {

@@ -110,11 +110,15 @@ test('strict request rejects forged dimensions, filters, credentials and result 
 test('property selection cannot mint ownership or accept tokens and URL paths', () => {
   const bad = [
     'sc-domain:EXAMPLE.TEST', 'sc-domain:example.test.', 'sc-domain:example',
-    'sc-domain:-example.test', 'sc-domain:example..test',
+    'sc-domain:-example.test', 'sc-domain:example..test', 'sc-domain:foo.localhost',
     'http://example.test/', 'https://user:pass@example.test/',
     'https://example.test/path', 'https://example.test/?key=secret',
     'https://example.test/#fragment', 'https://example.test:443/',
     'https://example.test:999/', 'https://localhost/',
+    'https://127.0.0.1/', 'https://10.1.2.3/',
+    'https://localhost./', 'https://example.test./',
+    'https://foo.localhost/', 'https://foo.local/',
+    'https://foo.invalid/', 'https://foo.internal/',
   ];
   for (const property of bad) {
     invalid({ ...base, profile: 'regional_web', countries: ['USA'], property });
