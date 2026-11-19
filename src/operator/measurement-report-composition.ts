@@ -1,3 +1,4 @@
+import { MAX_WQT_NORMALIZED_BYTES, type WqtAdapterConfig } from '../adapters/wqt.js';
 import type { EvidenceRepository } from '../persistence/repository.js';
 import { requireTenantContext, type TenantContext } from '../persistence/tenant-context.js';
 import type { ReviewLedgerRepository } from '../review/repository.js';
@@ -14,6 +15,11 @@ import {
   renderMeasurementReadinessHtml,
 } from './measurement-readiness.js';
 import { prepareOperatorWorkspace } from './workspace.js';
+import {
+  MAX_SITE_AUDIT_SELECTIONS,
+  composeSiteAuditAnnex,
+  type SiteAuditSelection,
+} from './site-audit-annex.js';
 
 // An internal presentation wrapper, not a new report schema, delivery artifact,
 // authorization capability or report-identity source. Keep the accepted renderer
@@ -23,6 +29,40 @@ const INTERNAL_START = '\n<div class="internal" id="measurement-readiness-annex"
   + '<p><strong>LDW INTERNAL REVIEW ONLY — not approved for customer delivery.'
   + ' These are trusted operator declarations, not verified live provider probes.</strong></p>\n';
 const INTERNAL_END = '\n</div>\n';
+
+/**
+ * Optional separately trusted WQT source for the SAME authoritative
+ * tenant-scoped internal report. This is not a customer-delivery capability.
+ */
+export interface InternalWqtSiteAuditInput {
+  readonly normalizedWqtBytes: Uint8Array;
+  readonly trustedConfig: WqtAdapterConfig;
+  readonly selections: readonly SiteAuditSelection[];
+}
+
+/** Snapshot source bytes/config before the first repository await. */
+function snapshotSiteAuditInput(input: InternalWqtSiteAuditInput | undefined):
+  InternalWqtSiteAuditInput | undefined {
+  if (input === undefined) return undefined;
+  if (input === null || typeof input !== 'object' || Array.isArray(input)
+      || Object.keys(input).sort().join(',') !== 'normalizedWqtBytes,selections,trustedConfig'
+      || !(input.normalizedWqtBytes instanceof Uint8Array)
+      || input.normalizedWqtBytes.byteLength > MAX_WQT_NORMALIZED_BYTES
+      || !Array.isArray(input.selections)
+      || input.selections.length > MAX_SITE_AUDIT_SELECTIONS) {
+    throw new Error('Invalid bounded internal WQT source input.');
+  }
+  try {
+    return {
+      normalizedWqtBytes: Uint8Array.from(input.normalizedWqtBytes),
+      trustedConfig: structuredClone(input.trustedConfig),
+      selections: structuredClone(input.selections),
+    };
+  } catch {
+    throw new Error('Internal WQT source input must be cloneable local data.');
+  }
+}
+
 
 /**
  * Assemble a report and a measurement-readiness fragment only after
@@ -40,8 +80,10 @@ export async function composeInternalMeasurementReadinessHtml(
   workspaceRequestInput: unknown,
   customerReportRequestInput: unknown,
   readinessRequestInput: unknown,
+  wqtEvidenceInput?: InternalWqtSiteAuditInput,
 ): Promise<string> {
   const tenantId = requireTenantContext(context);
+  const wqtSnapshot = snapshotSiteAuditInput(wqtEvidenceInput);
   const workspace = await prepareOperatorWorkspace(
     evidenceRepository,
     reviewRepository,
@@ -83,7 +125,25 @@ export async function composeInternalMeasurementReadinessHtml(
     throw new Error('Internal measurement report has a mismatched evaluation time.');
   }
   const fragment = renderMeasurementReadinessHtml(readiness);
-  const originalHtml = renderCustomerServiceReportHtml(report);
+
+  // Bind the separately issued WQT config to the CURRENT authoritative
+  // workspace on all three scope axes. Matching a URL is not sufficient.
+  let siteAudit;
+  if (wqtSnapshot !== undefined) {
+    const config = wqtSnapshot.trustedConfig;
+    if (config === null || typeof config !== 'object' || config.scope === null
+        || typeof config.scope !== 'object'
+        || config.scope.tenantId !== workspace.scope.tenantId
+        || config.scope.siteId !== workspace.scope.siteId
+        || config.scope.siteScopeRevisionId !== workspace.scope.siteScopeRevisionId
+        || config.expectedTargetOrigin !== workspace.trustedTarget) {
+      throw new Error('Internal WQT site audit source does not match trusted workspace scope and target.');
+    }
+    siteAudit = composeSiteAuditAnnex(
+      report, wqtSnapshot.normalizedWqtBytes, config, wqtSnapshot.selections,
+    );
+  }
+  const originalHtml = renderCustomerServiceReportHtml(report, siteAudit);
   if (!originalHtml.endsWith(REPORT_END)
       || originalHtml.indexOf('id="measurement-readiness-annex"') !== -1) {
     throw new Error('Accepted report HTML template is not suitable for internal composition.');
