@@ -137,7 +137,12 @@ export function previewGscSearchAnalyticsQuery(input: unknown): GscQueryPreview 
     readonly dimension: 'country' | 'device';
     readonly expressions: readonly string[];
   }[] = [];
-  if (countries !== undefined) filterLists.push(Object.freeze({ dimension: 'country' as const, expressions: countries }));
+  // Operator-supplied alpha-3 codes stay uppercase for stable caller input,
+  // but GSC country dimension values/filter expressions are source-key lowercase.
+  if (countries !== undefined) filterLists.push(Object.freeze({
+    dimension: 'country' as const,
+    expressions: Object.freeze(countries.map((country) => country.toLowerCase())),
+  }));
   if (devices !== undefined) filterLists.push(Object.freeze({ dimension: 'device' as const, expressions: devices }));
   const dimensionFilterGroups: GscQueryPreviewBody['dimensionFilterGroups'] = Object.freeze(
     filterLists.length === 0 ? [] : [Object.freeze({

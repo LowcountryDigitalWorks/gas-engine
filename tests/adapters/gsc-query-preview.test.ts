@@ -62,7 +62,7 @@ test('multi-country/device values OR within lists and AND between dimensions', (
   assert.deepEqual(first.body.dimensionFilterGroups, [{
     groupType: 'and',
     filterLists: [
-      { dimension: 'country', expressions: ['DEU', 'FRA', 'USA'] },
+      { dimension: 'country', expressions: ['deu', 'fra', 'usa'] },
       { dimension: 'device', expressions: ['DESKTOP', 'MOBILE', 'TABLET'] },
     ],
   }]);
@@ -75,8 +75,29 @@ test('multi-country/device values OR within lists and AND between dimensions', (
   input.countries[0] = 'CAN';
   assert.deepEqual(
     first.body.dimensionFilterGroups[0]!.filterLists[0]!.expressions,
-    ['DEU', 'FRA', 'USA'],
+    ['deu', 'fra', 'usa'],
   );
+});
+
+test('regional country filters use lowercase provider source keys without changing caller input', () => {
+  const input = {
+    ...base, profile: 'regional_web',
+    countries: ['USA', 'COL'],
+    devices: ['DESKTOP'],
+  };
+  const snapshot = structuredClone(input);
+  const projected = previewGscSearchAnalyticsQuery(input);
+  assert.deepEqual(projected.body.dimensionFilterGroups[0]!.filterLists, [
+    { dimension: 'country', expressions: ['col', 'usa'] },
+    { dimension: 'device', expressions: ['DESKTOP'] },
+  ]);
+  assert.deepEqual(input, snapshot);
+  assert.ok(Object.isFrozen(projected.body.dimensionFilterGroups[0]!.filterLists[0]!.expressions));
+  assert.equal(projected.sourceVerified, false);
+  assert.equal(projected.providerRowsCollected, false);
+  assert.equal(projected.networkAuthorized, false);
+  assert.equal(projected.acceptedSearchAnalyticsAdapterCompatible, false);
+  invalid({ ...base, profile: 'regional_web', countries: ['usa'] });
 });
 
 test('branded date floor is enforced without promising property eligibility', () => {
