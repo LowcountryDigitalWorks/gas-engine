@@ -18,7 +18,7 @@ The public export previewGscSearchAnalyticsQuery(candidate) accepts an ordinary 
 - property: operator-selected canonical sc-domain:example.test or exact HTTPS origin. This is NOT proof of ownership, tenant/site authority or available OAuth scope.
 - startDate, endDate: inclusive PT-calendar dates in YYYY-MM-DD format, at most 31 days.
 - profile: branded_split, multimodal_pages or regional_web.
-- optional countries: at most eight uppercase ISO-alpha3-shaped values (syntax only; country registry validity is NOT established). Optional devices: up to three distinct DESKTOP/MOBILE/TABLET values. Regional requires at least one such list.
+- optional countries: at most eight **uppercase caller-supplied** ISO-alpha3-shaped values, serialized to **lowercase** GSC country source-key expressions (for example, input `USA` emits `usa`) in the returned `filterLists`. Syntax only, **not** ISO registry or source response verification. Optional devices: up to three distinct **uppercase** DESKTOP/MOBILE/TABLET values, preserved as-is. Regional requires at least one such list.
 
 Synthetic illustration:
 
