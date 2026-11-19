@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import type { WqtAdapterConfig } from '../../src/adapters/wqt.js';
 import {
   composeInternalMeasurementReadinessHtml,
+  type InternalWqtSiteAuditInput,
 } from '../../src/operator/measurement-report-composition.js';
 import {
   composeCustomerServiceReport,
@@ -203,4 +206,170 @@ test('provider-controlled and human text stays HTML-escaped and CSP remains deny
   assert.doesNotMatch(html, /<script\b|<img\b/i);
   assert.match(html, /Content-Security-Policy/);
   assert.match(html, /script-src 'none'/);
+});
+
+
+const originalWqtMinor2 = JSON.parse(
+  readFileSync('tests/fixtures/wqt-normalized-v1.2.json', 'utf8'),
+) as Record<string, any>;
+
+function internalWqtInput(workspace: OperatorWorkspace): InternalWqtSiteAuditInput {
+  const artifact = structuredClone(originalWqtMinor2);
+  artifact.schemaMinorVersion = 3;
+  const config: WqtAdapterConfig = {
+    scope: structuredClone(workspace.scope),
+    expectedSiteId: 'example-site',
+    expectedTargetOrigin: workspace.trustedTarget,
+    providerConnectionIds: {
+      siteone: 'synthetic-siteone-connection',
+      lighthouse: 'synthetic-lighthouse-connection',
+    },
+    timing: {
+      observedAt: '2026-10-02T00:05:00.000Z',
+      startedAt: '2026-10-02T00:00:00.000Z',
+      endedAt: '2026-10-02T00:04:00.000Z',
+      collectedAt: '2026-10-02T00:06:00.000Z',
+      receivedAt: '2026-10-02T00:07:00.000Z',
+    },
+    availability: {
+      siteone: { state: 'available', reference: 'synthetic-siteone-artifact' },
+      lighthouse: { state: 'available', reference: 'synthetic-lighthouse-artifact' },
+    },
+  };
+  return {
+    normalizedWqtBytes: Buffer.from(JSON.stringify(artifact), 'utf8'),
+    trustedConfig: config,
+    selections: [
+      { provider: 'siteone', code: 'redirects' },
+      { provider: 'lighthouse', code: 'first-contentful-paint' },
+    ],
+  };
+}
+
+test('one tenant-verified internal report combines exact WQT audit and measurement readiness', async (t) => {
+  const x = await fixtureCase(t);
+  const { evidence, review } = x.fixture.prepared;
+  const wqt = internalWqtInput(x.workspace);
+  const accepted = await composeCustomerServiceReport(evidence, review, alpha, x.request, x.customer);
+  const legacyHtml = renderCustomerServiceReportHtml(accepted);
+  const legacyJson = serializeCustomerServiceReportJson(accepted);
+  const html = await composeInternalMeasurementReadinessHtml(
+    evidence, review, alpha, x.request, x.customer, x.readiness, wqt,
+  );
+  assert.match(html, /id="measurement-readiness-annex"/);
+  assert.match(html, /id="site-audit"/);
+  assert.equal((html.match(/id="site-audit"/g) ?? []).length, 1);
+  assert.equal((html.match(/id="measurement-readiness-annex"/g) ?? []).length, 1);
+  assert.match(html, /Original WQT source availability and timing/);
+  assert.match(html, /first-contentful-paint/);
+  assert.match(html, /redirect-count=1 count/);
+  assert.match(html, /configured no collection proof/);
+  assert.match(html, /not approved for customer delivery/);
+  assert.match(html, /No trusted provider status supplied; absence is not an observed zero/);
+  assert.match(html, /script-src 'none'/);
+  assert.match(html, /connect-src 'none'/);
+  assert.equal(html.includes('<script'), false);
+  assert.ok(Buffer.byteLength(html, 'utf8') <= MAX_CUSTOMER_REPORT_HTML_BYTES);
+  assert.equal(renderCustomerServiceReportHtml(accepted), legacyHtml);
+  assert.equal(serializeCustomerServiceReportJson(accepted), legacyJson);
+  assert.equal(html, await composeInternalMeasurementReadinessHtml(
+    evidence, review, alpha, x.request, x.customer, x.readiness, wqt,
+  ));
+});
+
+test('WQT source cannot cross tenant, site, revision or HTTPS target with matching hostname', async (t) => {
+  const x = await fixtureCase(t);
+  const { evidence, review } = x.fixture.prepared;
+  const wqt = internalWqtInput(x.workspace);
+  const attempt = (input: InternalWqtSiteAuditInput) =>
+    composeInternalMeasurementReadinessHtml(
+      evidence, review, alpha, x.request, x.customer, x.readiness, input,
+    );
+  for (const scope of [
+    { ...x.workspace.scope, tenantId: 'tenant-other' },
+    { ...x.workspace.scope, siteId: 'site-other' },
+    { ...x.workspace.scope, siteScopeRevisionId: 'site-revision-other' },
+  ]) {
+    await assert.rejects(attempt({
+      ...wqt,
+      trustedConfig: { ...wqt.trustedConfig, scope },
+    }), /scope and target/);
+  }
+  await assert.rejects(attempt({
+    ...wqt,
+    trustedConfig: {
+      ...wqt.trustedConfig,
+      expectedTargetOrigin: 'https://other.example.test',
+    },
+  }), /scope and target/);
+  await assert.rejects(attempt({
+    ...wqt,
+    trustedConfig: {
+      ...wqt.trustedConfig,
+      expectedSiteId: 'another-source-site',
+    },
+  }));
+});
+
+test('forged selection or malformed WQT bytes cannot enter the combined report', async (t) => {
+  const x = await fixtureCase(t);
+  const { evidence, review } = x.fixture.prepared;
+  const wqt = internalWqtInput(x.workspace);
+  const attempt = (input: InternalWqtSiteAuditInput) =>
+    composeInternalMeasurementReadinessHtml(
+      evidence, review, alpha, x.request, x.customer, x.readiness, input,
+    );
+  await assert.rejects(attempt({
+    ...wqt,
+    normalizedWqtBytes: Buffer.from('{"status":403}', 'utf8'),
+  }));
+  await assert.rejects(attempt({
+    ...wqt,
+    selections: [{ provider: 'siteone', code: 'nonexistent-source-observation' }],
+  }));
+  await assert.rejects(attempt({
+    ...wqt,
+    selections: [...wqt.selections, wqt.selections[0]!],
+  }));
+  await assert.rejects(attempt({
+    ...wqt,
+    selections: [
+      { provider: 'siteone', code: 'redirects', priority: 999 },
+    ] as unknown as InternalWqtSiteAuditInput['selections'],
+  }));
+  await assert.rejects(attempt({
+    ...wqt,
+    customerDeliveryAuthorized: true,
+  } as InternalWqtSiteAuditInput));
+});
+
+test('unavailable WQT remains unverified, trusted limitation escaped, selection prohibited', async (t) => {
+  const x = await fixtureCase(t);
+  const { evidence, review } = x.fixture.prepared;
+  const wqt = internalWqtInput(x.workspace);
+  const unavailable: InternalWqtSiteAuditInput = {
+    ...wqt,
+    trustedConfig: {
+      ...wqt.trustedConfig,
+      availability: {
+        ...wqt.trustedConfig.availability,
+        siteone: {
+          state: 'unavailable',
+          reason: '<ScRiPt>alert(1)</ScRiPt> - scanner denied HTTP403',
+        },
+      },
+    },
+    selections: [{ provider: 'lighthouse', code: 'first-contentful-paint' }],
+  };
+  const html = await composeInternalMeasurementReadinessHtml(
+    evidence, review, alpha, x.request, x.customer, x.readiness, unavailable,
+  );
+  assert.match(html, /not verified/);
+  assert.match(html, /&lt;ScRiPt&gt;alert\(1\)&lt;\/ScRiPt&gt;/);
+  assert.doesNotMatch(html, /<script\b/i);
+  assert.match(html, /measurement-readiness-annex/);
+  await assert.rejects(composeInternalMeasurementReadinessHtml(
+    evidence, review, alpha, x.request, x.customer, x.readiness,
+    { ...unavailable, selections: [{ provider: 'siteone', code: 'redirects' }] },
+  ));
 });

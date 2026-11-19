@@ -1,6 +1,6 @@
 # Trusted internal measurement readiness in service-report HTML
 
-**Status:** SOURCE-ONLY candidate under [GAS #186](https://github.com/LowcountryDigitalWorks/gas-engine/issues/186); not yet accepted or merged. G.A.S. remains the LDW-internal local managed-service evidence engine, private package 0.26.0. This feature does not authorize external source polling, site changes, tracking pixels, customer delivery or Release 1.0 cloud deployment.
+**Status:** Initial source accepted and merged through [GAS #186](https://github.com/LowcountryDigitalWorks/gas-engine/issues/186) and [PR #187](https://github.com/LowcountryDigitalWorks/gas-engine/pull/187). Optional WQT dual-annex extension is a new SOURCE-ONLY candidate under [GAS #181](https://github.com/LowcountryDigitalWorks/gas-engine/issues/181), not an accepted production/customer deployment. G.A.S. remains the LDW-internal local managed-service evidence engine, private package 0.26.0. This feature does not authorize external source polling, site changes, tracking pixels, customer delivery or Release 1.0 cloud deployment.
 
 ## Source and authority
 
@@ -26,10 +26,60 @@ const html = await composeInternalMeasurementReadinessHtml(
 );
 ```
 
-The caller must already hold an **issued** `TenantContext`. The function does not issue one and does not fetch provider data. This first version does not take a WQT annex or accept customer-selected HTML. The separate accepted WQT Site Audit annex keeps its original report/site/target binding; combining both requires additional tenant and scope proof and is not implied by this source.
+The caller must already hold an **issued** `TenantContext`. The function does not issue one and does not fetch provider data. The original six-argument form stays unchanged and does not accept customer-selected HTML. An optional seventh argument may compose accepted WQT Site Audit evidence into the SAME internal report, provided the separately trusted WQT adapter configuration also matches the fresh authoritative tenant, site, scope revision and HTTPS target.
 
 ## Validation and explicit non-authority
 
 Synthetic tests must prove exact scope and provenance, stale/forged context rejection, configured/blocked/missing separation, stable output, escaping and CSP. Hosted Contracts and Security checks, author-excluded source review and a separate eligible protected merge are required before accepted-main status.
 
 **No:** credentials, OAuth, analytics/tag installation, web crawling, WAF overrides, live Google PSI/GA4/GSC/Clarity requests, client emails/marketing consent, customer delivery, production runtime, new schema or database, report identity changes, score/ranking/causal inference, paid usage or public HTTP endpoint.
+
+
+## Optional WQT Site Audit annex (local source-only candidate)
+
+The OPTIONAL seventh argument to the accepted composeInternalMeasurementReadinessHtml
+function has precisely three properties: normalizedWqtBytes (original normalized
+ldw.website-quality.v1 minor3 Uint8Array), trustedConfig (a separately issued
+WqtAdapterConfig), and selections (zero to three exact human-selected SiteOne/
+Lighthouse provider-code pairs). This addition does NOT accept client-supplied
+report HTML, an external site URL for fetching, or a user-created tenant context.
+
+    const combinedInternalHtml = await composeInternalMeasurementReadinessHtml(
+      evidenceRepository, reviewRepository, issuedTenantContext,
+      authorizedWorkspaceRequest, authorizedCustomerReportRequest,
+      operatorDeclaredMeasurementStatus,
+      {
+        normalizedWqtBytes: existingOriginalWqtMinor3Bytes,
+        trustedConfig: separatelyIssuedWqtConfig,
+        selections: [
+          { provider: 'siteone', code: 'redirects' },
+          { provider: 'lighthouse', code: 'first-contentful-paint' },
+        ],
+      },
+    );
+
+The optional original bytes, configuration and selections are copied within
+existing bounds BEFORE awaiting any repository reads. The fresh authoritative
+OperatorWorkspace must match the WQT configuration on tenantId, siteId,
+siteScopeRevisionId AND canonical HTTPS target. Matching only the hostname
+or CustomerServiceReport.context.siteId is insufficient. Accepted
+composeSiteAuditAnnex then validates original source bytes, exact WQT minor3
+schema, native method/metadata, expected WQT site identity, availability,
+selection and source integrity. The accepted HTML renderer reads its private
+same-process verified annex snapshot; serialized/cloned/forged annex objects
+do not become presentation authority.
+
+Both the WQT annex and eight-source Measurement Readiness appear in one bounded
+CSP-constrained internal static report. Original six-argument HTML, customer
+report JSON/model/id and all accepted adapters remain byte-identical.
+Lighthouse numeric zero versus unscored null, human selection, source-local
+timing, scanner blocked/unknown reasons, and unavailable provider rows keep
+their original source semantics. SiteOne HTTP 403 is never auto-interpreted as
+healthy or cleared; PageSpeed API JSON must NOT be substituted for pinned WQT
+SiteOne+Lighthouse source, and an intentionally noindex page is NOT an
+automatic SEO defect or action recommendation.
+
+No network, GA4/Clarity/GSC property read, WQT scan, cloud deployment,
+credentials, customer delivery/email, scored health claim, database migration
+or release number change is authorized. Any new external collection, output
+routing or privileged action requires its separately accepted owning gate.
