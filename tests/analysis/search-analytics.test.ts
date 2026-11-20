@@ -249,6 +249,59 @@ test('explicit policy thresholds are inclusive at exact boundary values', () => 
   assert.equal(miss.signals.some((signal) => signal.kind === 'ctr_opportunity_candidate'), false);
 });
 
+test('low-volume impression percentage swing remains descriptive under an explicit caller baseline gate', () => {
+  // Synthetic query×page observation inspired by a low-volume cautionary case.
+  // This is NOT a reconstruction of property-level GSC totals or a site anomaly.
+  const before = baselineFixture();
+  before.rows = [{
+    query: 'synthetic low-volume cohort',
+    page: 'https://example.test/small-cohort',
+    clicks: 1,
+    impressions: 114,
+    ctr: 1 / 114,
+    averagePosition: 6,
+  }];
+  const after = currentFixture();
+  after.rows = [{
+    query: 'synthetic low-volume cohort',
+    page: 'https://example.test/small-cohort',
+    clicks: 0,
+    impressions: 38,
+    ctr: 0,
+    averagePosition: 3,
+  }];
+  const original = structuredClone({ before, after });
+  const baseline = adapt(before);
+  const current = adapt(after);
+
+  const guardedPolicy = structuredClone(policies);
+  guardedPolicy.decay.metric = 'impressions';
+  guardedPolicy.decay.minimumBaseline = 200;
+  guardedPolicy.decay.maximumCurrentToBaselineRatio = 0.5;
+  const guarded = analyzeSearchAnalyticsSignals(baseline, current, guardedPolicy);
+  const delta = guarded.signals.find((signal) => signal.kind === 'window_delta');
+  assert.ok(delta);
+  assert.equal(delta.values.impressionsDelta, -76);
+  assert.equal(delta.values.clicksDelta, -1);
+  assert.equal(guarded.signals.some((signal) => signal.kind === 'decay_candidate'), false);
+  assert.deepEqual({ before, after }, original);
+
+  // A separate explicit policy may admit the same data; G.A.S. must not
+  // silently choose a universal minimum volume or escalate a neutral signal.
+  const qualifyingPolicy = structuredClone(guardedPolicy);
+  qualifyingPolicy.decay.minimumBaseline = 100;
+  const qualifying = analyzeSearchAnalyticsSignals(baseline, current, qualifyingPolicy);
+  const decay = qualifying.signals.find((signal) => signal.kind === 'decay_candidate');
+  assert.ok(decay);
+  assert.deepEqual(decay.values, {
+    baselineValue: 114,
+    currentValue: 38,
+    currentToBaselineRatio: 38 / 114,
+  });
+  assert.equal(decay.policy.thresholds.minimumBaseline, 100);
+  assert.deepEqual({ before, after }, original);
+});
+
 test('one query across two qualifying current pages emits only neutral overlap evidence', () => {
   const { baseline, current } = pair();
   const report = analyzeSearchAnalyticsSignals(baseline, current, policies);
