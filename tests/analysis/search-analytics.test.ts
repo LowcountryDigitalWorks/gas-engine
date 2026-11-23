@@ -302,6 +302,45 @@ test('low-volume impression percentage swing remains descriptive under an explic
   assert.deepEqual({ before, after }, original);
 });
 
+test('zero-click baselines remain measured and cannot produce decay ratios', () => {
+  // An observed zero baseline is not an absent row or an anomaly. An explicit
+  // positive click baseline policy must suppress divide-by-zero decay claims.
+  for (const currentClicks of [0, 1] as const) {
+    const before = baselineFixture();
+    before.rows = [{
+      query: 'synthetic zero baseline',
+      page: 'https://example.test/zero-baseline',
+      clicks: 0, impressions: 100, ctr: 0, averagePosition: 6,
+    }];
+    const after = currentFixture();
+    after.rows = [{
+      query: 'synthetic zero baseline',
+      page: 'https://example.test/zero-baseline',
+      clicks: currentClicks, impressions: 100,
+      ctr: currentClicks / 100, averagePosition: 7,
+    }];
+    const sourceSnapshot = structuredClone({ before, after });
+    const clickPolicy = structuredClone(policies);
+    clickPolicy.decay.metric = 'clicks';
+    clickPolicy.decay.minimumBaseline = 1;
+
+    const report = analyzeSearchAnalyticsSignals(adapt(before), adapt(after), clickPolicy);
+    assert.deepEqual(report.signals.map((signal) => signal.kind), ['window_delta']);
+    const delta = report.signals[0]!;
+    assert.deepEqual(delta.values, {
+      clicksDelta: currentClicks,
+      impressionsDelta: 0,
+      ctrDelta: currentClicks / 100,
+      averagePositionDelta: 1,
+    });
+    assert.equal(report.unmatched.baselineOnly, 0);
+    assert.equal(report.unmatched.currentOnly, 0);
+    assert.equal(report.signals.some((signal) => signal.kind === 'decay_candidate'), false);
+    assert.ok(report.signals.every((signal) => Object.values(signal.values).every(Number.isFinite)));
+    assert.deepEqual({ before, after }, sourceSnapshot);
+  }
+});
+
 test('one query across two qualifying current pages emits only neutral overlap evidence', () => {
   const { baseline, current } = pair();
   const report = analyzeSearchAnalyticsSignals(baseline, current, policies);
