@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -22,6 +23,8 @@ import {
   prepareManagedServiceRun,
   summarizeManagedServiceRun,
 } from '../src/operator/service-run.js';
+import { composeInternalMeasurementReadinessHtml } from '../src/operator/measurement-report-composition.js';
+import { MAX_CUSTOMER_REPORT_HTML_BYTES } from '../src/operator/customer-report-html.js';
 import { alpha } from '../tests/persistence/helpers.js';
 import {
   serviceBriefScope,
@@ -89,6 +92,7 @@ async function generate(): Promise<void> {
     'customer-report.json',
     'customer-report.html',
     'package-manifest.json',
+    'internal-dual-annex-preview.html',
     'preview.sqlite',
     'preview.sqlite-shm',
     'preview.sqlite-wal',
@@ -297,6 +301,77 @@ async function generate(): Promise<void> {
         priorRun: prior,
         customerReportRequest: reportRequest,
       },
+    );
+
+    // Standalone SYNTHETIC / LDW INTERNAL preview; never part of pkg.files
+    // or its customer-safe output/manifest. All declarations are fictional.
+    const originalFiles = JSON.stringify(pkg.files);
+    const originalManifest = JSON.stringify(pkg.manifest);
+    const originalManifestJson = pkg.manifestJson;
+    const originalFilenames = [
+      'service-run.json', 'operator-workspace.json', 'operator-workspace.html',
+      'customer-report.json', 'customer-report.html',
+    ];
+    assert.deepEqual(pkg.files.map((file) => file.filename), originalFilenames);
+    assert.deepEqual(pkg.manifest.entries.map((entry) => entry.filename), originalFilenames);
+    const originalCustomerHtml = pkg.files.find((file) => file.role === 'customer_report_html');
+    assert.ok(originalCustomerHtml);
+    assert.equal(originalCustomerHtml.classification, 'customer_safe');
+    assert.doesNotMatch(originalCustomerHtml.content, /id="(?:site-audit|measurement-readiness-annex)"/);
+
+    const composeInternalPreview = () => composeInternalMeasurementReadinessHtml(
+      evidence,
+      review,
+      alpha,
+      workspaceRequest,
+      reportRequest,
+      {
+        scope: structuredClone(workspace.scope),
+        target: workspace.trustedTarget,
+        evaluatedAt: workspace.evaluatedAt,
+        sources: [
+          { provider: 'google_search_console', state: 'verified',
+            limitation: 'Synthetic operator declaration only; no provider inspection.' },
+          { provider: 'google_analytics_4', state: 'configured_no_collection_proof',
+            limitation: 'Synthetic configuration only; no event collection observed.' },
+        ],
+        nextChecks: [
+          { provider: 'google_analytics_4', humanCheck: 'Review synthetic collection readiness before any authorized source test.' },
+        ],
+      },
+      {
+        normalizedWqtBytes: currentBytes,
+        trustedConfig: wqtConfig('2026-10-02T09:00:00.000Z'),
+        selections: [
+          { provider: 'siteone', code: 'redirects' },
+          { provider: 'lighthouse', code: 'first-contentful-paint' },
+        ],
+      },
+    );
+    const internalHtml = await composeInternalPreview();
+    assert.equal(await composeInternalPreview(), internalHtml);
+    const internalBytes = Buffer.from(internalHtml, 'utf8');
+    assert.equal(internalBytes.toString('utf8'), internalHtml);
+    assert.ok(internalBytes.byteLength > 0 && internalBytes.byteLength <= MAX_CUSTOMER_REPORT_HTML_BYTES);
+    assert.match(internalHtml, /LDW INTERNAL REVIEW ONLY — not approved for customer delivery/);
+    assert.match(internalHtml, /id="site-audit"/);
+    assert.match(internalHtml, /id="measurement-readiness-annex"/);
+    assert.match(internalHtml, /script-src 'none'/);
+    assert.match(internalHtml, /connect-src 'none'/);
+    assert.doesNotMatch(internalHtml, /<script\b/i);
+    assert.ok(internalHtml.includes(currentWqt.inputSha256));
+    assert.equal(JSON.stringify(pkg.files), originalFiles);
+    assert.equal(JSON.stringify(pkg.manifest), originalManifest);
+    assert.equal(pkg.manifestJson, originalManifestJson);
+
+    const internalFilename = 'internal-dual-annex-preview.html';
+    writeFileSync(resolve(artifactDirectory, internalFilename), internalBytes, { flag: 'wx' });
+    assert.deepEqual(readFileSync(resolve(artifactDirectory, internalFilename)), internalBytes);
+    console.log(
+      'Standalone preview: filename=' + internalFilename +
+      '; classification=LDW_INTERNAL / SYNTHETIC; sha256=' +
+      createHash('sha256').update(internalBytes).digest('hex') +
+      '; bytes=' + String(internalBytes.byteLength),
     );
 
     for (const file of pkg.files) {

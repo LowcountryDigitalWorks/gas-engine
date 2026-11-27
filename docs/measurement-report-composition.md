@@ -1,6 +1,6 @@
 # Trusted internal measurement readiness in service-report HTML
 
-**Status:** Initial source accepted and merged through [GAS #186](https://github.com/LowcountryDigitalWorks/gas-engine/issues/186) and [PR #187](https://github.com/LowcountryDigitalWorks/gas-engine/pull/187). Optional WQT dual-annex extension is a new SOURCE-ONLY candidate under [GAS #181](https://github.com/LowcountryDigitalWorks/gas-engine/issues/181), not an accepted production/customer deployment. G.A.S. remains the LDW-internal local managed-service evidence engine, private package 0.26.0. This feature does not authorize external source polling, site changes, tracking pixels, customer delivery or Release 1.0 cloud deployment.
+**Status:** Initial source accepted and merged through [GAS #186](https://github.com/LowcountryDigitalWorks/gas-engine/issues/186) and [PR #187](https://github.com/LowcountryDigitalWorks/gas-engine/pull/187). Optional WQT dual-annex extension is accepted source-only under [GAS #181](https://github.com/LowcountryDigitalWorks/gas-engine/issues/181) / [PR #190](https://github.com/LowcountryDigitalWorks/gas-engine/pull/190), merged at `8047d0c137e65ae590168d4bfaa0813a5c72e4ff`, not an accepted production/customer deployment. G.A.S. remains the LDW-internal local managed-service evidence engine, private package 0.26.0. This feature does not authorize external source polling, site changes, tracking pixels, customer delivery or Release 1.0 cloud deployment.
 
 ## Source and authority
 
@@ -35,7 +35,7 @@ Synthetic tests must prove exact scope and provenance, stale/forged context reje
 **No:** credentials, OAuth, analytics/tag installation, web crawling, WAF overrides, live Google PSI/GA4/GSC/Clarity requests, client emails/marketing consent, customer delivery, production runtime, new schema or database, report identity changes, score/ranking/causal inference, paid usage or public HTTP endpoint.
 
 
-## Optional WQT Site Audit annex (local source-only candidate)
+## Optional WQT Site Audit annex (accepted local source-only)
 
 The OPTIONAL seventh argument to the accepted composeInternalMeasurementReadinessHtml
 function has precisely three properties: normalizedWqtBytes (original normalized
@@ -83,3 +83,24 @@ No network, GA4/Clarity/GSC property read, WQT scan, cloud deployment,
 credentials, customer delivery/email, scored health claim, database migration
 or release number change is authorized. Any new external collection, output
 routing or privileged action requires its separately accepted owning gate.
+
+## Inspect the standalone synthetic dual-annex preview
+
+After the existing locked dependency setup and `npm run build`, run the existing
+`npm run preview:service-run` command. It writes
+`local-artifacts/release-0.18-service-run/internal-dual-annex-preview.html` as a
+separate **LDW INTERNAL / SYNTHETIC** local file, not a managed-service package
+entry or a customer-safe export. Open it locally to inspect the existing technical
+site audit and measurement-readiness annexes together. All declarations and WQT
+observations are synthetic, not live collection or permission evidence.
+
+The preview checks the exact internal warning, both annex identifiers, deny-network
+CSP, absence of script tags, original WQT source digest and the accepted HTML byte
+bound. It recomposes the internal HTML and checks byte identity in-process, verifies
+file readback, and checks that the original five package files and manifest are
+unchanged by the separate composition. Only its filename, classification, byte
+count and SHA-256 are logged for the new artifact. Run the preview twice and compare
+both the standalone SHA-256 and existing package manifest SHA-256 in the output;
+compare the original package digests against the unmodified base preview as well.
+No PDF generator, delivery approval, customer export, hosted artifact upload,
+provider access or new runtime dependency is implied.
