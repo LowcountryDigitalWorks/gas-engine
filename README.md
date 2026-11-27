@@ -74,7 +74,7 @@ Internal automation does not prove commercial demand. LDW's audit-first/service-
 
 ## Local validation
 
-`.nvmrc` and `package.json` are the canonical runtime pins: the current CI and developer runtime is exact Node 24.22.2, the supported Node engine is `>=24.22.1 <25`, and the npm baseline is 11.17.0. Dependency installation needs the package registry or an existing cache; the checks use only local/synthetic inputs.
+`.nvmrc` selects the security-patched Node 24.22.3 LTS runtime for CI and development; `package.json` records npm 11.19.1, the bundled version observed in accepted hosted CI and the patched-runtime validation. Use this pinned toolchain for reproducible validation. The existing compatibility engine ranges are unchanged (`>=24.22.1 <25` and npm `>=11 <12`); they do not establish security-patch parity. The current CI selects Node via `.nvmrc` and uses its bundled npm, rather than independently installing an npm version. Dependency installation needs the package registry or an existing cache; the checks use only local/synthetic inputs.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
