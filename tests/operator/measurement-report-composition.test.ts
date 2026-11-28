@@ -22,7 +22,42 @@ import {
 import { alpha, beta } from '../persistence/helpers.js';
 import { decisionCycleFixture } from './decision-cycle-support.js';
 
+import { composeSiteAuditAnnex } from '../../src/operator/site-audit-annex.js';
+
 type Fixture = Awaited<ReturnType<typeof decisionCycleFixture>>;
+
+// Independent literal expectations: do not import the private presentation helper.
+const expectedBanner = '<p id="ldw-internal-classification">LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY</p>' + '\n';
+const expectedPrintStyle = `#ldw-internal-classification{border:2px solid #102a3a;background:#102a3a;color:#fff;padding:.75rem;margin:0 0 1rem;font-weight:700;text-align:center;overflow-wrap:anywhere}
+@media screen and (max-width:480px){main{padding:.75rem}}
+@media print{
+  @page{margin:.7in .55in;
+    @top-center{content:"LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY";font:700 9pt system-ui,sans-serif;color:#102a3a}
+    @bottom-center{content:"LDW INTERNAL REVIEW — Page " counter(page) " of " counter(pages);font:9pt system-ui,sans-serif;color:#102a3a}
+  }
+  main{padding:0}#ldw-internal-classification{background:#fff;color:#102a3a;break-inside:avoid}
+  thead{display:table-header-group}tr{break-inside:avoid}
+}
+`;
+const reportEnd = '\n</main>\n</body>\n</html>\n';
+const readinessStart = '\n<div class="internal" id="measurement-readiness-annex" role="note">\n';
+
+function assertOnlyInternalAdditions(html: string, original: string): void {
+  assert.equal(html.split(expectedBanner).length, 2);
+  assert.equal(html.split(expectedPrintStyle).length, 2);
+  assert.ok(html.includes(expectedPrintStyle + '</style>\n</head>'));
+  assert.ok(html.includes('<main>\n' + expectedBanner + '<header>'));
+  assert.ok(html.indexOf(expectedBanner) < html.indexOf('<h1>'));
+  assert.ok(html.endsWith(reportEnd));
+  assert.equal(html.split(readinessStart).length, 2);
+  const withoutMarkings = html.replace(expectedPrintStyle, '').replace(expectedBanner, '');
+  const annexAt = withoutMarkings.indexOf(readinessStart);
+  assert.ok(annexAt > 0);
+  assert.equal(withoutMarkings.slice(0, annexAt) + reportEnd, original);
+  assert.ok(!original.includes('id="ldw-internal-classification"'));
+  assert.ok(!original.includes(expectedPrintStyle));
+}
+
 
 function workspaceRequest(fixture: Fixture): OperatorWorkspaceRequest {
   return {
@@ -92,7 +127,7 @@ async function fixtureCase(t: Parameters<typeof decisionCycleFixture>[0]) {
   };
 }
 
-test('trusted in-process composition adds only a clearly internal source-readiness fragment', async (t) => {
+test('trusted in-process composition adds only internal classification and source-readiness presentation', async (t) => {
   const x = await fixtureCase(t);
   const { evidence, review } = x.fixture.prepared;
   const accepted = await composeCustomerServiceReport(evidence, review, alpha, x.request, x.customer);
@@ -106,7 +141,7 @@ test('trusted in-process composition adds only a clearly internal source-readine
   assert.equal(result, await composeInternalMeasurementReadinessHtml(
     evidence, review, alpha, x.request, x.customer, x.readiness,
   ));
-  assert.ok(result.startsWith(legacy.slice(0, legacy.indexOf('\n</main>\n</body>\n</html>\n'))));
+  assertOnlyInternalAdditions(result, legacy);
   assert.match(result, /id="measurement-readiness-annex"/);
   assert.match(result, /LDW INTERNAL REVIEW ONLY/);
   assert.match(result, /not approved for customer delivery/);
@@ -258,6 +293,10 @@ test('one tenant-verified internal report combines exact WQT audit and measureme
   );
   assert.match(html, /id="measurement-readiness-annex"/);
   assert.match(html, /id="site-audit"/);
+  const originalDualHtml = renderCustomerServiceReportHtml(accepted, composeSiteAuditAnnex(
+    accepted, wqt.normalizedWqtBytes, wqt.trustedConfig, wqt.selections,
+  ));
+  assertOnlyInternalAdditions(html, originalDualHtml);
   assert.equal((html.match(/id="site-audit"/g) ?? []).length, 1);
   assert.equal((html.match(/id="measurement-readiness-annex"/g) ?? []).length, 1);
   assert.match(html, /Original WQT source availability and timing/);

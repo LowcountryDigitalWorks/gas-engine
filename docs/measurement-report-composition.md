@@ -9,7 +9,7 @@ The new `src/operator/measurement-report-composition.ts` entrypoint `composeInte
 1. `requireTenantContext(issuedTenantContext)` and `prepareOperatorWorkspace` recompute the authoritative service brief/decision source against tenant-scoped repositories, yielding the exact `tenantId`, `siteId`, `siteScopeRevisionId`, HTTPS target origin, workspace ID and source IDs. A browser export, raw `CustomerServiceReport.context.siteId`, hostname, hash or user-supplied scope does not mint tenant authority.
 2. The **current** `composeCustomerServiceReport` recomputes the source workspace and validates exact request workspace + service-brief + optional decision-cycle IDs. Its canonical report `id`, JSON, contract and existing render output are unchanged.
 3. Accepted `composeMeasurementReadiness` validates the strict caller-declared eight-provider statuses against that authoritative triple and canonical HTTPS target. Its evaluation time must match the authoritative workspace evaluation time. `renderMeasurementReadinessHtml` accepts only its own same-process WeakMap-verified result, not forged/serialized/cloned display objects.
-4. The accepted static `renderCustomerServiceReportHtml(report)` is left untouched. This new internal-only function inserts a bounded, escaped readiness section just before the closing `</main>`, keeping the original CSP and enforcing `MAX_CUSTOMER_REPORT_HTML_BYTES`.
+4. The accepted static `renderCustomerServiceReportHtml(report)` is left untouched. This internal-only function inserts a fixed classification banner and print styles into exact, unique renderer anchors, plus a bounded, escaped readiness section just before the closing `</main>`, keeping the original CSP and enforcing `MAX_CUSTOMER_REPORT_HTML_BYTES`.
 
 The readiness rows are **declared by a separately authorized operator** and are *not* live provider inspection, proof of property ownership, browser pixel deployment, user/session totals, or a customer performance claim. Missing states are `unknown`, not measured zero. Google Search Console and Bing verification do not require visitor tracking scripts; GA4 configured property does not prove events, Cloudflare edge requests are not GA4 sessions, Clarity replay requires a separate privacy decision, and a SiteOne HTTP 403 cannot be described as a healthy crawl.
 
@@ -26,7 +26,7 @@ const html = await composeInternalMeasurementReadinessHtml(
 );
 ```
 
-The caller must already hold an **issued** `TenantContext`. The function does not issue one and does not fetch provider data. The original six-argument form stays unchanged and does not accept customer-selected HTML. An optional seventh argument may compose accepted WQT Site Audit evidence into the SAME internal report, provided the separately trusted WQT adapter configuration also matches the fresh authoritative tenant, site, scope revision and HTTPS target.
+The caller must already hold an **issued** `TenantContext`. The function does not issue one and does not fetch provider data. The six-argument calling contract stays unchanged and does not accept customer-selected HTML. Its internal-only presentation now includes the same classification markings as the seven-argument form. An optional seventh argument may compose accepted WQT Site Audit evidence into the SAME internal report, provided the separately trusted WQT adapter configuration also matches the fresh authoritative tenant, site, scope revision and HTTPS target.
 
 ## Validation and explicit non-authority
 
@@ -70,8 +70,10 @@ same-process verified annex snapshot; serialized/cloned/forged annex objects
 do not become presentation authority.
 
 Both the WQT annex and eight-source Measurement Readiness appear in one bounded
-CSP-constrained internal static report. Original six-argument HTML, customer
-report JSON/model/id and all accepted adapters remain byte-identical.
+CSP-constrained internal static report. Both six- and seven-argument internal
+HTML presentations intentionally include the classification markings; ordinary
+customer report HTML/JSON/model/id, package contents and all accepted adapters
+remain unchanged.
 Lighthouse numeric zero versus unscored null, human selection, source-local
 timing, scanner blocked/unknown reasons, and unavailable provider rows keep
 their original source semantics. SiteOne HTTP 403 is never auto-interpreted as
@@ -104,3 +106,22 @@ both the standalone SHA-256 and existing package manifest SHA-256 in the output;
 compare the original package digests against the unmodified base preview as well.
 No PDF generator, delivery approval, customer export, hosted artifact upload,
 provider access or new runtime dependency is implied.
+
+## Internal review classification and printing
+
+Both internal composition forms display a semantic, high-contrast first-page
+and on-screen paragraph: **LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY**.
+The internal-only stylesheet requests repeated classification and page numbering
+in supported print engines; narrow screens retain readable content and print
+table headers repeat where supported. The ordinary customer renderer is not
+modified. The classification is not a redaction mechanism, DLP control or
+delivery approval.
+
+Use actual generated synthetic HTML to verify 320/375/1440px screens and every
+Letter/A4 printed page for warning text, page numbering, clipping, overlap and
+legibility. Print engines may ignore margin boxes or fail to preserve semantic
+structure. Visible/searchable text and a PDF tag tree alone do not establish
+accessible pagination artifacts or verified reading order. Verify structural
+accessibility separately when applicable; do not claim PDF/UA conformance.
+Hold an unverified PDF and use the authorized accessible HTML alternative.
+No PDF generation dependency, automatic export or delivery is introduced.

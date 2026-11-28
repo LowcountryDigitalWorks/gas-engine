@@ -317,7 +317,8 @@ async function generate(): Promise<void> {
     const originalCustomerHtml = pkg.files.find((file) => file.role === 'customer_report_html');
     assert.ok(originalCustomerHtml);
     assert.equal(originalCustomerHtml.classification, 'customer_safe');
-    assert.doesNotMatch(originalCustomerHtml.content, /id="(?:site-audit|measurement-readiness-annex)"/);
+    assert.doesNotMatch(originalCustomerHtml.content, /id="(?:site-audit|measurement-readiness-annex|ldw-internal-classification)"/);
+    assert.doesNotMatch(originalCustomerHtml.content, /#ldw-internal-classification/);
 
     const composeInternalPreview = () => composeInternalMeasurementReadinessHtml(
       evidence,
@@ -354,6 +355,10 @@ async function generate(): Promise<void> {
     assert.equal(internalBytes.toString('utf8'), internalHtml);
     assert.ok(internalBytes.byteLength > 0 && internalBytes.byteLength <= MAX_CUSTOMER_REPORT_HTML_BYTES);
     assert.match(internalHtml, /LDW INTERNAL REVIEW ONLY — not approved for customer delivery/);
+    assert.ok(internalHtml.includes('<main>\n<p id="ldw-internal-classification">LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY</p>\n<header>'));
+    assert.equal((internalHtml.match(/id="ldw-internal-classification"/g) ?? []).length, 1);
+    assert.ok(internalHtml.includes('@top-center{content:"LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY"'));
+    assert.ok(internalHtml.includes('counter(page) " of " counter(pages)'));
     assert.match(internalHtml, /id="site-audit"/);
     assert.match(internalHtml, /id="measurement-readiness-annex"/);
     assert.match(internalHtml, /script-src 'none'/);

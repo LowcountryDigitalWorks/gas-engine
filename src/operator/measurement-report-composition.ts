@@ -30,6 +30,36 @@ const INTERNAL_START = '\n<div class="internal" id="measurement-readiness-annex"
   + ' These are trusted operator declarations, not verified live provider probes.</strong></p>\n';
 const INTERNAL_END = '\n</div>\n';
 
+const STYLE_END = '</style>\n</head>';
+const MAIN_START = '<main>\n<header>';
+const CLASSIFICATION_ID = 'id="ldw-internal-classification"';
+const CLASSIFICATION_BANNER = '<p id="ldw-internal-classification">LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY</p>' + '\n';
+const CLASSIFICATION_STYLE = `#ldw-internal-classification{border:2px solid #102a3a;background:#102a3a;color:#fff;padding:.75rem;margin:0 0 1rem;font-weight:700;text-align:center;overflow-wrap:anywhere}
+@media screen and (max-width:480px){main{padding:.75rem}}
+@media print{
+  @page{margin:.7in .55in;
+    @top-center{content:"LDW INTERNAL REVIEW — NOT APPROVED FOR CUSTOMER DELIVERY";font:700 9pt system-ui,sans-serif;color:#102a3a}
+    @bottom-center{content:"LDW INTERNAL REVIEW — Page " counter(page) " of " counter(pages);font:9pt system-ui,sans-serif;color:#102a3a}
+  }
+  main{padding:0}#ldw-internal-classification{background:#fff;color:#102a3a;break-inside:avoid}
+  thead{display:table-header-group}tr{break-inside:avoid}
+}
+`;
+
+function addInternalClassification(html: string): string {
+  const styleAt = html.indexOf(STYLE_END);
+  const mainAt = html.indexOf(MAIN_START);
+  if (styleAt < 0 || mainAt <= styleAt
+      || styleAt !== html.lastIndexOf(STYLE_END)
+      || mainAt !== html.lastIndexOf(MAIN_START)
+      || html.includes(CLASSIFICATION_ID)
+      || html.includes(CLASSIFICATION_STYLE)) {
+    throw new Error('Accepted report HTML template is not suitable for internal classification.');
+  }
+  return html.replace(STYLE_END, CLASSIFICATION_STYLE + STYLE_END)
+    .replace(MAIN_START, '<main>\n' + CLASSIFICATION_BANNER + '<header>');
+}
+
 /**
  * Optional separately trusted WQT source for the SAME authoritative
  * tenant-scoped internal report. This is not a customer-delivery capability.
@@ -148,7 +178,8 @@ export async function composeInternalMeasurementReadinessHtml(
       || originalHtml.indexOf('id="measurement-readiness-annex"') !== -1) {
     throw new Error('Accepted report HTML template is not suitable for internal composition.');
   }
-  const internalHtml = originalHtml.slice(0, -REPORT_END.length)
+  const classifiedHtml = addInternalClassification(originalHtml);
+  const internalHtml = classifiedHtml.slice(0, -REPORT_END.length)
     + INTERNAL_START + fragment + INTERNAL_END + REPORT_END;
   if (Buffer.byteLength(internalHtml, 'utf8') > MAX_CUSTOMER_REPORT_HTML_BYTES) {
     throw new Error('Internal measurement report exceeds the accepted HTML byte bound.');
